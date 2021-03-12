@@ -1262,9 +1262,10 @@ contains
      ! fillvalue needs to not be optional to avoid ambiguity
      real(r8), target,    intent(out) :: fillvalue
      integer,  optional,  intent(out) :: no_fill
-
+     integer :: lno_fill
 #ifdef PIO2
-     ierr = pio_inq_var_fill(File, vdesc, no_fill, fillvalue)
+     ierr = pio_inq_var_fill(File, vdesc, lno_fill, fillvalue)
+     if (present(no_fill)) no_fill=lno_fill
 #else
      ierr = PIO_NOERR
      fillvalue = 0.0_R8
