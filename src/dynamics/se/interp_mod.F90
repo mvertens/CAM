@@ -120,12 +120,12 @@ CONTAINS
             case(interp_gridtype_equal_poles)
               call cam_grid_attribute_register(trim(gridname),                &
                    'interp_outputgridtype', 'equally spaced with poles')
-              call cam_grid_attribute_register(trim(gridname), 'w',           &
+              call cam_grid_attribute_register(trim(gridname), 'gw',           &
                    'latitude weights', 'lat', w)
             case(interp_gridtype_equal_nopoles)
               call cam_grid_attribute_register(trim(gridname),                &
                    'interp_outputgridtype', 'equally spaced no poles')
-              call cam_grid_attribute_register(trim(gridname), 'gw',          &
+              call cam_grid_attribute_register(trim(gridname), 'w_stag',      &
                    'latitude weights', 'lat', w)
             case(interp_gridtype_gauss)
               call cam_grid_attribute_register(trim(gridname),                &
