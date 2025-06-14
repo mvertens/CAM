@@ -3234,6 +3234,12 @@ Tunable parcel temperature perturbation in ZM deep convection scheme in units of
 Default: 0.5K perturbation
 </entry>
 
+<entry id="zmconv_tiedke_lnd" type="real" category="conv"
+       group="zmconv_nl" valid_values="" >
+tht: parcel temp perturbation over land in ZM deep convection scheme in units of (K).
+Default: 1.0K perturbation
+</entry>
+
 <entry id="zmconv_capelmt" type="real" category="conv"
        group="zmconv_nl" valid_values="" >
 Tunable triggering threshold for convection in ZM deep scheme in units of (J kg-1).
@@ -3256,6 +3262,32 @@ Default: 0.5
        group="zmconv_nl" valid_values="" >
 Convective adjustment timescale in units of (s)
 Default: 3600.0 s
+</entry>
+
+<entry id="zmconv_tht_thermo" type="logical" category="conv"
+       group="zmconv_nl" valid_values="" >
+tht: use moist td to compute plume-ensemble properties
+Default: .false.
+</entry>
+<entry id="zmconv_retrigger"  type="logical" category="conv"
+       group="zmconv_nl" valid_values="" >
+tht: iterate plume-ensemble computation and trigger functions
+Default: .false. 
+</entry>
+<entry id="zmconv_entrmn"     type="real"    category="conv"
+       group="zmconv_nl" valid_values="" >
+tht: previously undeclared par: max entr. rate for plume-ens
+Default: 2e-4
+</entry>
+<entry id="zmconv_alfadet"    type="real"    category="conv"
+       group="zmconv_nl" valid_values="" >
+tht: previously undeclared param: detrainment/entrainment
+Default: 0.1
+</entry>
+<entry id="zmconv_plclmin"    type="real"    category="conv"
+       group="zmconv_nl" valid_values="" >
+tht: previously undeclared param: min LCL pressure to allow zm
+Default: 6e2
 </entry>
 
 <!-- Cloud sedimentation -->
@@ -8155,6 +8187,13 @@ List of water species that are included in "moist" air.  This is currently
 used only by the SE dycore to generalize the computation of the moist air
 mass and thermodynamic properties.
 Default: Set by build-namelist.
+</entry>
+
+<entry id="compute_enthalpy_flux" type="logical"  category="physconst"
+       group="air_composition_nl" valid_values="" >
+Enthalpy flux terms explicitly computed and added in atmosphere and
+passed to MOM6
+Default: TRUE
 </entry>
 
 <!-- SE dycore -->
