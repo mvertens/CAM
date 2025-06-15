@@ -18,8 +18,6 @@ module check_energy
 ! Modifications:
 !   03.03.29  Boville  Add global energy check and fixer.
 !
-!   25.06.14  Added formulation of enthalpy adjustment created by  Peter Lauritzen (NCAR) and Thomas Toniazzo (Bjerknes Centre / NORCE)  
-!
 !---------------------------------------------------------------------------------
 
   use shr_kind_mod,    only: r8 => shr_kind_r8
@@ -979,6 +977,7 @@ end subroutine check_energy_readnl
     real(r8), parameter :: eps=1.E-10_r8
 
     logical, parameter :: debug=.true.
+    logical, parameter :: use_nonlinear_evap_fraction=.false.
 
     integer :: i, k
     real(r8):: tot, wgt_bc, wgt_ac
@@ -1011,21 +1010,25 @@ end subroutine check_energy_readnl
     if (minval(cam_in%ts(:ncol)).gt.0._r8) then
        hevap_atm(:ncol) = cam_in%cflx    (:ncol,1)*(cpwv*(cam_in%ts (:ncol)-t00a)+(cpliq*t00a+h00a))   ! into atm
      !tht: add non-linear terms? using evap_ocn, sst
-       nocnfrc(:ncol)=1._r8-cam_in%ocnfrac(:ncol)
-       where(nocnfrc(:ncol).gt.1e-2) ! not sure what's safe here -- last factor may be large
-        hevap_atm(:ncol)= hevap_atm(:ncol) &
-                        + cpwv &
-                         *(1._r8-nocnfrc(:ncol))/nocnfrc(:ncol) &
-                         *(cam_in%cflx(:ncol,1)-cam_in%evap_ocn(:ncol)) &
-                         *(cam_in%ts(:ncol)-cam_in%sst(:ncol))
-        tevp     (:ncol)= cam_in%ts(:ncol)  &
-                        + (1._r8-nocnfrc(:ncol))/nocnfrc(:ncol) &
-                         *(1._r8-cam_in%evap_ocn(:ncol)/cam_in%cflx(:ncol,1))&
-                         *(cam_in%ts(:ncol)-cam_in%sst(:ncol))
-       elsewhere
-        tevp     (:ncol)= cam_in%ts(:ncol)
-       endwhere
-     !tht: for ocean-only  mat.enthalpy flux (passed to ocean)
+       if (use_nonlinear_evap_fraction) then
+        nocnfrc(:ncol)=1._r8-cam_in%ocnfrac(:ncol)
+        where(nocnfrc(:ncol).gt.1e-2) ! not sure what's safe here -- last factor may be large
+         hevap_atm(:ncol)= hevap_atm(:ncol) &
+                         + cpwv &
+                          *(1._r8-nocnfrc(:ncol))/nocnfrc(:ncol) &
+                          *(cam_in%cflx(:ncol,1)-cam_in%evap_ocn(:ncol)) &
+                          *(cam_in%ts(:ncol)-cam_in%sst(:ncol))
+         tevp     (:ncol)= cam_in%ts(:ncol)  &
+                         + (1._r8-nocnfrc(:ncol))/nocnfrc(:ncol) &
+                          *(1._r8-cam_in%evap_ocn(:ncol)/cam_in%cflx(:ncol,1))&
+                          *(cam_in%ts(:ncol)-cam_in%sst(:ncol))
+        elsewhere
+         tevp     (:ncol)= cam_in%ts(:ncol)
+        endwhere
+       else
+         tevp     (:ncol)= cam_in%ts(:ncol)
+       endif
+      !tht: for ocean-only  mat.enthalpy flux (passed to ocean)
        hevap_ocn (:ncol)= cam_in%evap_ocn(:ncol)  *(cpwv*(cam_in%sst(:ncol)-t00a)+(cpliq*t00a+h00a)) 
     else ! not great but better than zeros
        hevap_atm (:ncol)= cam_in%cflx    (:ncol,1)*(cpwv*(state%t(:ncol,pver)-t00a)+(cpliq*t00a+h00a)) ! into atm
@@ -1033,6 +1036,24 @@ end subroutine check_energy_readnl
        hevap_ocn (:ncol)= hevap_atm(:ncol) ! out of ocn 
     endif
     call pbuf_set_field(pbuf, enthalpy_evop_idx, hevap_ocn)
+
+    if (use_nonlinear_evap_fraction) then
+     if(maxval(tevp(:ncol)).gt.350._r8 .or. minval(tevp(:ncol)).lt.150._r8)then
+      i=maxloc(tevp(:ncol),1)
+      k=minloc(tevp(:ncol),1)
+      print*,'Bad Tevap'
+      print*,'min ts=',minval(cam_in%ts(:ncol)),maxval(cam_in%ts(:ncol))
+      print*,'state%t',minval(state%t(:ncol,pver)),maxval(state%t(:ncol,pver))
+      print*,'tevp =',tevp(k),tevp(i)
+      print*,'ts   =',cam_in%ts (k),cam_in%ts (i)
+      print*,'sst  =',cam_in%sst(k),cam_in%sst(i)
+      print*,'cflx =',cam_in%cflx(k,1),cam_in%cflx(i,1)
+      print*,'evop =',cam_in%evap_ocn(k),cam_in%evap_ocn(i)
+      print*,'corr =',(1._r8-nocnfrc(k))/nocnfrc(k) *(1._r8-cam_in%evap_ocn(k)/cam_in%cflx(k,1)) *(cam_in%ts(k)-cam_in%sst(k)) &
+                     ,(1._r8-nocnfrc(i))/nocnfrc(i) *(1._r8-cam_in%evap_ocn(i)/cam_in%cflx(i,1)) *(cam_in%ts(i)-cam_in%sst(i))
+      call endrun('stopping in enthalpy_adjustment')
+     endif
+    endif
 
     !------------------------------------------------------------------
     ! compute precipitation fluxes and set associated physics buffers
@@ -1128,31 +1149,8 @@ end subroutine check_energy_readnl
                            , pdel_rf=pdel_rf )
 
     call outfld('IETEND_DME', dsema            , pcols, lchnk)
-
     call outfld('EFLX'      , enthalpy_flux_atm                 , pcols, lchnk)
-   !call outfld('EFLX_out'  , eflx_out , pcols, lchnk) ! test
-
     call outfld('MFLX'      , water_flux_bc+water_flux_ac       , pcols, lchnk)
-   !call outfld('MFLX_out'  ,-mflx_out , pcols, lchnk) ! test
-
-   !! check energy must be called with "physics" temps to compensate for internal rescaling
-   !! call unnecessary, only for testing. te_cur is updated below.
-   !do k = 1, pver
-   !  do i = 1, ncol
-   !    scale_cpdry_cpdycore(i,k) = cpairv(i,k,lchnk)/cp_or_cv_dycore(i,k,lchnk)
-   !    state%T  (i,k) = state%temp_ini(i,k)+(state%T(i,k)- state%temp_ini(i,k))/scale_cpdry_cpdycore(i,k)
-   !    tend%dtdt(i,k) = tend%dtdt(i,k)/scale_cpdry_cpdycore(i,k)
-   !  end do
-   !end do
-   !call check_energy_cam_chng(state, tend, "enthalpy_ac+bc_tend", nstep, ztodt, zero, zero, zero, dsema)    
-   !! ...aand scale temperature back
-   !do k = 1, pver
-   !  do i = 1, ncol
-   !    scale_cpdry_cpdycore(i,k) = cpairv(i,k,lchnk)/cp_or_cv_dycore(i,k,lchnk)
-   !    state%T  (i,k) = state%temp_ini(i,k)+scale_cpdry_cpdycore(i,k)*(state%T(i,k)- state%temp_ini(i,k))
-   !    tend%dtdt(i,k) = scale_cpdry_cpdycore(i,k)*tend%dtdt(i,k)
-   !  end do
-   !end do
 
     ! compute and store new column-integrated enthalpy and associated tendency
     call get_hydrostatic_energy(state%q(1:ncol,1:pver,1:pcnst),.true.,          &
@@ -1162,14 +1160,8 @@ end subroutine check_energy_readnl
          te = te(:ncol), se=se(:ncol), po=po(:ncol), ke=ke(:ncol)) 
     ! Save final energy for use with global fixer in next timestep -- note sign conventions, and coupling-dependent options
     state%te_cur(:ncol,dyn_te_idx) = te(:ncol) & ! *subtract* from this the h flux (sign: into atm) that is *not* passed to surface components
-                                   !- 0._r8                                                    ! A. pass hmat to all (test atm conservation via TFIX)
-                                   !-ztodt*(enthalpy_flux_atm(:ncol)-enthalpy_flux_ocn(:ncol)) ! B. pass hmat to ocean only, fix the rest in atmo
                                     -ztodt*(enthalpy_flux_atm(:ncol)-enthalpy_flux_ocn(:ncol)-cam_in%hrof(:ncol)) ! also remove enthalpy of run-off (if added to BLOM)
-                                   !-ztodt* enthalpy_flux_atm(:ncol)                           ! C. don't use hmat, fix everything in atmo
-   !tend%te_tnd(:ncol)=tend%te_tnd(:ncol) + enthalpy_flux_atm(:ncol)                           ! A.
-   !tend%te_tnd(:ncol)=tend%te_tnd(:ncol) + enthalpy_flux_ocn(:ncol)                           ! B.
     tend%te_tnd(:ncol)=tend%te_tnd(:ncol) +(enthalpy_flux_ocn(:ncol)+cam_in%hrof(:ncol))       ! B. with run-off
-   !tend%te_tnd(:ncol)=tend%te_tnd(:ncol) + 0._r0                                              ! C.
 
     if (thermo_budget_history) then
        call tot_energy_phys(state, 'phAM')
@@ -1181,15 +1173,6 @@ end subroutine check_energy_readnl
     dEdt_efix(:ncol) = (state%te_cur(:ncol,dyn_te_idx)-te         (:ncol))/ztodt
     call outfld("dEdt_efix_physics"  ,  dEdt_efix  , pcols   ,lchnk   )
 
-    ! xxx diagnostics
-    ! compute latent heat fluxes
-      !tht: correct for reference T of latent heats! (ice reference state here)
-   !variable_latent_heat_surface_cpice_term(:ncol)=(cam_in%cflx(:ncol,1)-fliq_tot(:ncol))*        cpice * state%temp_ini(:ncol,pver) ! +0.
-   !variable_latent_heat_surface_ls_term   (:ncol)= cam_in%cflx(:ncol,1)                 *((cpwv -cpice)*(state%temp_ini(:ncol,pver)-t00a)+cpice*t00a)
-   !variable_latent_heat_surface_lf_term   (:ncol)=                     -fliq_tot(:ncol) *((cpliq-cpice)*(state%temp_ini(:ncol,pver)-t00a)+cpice*t00a)
-   !call outfld ('cpice_srf', variable_latent_heat_surface_cpice_term, pcols, lchnk) !xxx diags will remove
-   !call outfld ('ls_srf'   , variable_latent_heat_surface_ls_term   , pcols, lchnk) !xxx diags will remove
-   !call outfld ('lf_srf'   , variable_latent_heat_surface_lf_term   , pcols, lchnk) !xxx diags will remove
   end subroutine enthalpy_adjustment
  
 end module check_energy
