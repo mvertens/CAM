@@ -219,7 +219,7 @@ integer :: &
      qrain_idx=-1, qsnow_idx=-1,    &
      nrain_idx=-1, nsnow_idx=-1,    &
      qcsedten_idx=-1, qrsedten_idx=-1, &
-     qisedten_idx=-1, qssedten_idx=-1, &
+     qisedten_idx=-1, qssedten_idx=-1, qgsedten_idx=-1, & !+tht
      vtrmc_idx=-1, umr_idx=-1, &
      vtrmi_idx=-1, ums_idx=-1, &
      qcsevap_idx=-1, qisevap_idx=-1
@@ -816,6 +816,14 @@ subroutine micro_pumas_cam_register
       call pbuf_add_field('UMS', 'physpkg', dtype_r8, (/pcols,pver/), ums_idx)
       call pbuf_add_field('QCSEVAP', 'physpkg', dtype_r8, (/pcols,pver/), qcsevap_idx)
       call pbuf_add_field('QISEVAP', 'physpkg', dtype_r8, (/pcols,pver/), qisevap_idx)
+!+tht
+   else
+      call pbuf_add_field('QCSEDTEN', 'physpkg', dtype_r8, (/pcols,pver/), qcsedten_idx)
+      call pbuf_add_field('QRSEDTEN', 'physpkg', dtype_r8, (/pcols,pver/), qrsedten_idx)
+      call pbuf_add_field('QISEDTEN', 'physpkg', dtype_r8, (/pcols,pver/), qisedten_idx)
+      call pbuf_add_field('QSSEDTEN', 'physpkg', dtype_r8, (/pcols,pver/), qssedten_idx)
+      call pbuf_add_field('QGSEDTEN', 'physpkg', dtype_r8, (/pcols,pver/), qgsedten_idx)
+!-tht
    end if
 
 end subroutine micro_pumas_cam_register
@@ -1448,6 +1456,7 @@ subroutine micro_pumas_cam_init(pbuf2d)
       if (qrsedten_idx > 0)   call pbuf_set_field(pbuf2d, qrsedten_idx, 0._r8)
       if (qisedten_idx > 0)   call pbuf_set_field(pbuf2d, qisedten_idx, 0._r8)
       if (qssedten_idx > 0)   call pbuf_set_field(pbuf2d, qssedten_idx, 0._r8)
+      if (qgsedten_idx > 0)   call pbuf_set_field(pbuf2d, qgsedten_idx, 0._r8) !+tht
       if (vtrmc_idx > 0)      call pbuf_set_field(pbuf2d, vtrmc_idx, 0._r8)
       if (umr_idx > 0)        call pbuf_set_field(pbuf2d, umr_idx, 0._r8)
       if (vtrmi_idx > 0)      call pbuf_set_field(pbuf2d, vtrmi_idx, 0._r8)
@@ -1855,6 +1864,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    real(r8) :: qrsedtenout_grid(pcols,pver)
    real(r8) :: qisedtenout_grid(pcols,pver)
    real(r8) :: qssedtenout_grid(pcols,pver)
+   real(r8) :: qgsedtenout_grid(pcols,pver)!+tht
    real(r8) :: vtrmcout_grid(pcols,pver)
    real(r8) :: umrout_grid(pcols,pver)
    real(r8) :: vtrmiout_grid(pcols,pver)
@@ -1929,6 +1939,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    real(r8), pointer :: qrsedtenout_grid_ptr(:,:)
    real(r8), pointer :: qisedtenout_grid_ptr(:,:)
    real(r8), pointer :: qssedtenout_grid_ptr(:,:)
+   real(r8), pointer :: qgsedtenout_grid_ptr(:,:) !+tht
    real(r8), pointer :: vtrmcout_grid_ptr(:,:)
    real(r8), pointer :: umrout_grid_ptr(:,:)
    real(r8), pointer :: vtrmiout_grid_ptr(:,:)
@@ -2194,6 +2205,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    if (qrsedten_idx > 0) call pbuf_get_field(pbuf, qrsedten_idx, qrsedtenout_grid_ptr)
    if (qisedten_idx > 0) call pbuf_get_field(pbuf, qisedten_idx, qisedtenout_grid_ptr)
    if (qssedten_idx > 0) call pbuf_get_field(pbuf, qssedten_idx, qssedtenout_grid_ptr)
+   if (qgsedten_idx > 0) call pbuf_get_field(pbuf, qgsedten_idx, qgsedtenout_grid_ptr) !+tht
    if (vtrmc_idx > 0) call pbuf_get_field(pbuf, vtrmc_idx, vtrmcout_grid_ptr)
    if (umr_idx > 0) call pbuf_get_field(pbuf, umr_idx, umrout_grid_ptr)
    if (vtrmi_idx > 0) call pbuf_get_field(pbuf, vtrmi_idx, vtrmiout_grid_ptr)
@@ -2923,6 +2935,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
       qisevapout_grid(:ncol,:top_lev-1) = 0._r8
       qrsedtenout_grid(:ncol,:top_lev-1) = 0._r8
       qssedtenout_grid(:ncol,:top_lev-1) = 0._r8
+      qgsedtenout_grid(:ncol,:top_lev-1) = 0._r8 !+tht
       umrout_grid(:ncol,:top_lev-1) = 0._r8
       umsout_grid(:ncol,:top_lev-1) = 0._r8
       psacro_grid(:ncol,:top_lev-1) = 0._r8
@@ -3013,6 +3026,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
       ns_grid = state_loc%q(:,:,ixnumsnow)
       qrsedtenout_grid(:ncol,top_lev:) = proc_rates%qrsedten
       qssedtenout_grid(:ncol,top_lev:) = proc_rates%qssedten
+      qgsedtenout_grid(:ncol,top_lev:) = proc_rates%qgsedten !+tht
       umrout_grid(:ncol,top_lev:) = proc_rates%umr
       umsout_grid(:ncol,top_lev:) = proc_rates%ums
 
@@ -3505,6 +3519,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    if (qrsedten_idx > 0) qrsedtenout_grid_ptr = qrsedtenout_grid
    if (qisedten_idx > 0) qisedtenout_grid_ptr = qisedtenout_grid
    if (qssedten_idx > 0) qssedtenout_grid_ptr = qssedtenout_grid
+   if (qgsedten_idx > 0) qgsedtenout_grid_ptr = qgsedtenout_grid !+tht
    if (vtrmc_idx > 0)    vtrmcout_grid_ptr    = vtrmcout_grid
    if (umr_idx > 0)      umrout_grid_ptr      = umrout_grid
    if (vtrmi_idx > 0)    vtrmiout_grid_ptr    = vtrmiout_grid
