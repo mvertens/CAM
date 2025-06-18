@@ -69,6 +69,10 @@
 <prescribed_volcaero_cycle_yr>1850</prescribed_volcaero_cycle_yr>
 <prescribed_volcaero_type>CYCLICAL</prescribed_volcaero_type>
 
+<!--Options for mineral dust -->
+<dust_emis_fact> 4.60D0  </dust_emis_fact>                   <!--dust_nl-->
+<dust_emis_method>Leung_2023</dust_emis_method>              <!--dust_emi--> 
+
 <!-- ================================================= -->
 <!-- noresm-physics -->
 <!-- ================================================= -->

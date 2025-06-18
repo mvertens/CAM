@@ -72,9 +72,9 @@ BEGSIM
 	       monoterp + O3 -> .15*SOA_LV 			; 8.05e-16, -640.
 	       monoterp + OH -> .15*SOA_SV			; 1.2e-11, 440.
 	       monoterp + NO3 -> .15*SOA_SV			; 1.2e-12, 490.
-	       isoprene + O3 -> .05*SOA_SV			; 1.03e-14, -1995.
-	       isoprene + OH -> .05*SOA_SV 			; 2.7e-11, 390.
-	       isoprene + NO3 -> .05*SOA_SV 			; 3.15e-12, -450.
+	       isoprene + O3 -> .025*SOA_SV			; 1.03e-14, -1995.
+	       isoprene + OH -> .025*SOA_SV 			; 2.7e-11, 390.
+	       isoprene + NO3 -> .025*SOA_SV 			; 3.15e-12, -450.
       End Reactions
 
       Heterogeneous

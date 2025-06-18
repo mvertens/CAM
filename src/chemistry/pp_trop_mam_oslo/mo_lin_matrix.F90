@@ -49,7 +49,7 @@
          mat(32) = -( het_rates(27) )
          mat(4) = .114_r8*rxt(7)
          mat(34) = .150_r8*rxt(9) + .150_r8*rxt(10)
-         mat(36) = .050_r8*rxt(11) + .050_r8*rxt(12) + .050_r8*rxt(13)
+         mat(36) = .025_r8*rxt(11) + .025_r8*rxt(12) + .025_r8*rxt(13)
          mat(35) = -( rxt(8) + rxt(9) + rxt(10) + het_rates(28) )
          mat(37) = -( rxt(11) + rxt(12) + rxt(13) + het_rates(29) )
          mat(38) = -( het_rates(30) )

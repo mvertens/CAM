@@ -62,7 +62,6 @@ module atm_import_export
   integer                :: megan_nflds = -huge(1)  ! number of MEGAN voc fields from lnd-> atm
   integer                :: emis_nflds = -huge(1)   ! number of fire emission fields from lnd-> atm
   logical                :: atm_provides_lightning = .false. ! cld to grnd lightning flash freq (min-1)
-  logical, public        :: dms_from_ocn = .false.   ! dms is obtained from ocean as atm import data
   logical, public        :: brf_from_ocn = .false.   ! brf is obtained from ocean as atm import data
   logical, public        :: n2o_from_ocn = .false.   ! n2o is obtained from ocean as atm import data
   logical, public        :: nh3_from_ocn = .false.   ! nh3 is obtained from ocean as atm import data
@@ -116,6 +115,7 @@ contains
     logical                :: flds_co2b      ! use case
     logical                :: flds_co2c      ! use case
     character(len=128)     :: fldname
+    logical                :: dms_from_ocn   ! dms is obtained from ocean as atm import data
     logical                :: ispresent
     logical                :: isset
     character(len=*), parameter :: subname='(atm_import_export:advertise_fields): '

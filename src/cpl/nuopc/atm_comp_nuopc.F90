@@ -636,11 +636,12 @@ contains
     end if
 
     ! Check for DMS from ocean
-    call ESMF_StateGet(importState, 'Faoo_fdms_ocn', itemFlag, rc=rc)
-    if ( ChkErr(rc,__LINE__,u_FILE_u)) then
-       dms_from_ocn = .false.
+    call NUOPC_CompAttributeGet(gcomp, name='flds_dms', value=cvalue, ispresent=ispresent, isset=isset, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (ispresent .and. isset) then
+       read(cvalue,*) dms_from_ocn
     else
-       dms_from_ocn = (itemflag == ESMF_STATEITEM_NOTFOUND)
+       dms_from_ocn = .false.
     end if
 
     call cam_init( &
