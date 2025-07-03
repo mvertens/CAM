@@ -8,7 +8,7 @@
       CAM
     ===============
    -->
-    <desc atm="CAM70[%LT][%MT][%WA][%WX][%CSO][%CT1S][%CT4S][%CT0MA][%CT1MA][%CT4MA][%GHGMAM4][%NORESM][%TROPMAM4][%CAMoslo]"                                                                                                                                                                                                                                                                                >CAM cam7 physics:</desc>
+    <desc atm="CAM70[%LT][%MT][%WA][%WX][%CSO][%CT1S][%CT4S][%CT0MA][%CT1MA][%CT4MA][%GHGMAM4][%NORESM][%TROPMAM4][%CAMoslo][%GHGCAMoslo]"                                                                                                                                                                                                                                                                                >CAM cam7 physics:</desc>
     <desc atm="CAM60[%1PCT][%4xCO2][%CARMATS][%CARMAWM][%CT1S][%CT2S][%CFIRE][%CVBSX][%NUDG][%PORT][%RCO2][%SCAM][%SDYN][%WCCM][%WCMD][%WCSC][%WCTS][%WXIE][%WXIED][%HEMCO][%GEOSCHEM][%SCAMARM95][%SCAMARM97][%SCAMATEX][%SCAMBOMEX][%SCAMCGILSS11][%SCAMCGILSS12][%SCAMCGILSS6][%SCAMDYCOMSRF01][%SCAMDYCOMSRF02][%SCAMGATE3][%SCAMMPACE][%SCAMRICO][%SCAMSPARTICUS][%SCAMTOGA2][%SCAMTWP06][%SCAMCAMFRC]" >CAM cam6 physics:</desc>
     <desc atm="CAM50[%CT1S][%CLB][%PORT][%RCO2][%MAM7][%SCAM][%SDYN][%WCSC][%WCTS][%SCAMARM95][%SCAMARM97][%SCAMATEX][%SCAMBOMEX][%SCAMCGILSS11][%SCAMCGILSS12][%SCAMCGILSS6][%SCAMDYCOMSRF01][%SCAMDYCOMSRF02][%SCAMGATE3][%SCAMMPACE][%SCAMRICO][%SCAMSPARTICUS][%SCAMTOGA2][%SCAMTWP06][%SCAMCAMFRC]"                                                                                                     >CAM cam5 physics:</desc>
     <desc atm="CAM40[%PORT][%RCO2][%SCAM][%SDYN][%TMOZ][%WX][%WXIE][%WXIED][%WCCM][%WCMD][%SCAMARM95][%SCAMARM97][%SCAMATEX][%SCAMBOMEX][%SCAMCGILSS11][%SCAMCGILSS12][%SCAMCGILSS6][%SCAMDYCOMSRF01][%SCAMDYCOMSRF02][%SCAMGATE3][%SCAMMPACE][%SCAMRICO][%SCAMSPARTICUS][%SCAMTOGA2][%SCAMTWP06][%SCAMCAMFRC]"                                                                                              >CAM cam4 physics:</desc>
@@ -22,6 +22,7 @@
 
     <desc option="NORESM"        >CAM-Nor physics and dynamics differences :</desc>
     <desc option="CAMoslo"       >Use the Oslo Aero aerosol model with trop_mam_oslo chemistry :</desc>
+    <desc option="GHGCAMoslo"    >Use the Oslo Aero aerosol model with ghg_mam_oslo chemistry :</desc>
 
   <!--
     ===============
@@ -157,6 +158,7 @@
       <value compset="_CAM.*(%TROPMAM4)">-chem trop_mam4</value>
       <value compset="_CAM.*(%GHGMAM4)">-chem ghg_mam4</value>
       <value compset="_CAM.*(%CAMoslo)">-chem trop_mam_oslo</value>
+      <value compset="_CAM.*(%GHGCAMoslo)">-chem ghg_mam_oslo</value>
 
       <!-- Modifiers for CAM runs (%.* includes SCAM runs) -->
       <value compset="_CAM.*(%CT1S|%CFIRE)">-chem trop_strat_mam5_vbs</value>
@@ -363,6 +365,7 @@
       <!-- NorESM use cases -->
       <value compset="1850_CAM70%LT%NORESM%TROPMAM4" >1850_camnor_lt_tropmam4</value>
       <value compset="1850_CAM70%LT%NORESM%CAMoslo"  >1850_camnor_lt_osloaero</value>
+      <value compset="1850_CAM70%LT%NORESM%GHGCAMoslo"  >1850_camnor_lt_ghgosloaero</value>
       <value compset="HIST_CAM70%LT%NORESM%TROPMAM4" >hist_camnor_lt_tropmam4</value>
       <value compset="HIST_CAM70%LT%NORESM%CAMoslo"  >hist_camnor_lt_osloaero</value>
       <value compset="2000_CAM70%LT%NORESM%TROPMAM4" >2000_camnor_tropmam4</value>

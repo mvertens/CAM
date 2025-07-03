@@ -675,6 +675,7 @@
 <h2orates chem="waccm_sc"     >atm/waccm/phot/xh2o_c080826.nc</h2orates>
 <h2orates chem="waccm_sc_mam4">atm/waccm/phot/xh2o_c080826.nc</h2orates>
 <h2orates chem="ghg_mam4"     >atm/waccm/phot/xh2o_c080826.nc</h2orates>
+<h2orates chem="ghg_mam_oslo" >atm/waccm/phot/xh2o_c080826.nc</h2orates>
 
 <!-- Constituents for non-LTE calculations and heating rates below 200 nm -->
 <waccm_forcing_datapath chem="waccm_sc">atm/waccm/ub</waccm_forcing_datapath>
@@ -2375,6 +2376,7 @@
 <use_hetfrz_classnuc phys="cam6"   >.true.</use_hetfrz_classnuc>
 <use_hetfrz_classnuc phys="cam7"   >.true.</use_hetfrz_classnuc>
 <use_hetfrz_classnuc chem="trop_mam_oslo">.true.</use_hetfrz_classnuc>
+<use_hetfrz_classnuc chem="ghg_mam_oslo">.true.</use_hetfrz_classnuc>
 <hetfrz_bc_scalfac>0.01D0</hetfrz_bc_scalfac>
 <hetfrz_dust_scalfac>0.05D0</hetfrz_dust_scalfac>
 

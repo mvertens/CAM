@@ -893,7 +893,7 @@ if (($chem =~ /waccm_ma/ or $chem =~ /waccm_tsmlt/ or $chem =~ /waccm_t4ma/) and
 elsif (($chem =~ /trop_strat/ or $chem =~ /geoschem/) and !$chem_rad_passive) {
     $radval .= ",'N:O2:O2','A:CO2:CO2'";
 }
-elsif (($co2_cycle and !$co2_cycle_rad_passive) or ($chem =~ /ghg_mam4/)) {
+elsif (($co2_cycle and !$co2_cycle_rad_passive) or ($chem =~ /ghg_mam4/) or ($chem =~ /ghg_mam_oslo/)) {
     $radval .= ",'N:O2:O2','A:CO2:CO2'";
 }
 else {
@@ -917,7 +917,7 @@ if ($rad_prog_ozone) {
     die "ERROR: can not set ozone rad_climate specification\n";
 }
 
-if ((($chem =~ /ghg_mam4/) or ($chem =~ /waccm_ma/) or ($chem =~ /waccm_t4ma/) or ($chem =~ /waccm_sc_mam/) or ($chem =~ /waccm_tsmlt/) or ($chem =~ /trop_strat/)) and !$chem_rad_passive ) {
+if ((($chem =~ /ghg_mam4/) or ($chem =~ /ghg_mam_oslo/) or ($chem =~ /waccm_ma/) or ($chem =~ /waccm_t4ma/) or ($chem =~ /waccm_sc_mam/) or ($chem =~ /waccm_tsmlt/) or ($chem =~ /trop_strat/)) and !$chem_rad_passive ) {
     $radval .= ",'A:N2O:N2O','A:CH4:CH4','N:CFC11STAR:CFC11','A:CFC12:CFC12'";
 } elsif ($prog_ghg1 and $prog_ghg2 and !$chem_rad_passive ) {
     $radval .= ",'A:N2O:N2O','A:CH4:CH4','A:CFC11:CFC11','A:CFC12:CFC12'";
@@ -1626,7 +1626,7 @@ elsif ($carma =~ /trop_strat/) {
 
 # turn on stratospheric aerosol forcings in CAM6 configurations
 my $chem_has_ocs = chem_has_species($cfg, 'OCS');
-if (($phys =~ /cam6/ or $phys =~ /cam7/) and $chem =~ /_mam/ and $chem ne 'trop_mam_oslo') {
+if (($phys =~ /cam6/ or $phys =~ /cam7/) and $chem =~ /_mam/ and $chem ne 'trop_mam_oslo' and $chem ne 'ghg_mam_oslo' ) {
   # turn on volc forcings in cam6 -- prognostic or prescribed
   if ( $chem_has_ocs ) {
       # turn on prognostic stratospheric aerosols
@@ -1773,7 +1773,7 @@ if ($chem =~ /waccm_sc/) {
     add_default($nl, 'h2orates');
     add_default($nl, 'solar_parms_data_file');
 }
-if ($chem =~ /ghg_mam4/) {
+if ($chem =~ /ghg_mam4/ or $chem =~ /ghg_mam_oslo/) {
     add_default($nl, 'h2orates');
     my $flbc_list = "'CH4','N2O','CO2','CFC11','CFC12'";
     add_default($nl, 'flbc_list', 'val'=>$flbc_list);
@@ -2819,7 +2819,7 @@ if (($chem eq 'trop_mam4') or ($chem eq 'waccm_sc_mam4') or ($chem eq 'ghg_mam4'
         add_default($nl, $file);
     }
 }
-if ($chem eq 'trop_mam_oslo' ) {
+if ($chem eq 'trop_mam_oslo' or $chem eq 'ghg_mam_oslo') {
 
     my %species;
 
@@ -2883,10 +2883,19 @@ if ($chem eq 'trop_mam_oslo' ) {
     }
 
     # Prescribed species
-    add_default($nl, 'tracer_cnst_specifier', 'val'=>"'O3','OH','NO3','HO2'");
-    unless (defined $nl->get_value('tracer_cnst_type')) {
-        add_default($nl, 'tracer_cnst_type',    'ver'=>'fixed_ox');
-        add_default($nl, 'tracer_cnst_cycle_yr','ver'=>'fixed_ox');
+    if ($chem eq 'ghg_mam_oslo'){
+    	add_default($nl, 'tracer_cnst_specifier', 'val'=>"'O3','OH','NO3','HO2','HALONS'");
+    	unless (defined $nl->get_value('tracer_cnst_type')) {
+            add_default($nl, 'tracer_cnst_type');
+            add_default($nl, 'tracer_cnst_cycle_yr');
+        }
+    }
+    else {
+        add_default($nl, 'tracer_cnst_specifier', 'val'=>"'O3','OH','NO3','HO2'");
+        unless (defined $nl->get_value('tracer_cnst_type')) {
+            add_default($nl, 'tracer_cnst_type',    'ver'=>'fixed_ox');
+            add_default($nl, 'tracer_cnst_cycle_yr','ver'=>'fixed_ox');
+        }
     }
 
     my @files = ('tracer_cnst_datapath', 'tracer_cnst_file', 'tracer_cnst_filelist');
