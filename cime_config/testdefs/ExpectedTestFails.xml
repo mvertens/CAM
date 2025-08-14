@@ -30,6 +30,13 @@
 
   <!-- aux_cam_noresm test suite failures -->
 
+  <test name="ERP_Ln9.ne30pg3_ne30pg3_mtn14.NF1850.betzy_intel.cam-outfrq9s_aero_history">
+    <phase name="COMPARE_base_rest">
+      <status>FAIL</status>
+      <issue>NorESMhub/CAM#180</issue>
+    </phase>
+  </test>
+
   <test name="ERP_Ln9.ne16pg3_ne16pg3_mtn14.NF1850ghg_fates-nocomp.betzy_intel.cam-outfrq9s">
     <phase name="COMPARE_base_rest">
       <status>FAIL</status>

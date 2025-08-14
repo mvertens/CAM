@@ -1,0 +1,13 @@
+mfilt=1,1,1,1,1,1
+ndens=1,1,1,1,1,1
+nhtfrq=9,9,9,9,9,9
+write_nstep0=.true.
+inithist='ENDOFRUN'
+history_chemspecies_srf = .true.
+history_aerosol = .true.
+history_aerosol_base = .true.
+history_aerosol_decomposed = .true.
+history_aerosol_forcing = .true.
+history_aerosol_radiation = .true.
+history_aerosol_debug_output = .true.
+history_gas = .true.

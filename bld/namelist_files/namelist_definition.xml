@@ -5734,6 +5734,47 @@ Switch to turn on/off default output chemical species mixing ratios in the surfa
 Default: .false.
 </entry>
 
+<entry id="history_aerosol_base" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of; mass mixing ratios and column burdens for compounded aerosols (BC, DUST, OM, SALT, SULFATE) 
+and gas-phase column burdens from OsloAero; summation fields for emission/source, wet and dry deposition.
+Also controls output of other key aerosol-specific output fields.
+Default: .true.
+</entry>
+
+<entry id="history_aerosol_decomposed" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of decomposed aerosols from OsloAero.
+Default: .false.
+</entry>
+
+<entry id="history_gas" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of 3D gasphase aerosols from OsloAero.
+NOTE; the 2D column burdens are triggered by history_aerosol_base.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_forcing" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of forcing specific species in OsloAero.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_radiation" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of aerosol radiative properties.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_debug_output" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output for debugging summation from OsloAero. Some summation fields are compounded of variables passed through
+the physics buffer. This flag provides the lagged output of these variables. Also controls summations used across multiple
+summation fields.
+Default: .false.
+</entry>
+
 <entry id="offline_driver" type="logical" category="offline_unit_driver"
        group="phys_ctl_nl" valid_values="" >
 True when model is configured to use an offline driver.

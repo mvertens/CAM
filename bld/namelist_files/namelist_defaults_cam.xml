@@ -2978,6 +2978,12 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <history_chemspecies_srf>      .true.   </history_chemspecies_srf>
 <history_clubb>                .true.   </history_clubb>
 <history_dust>                 .false.  </history_dust>
+<history_aerosol_base>         .true.   </history_aerosol_base>
+<history_aerosol_decomposed>   .false.  </history_aerosol_decomposed>
+<history_gas>                  .false.  </history_gas>
+<history_aerosol_forcing>      .false.  </history_aerosol_forcing>
+<history_aerosol_radiation>    .false.  </history_aerosol_radiation>
+<history_aerosol_debug_output> .false.  </history_aerosol_debug_output>
 
 <cam_snapshot_before_num>  -1 </cam_snapshot_before_num>
 <cam_snapshot_after_num>   -1 </cam_snapshot_after_num>
