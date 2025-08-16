@@ -69,6 +69,7 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
+   use air_composition     , only : compute_enthalpy_flux
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -300,6 +301,15 @@ contains
     else
        call shr_sys_abort(subname//'Need to set attribute ScalarFieldIdxNextSwCday')
     endif
+
+    call NUOPC_CompAttributeGet(gcomp, name='atm_computes_enthalpy_flux', value=cvalue, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       read (cvalue,*) compute_enthalpy_flux
+    else
+       compute_enthalpy_flux = .false.
+    end if
 
     ! read mediator fields namelists
     call read_surface_fields_namelists()
