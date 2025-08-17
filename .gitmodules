@@ -248,7 +248,3 @@
     fxtag = mosart1.1.12_noresm_v0
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/MOSART
-
-[submodule "tools/AeroTab"]
-    path = tools/AeroTab
-    url = https://github.com/NorESMhub/AeroTab
