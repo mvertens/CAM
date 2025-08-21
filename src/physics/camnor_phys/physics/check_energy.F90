@@ -957,8 +957,8 @@ end subroutine check_energy_readnl
     real(r8), dimension(pcols)      :: variable_latent_heat_surface_ls_term !xxx diagnostics
     real(r8), dimension(pcols)      :: variable_latent_heat_surface_lf_term !xxx diagnostics
     real(r8), dimension(pcols)      :: enthalpy_flux_atm, enthalpy_flux_ocn !tht
-    real(r8), dimension(pcols,pver) :: tmp_t, pdel_rf, qinp, totliqinp, toticeinp 
-    real(r8), dimension(pcols)      :: zero, dsema, dcp_heat, iedme 
+    real(r8), dimension(pcols,pver) :: tmp_t, pdel_rf, qinp, totliqinp, toticeinp
+    real(r8), dimension(pcols)      :: zero, dsema, dcp_heat, iedme
     real(r8), dimension(pcols)      :: water_flux_bc, water_flux_ac, enthalpy_flux_bc, enthalpy_flux_ac
     real(r8), dimension(pcols)      :: eflx_out
     real(r8), dimension(pcols)      :: mflx_out
@@ -976,7 +976,7 @@ end subroutine check_energy_readnl
 
     real(r8), parameter :: eps=1.E-10_r8
 
-    logical, parameter :: debug=.true.
+    logical, parameter :: debug_enthalpy=.false.
     logical, parameter :: use_nonlinear_evap_fraction=.false.
 
     integer :: i, k
@@ -1001,7 +1001,7 @@ end subroutine check_energy_readnl
     !-------------------------------------------------------------------------------------------
 
    !=== start computation of material enthalpy fluxes ===
-    ! evaporation enthalpy flux 
+    ! evaporation enthalpy flux
     enthalpy_evop_idx    = pbuf_get_index('ENTHALPY_EVOP'   , errcode=i)
     if (enthalpy_evop_idx==0) then
       call endrun("pbufs for enthalpy evap flux not allocated")
@@ -1029,11 +1029,11 @@ end subroutine check_energy_readnl
          tevp     (:ncol)= cam_in%ts(:ncol)
        endif
       !tht: for ocean-only  mat.enthalpy flux (passed to ocean)
-       hevap_ocn (:ncol)= cam_in%evap_ocn(:ncol)  *(cpwv*(cam_in%sst(:ncol)-t00a)+(cpliq*t00a+h00a)) 
+       hevap_ocn (:ncol)= cam_in%evap_ocn(:ncol)  *(cpwv*(cam_in%sst(:ncol)-t00a)+(cpliq*t00a+h00a))
     else ! not great but better than zeros
        hevap_atm (:ncol)= cam_in%cflx    (:ncol,1)*(cpwv*(state%t(:ncol,pver)-t00a)+(cpliq*t00a+h00a)) ! into atm
        tevp      (:ncol)= state%t(:ncol,pver)
-       hevap_ocn (:ncol)= hevap_atm(:ncol) ! out of ocn 
+       hevap_ocn (:ncol)= hevap_atm(:ncol) ! out of ocn
     endif
     call pbuf_set_field(pbuf, enthalpy_evop_idx, hevap_ocn)
 
@@ -1082,7 +1082,7 @@ end subroutine check_energy_readnl
                               +hevap_atm    (:ncol)
     water_flux_bc    (:ncol) = enthalpy_prec_bc(:ncol,fliq_idx)+enthalpy_prec_bc(:ncol,fice_idx)
     water_flux_ac    (:ncol) = enthalpy_prec_ac(:ncol,fliq_idx)+enthalpy_prec_ac(:ncol,fice_idx) &
-                              -cam_in%cflx(:ncol,1) 
+                              -cam_in%cflx(:ncol,1)
     enthalpy_flux_atm(:ncol) = enthalpy_prec_bc(:ncol,hliq_idx)+enthalpy_prec_bc(:ncol,hice_idx) &
                               +enthalpy_prec_ac(:ncol,hliq_idx)+enthalpy_prec_ac(:ncol,hice_idx) &
                               +hevap_atm    (:ncol)
@@ -1091,7 +1091,7 @@ end subroutine check_energy_readnl
                               +hevap_ocn    (:ncol)
     enthalpy_flux_ocn(:ncol) = cam_in%ocnfrac(:ncol)*enthalpy_flux_ocn(:ncol)
 
-    if (debug) then
+    if (debug_enthalpy) then
      call outfld("enth_prec_ac_hice"  , enthalpy_prec_ac(:,hice_idx)     , pcols   ,lchnk   )
      call outfld("enth_prec_ac_hliq"  , enthalpy_prec_ac(:,hliq_idx)     , pcols   ,lchnk   )
      call outfld("enth_prec_bc_hice"  , enthalpy_prec_bc(:,hice_idx)     , pcols   ,lchnk   )
@@ -1103,9 +1103,9 @@ end subroutine check_energy_readnl
      call outfld("enth_hevap_atm"     , hevap_atm       (:)              , pcols   ,lchnk   )
      call outfld("enth_hevap_ocn"     , hevap_ocn       (:)              , pcols   ,lchnk   )
     endif
-   !=== end computation of material enthalpy fluxes ===
+    !=== end computation of material enthalpy fluxes ===
 
-   !+++ diags
+    !+++ diags
     ! compute total energy after physics using equation 78
     call get_hydrostatic_energy(state%q(1:ncol,1:pver,1:pcnst),.true.,            &
          state%pdel(1:ncol,1:pver), cp_or_cv_dycore(:ncol,:,lchnk),               &
@@ -1157,7 +1157,7 @@ end subroutine check_energy_readnl
          state%pdel(1:ncol,1:pver), cp_or_cv_dycore(:ncol,:,lchnk),                           &
          state%u(1:ncol,1:pver), state%v(1:ncol,1:pver), state%T(1:ncol,1:pver),&
          vc_dycore, ptop=state%pintdry(1:ncol,1), phis = state%phis(1:ncol),    &
-         te = te(:ncol), se=se(:ncol), po=po(:ncol), ke=ke(:ncol)) 
+         te = te(:ncol), se=se(:ncol), po=po(:ncol), ke=ke(:ncol))
     ! Save final energy for use with global fixer in next timestep -- note sign conventions, and coupling-dependent options
     state%te_cur(:ncol,dyn_te_idx) = te(:ncol) & ! *subtract* from this the h flux (sign: into atm) that is *not* passed to surface components
                                     -ztodt*(enthalpy_flux_atm(:ncol)-enthalpy_flux_ocn(:ncol)-cam_in%hrof(:ncol)) ! also remove enthalpy of run-off (if added to BLOM)
@@ -1174,5 +1174,5 @@ end subroutine check_energy_readnl
     call outfld("dEdt_efix_physics"  ,  dEdt_efix  , pcols   ,lchnk   )
 
   end subroutine enthalpy_adjustment
- 
+
 end module check_energy

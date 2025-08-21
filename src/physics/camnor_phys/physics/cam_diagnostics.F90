@@ -191,12 +191,13 @@ contains
     use cam_history,        only: register_vector_field
     use tidal_diag,         only: tidal_diag_init
     use cam_budget,         only: cam_budget_em_snapshot, cam_budget_em_register, thermo_budget_history
-    use air_composition,    only: compute_enthalpy_flux !+tht
+    use air_composition,    only: compute_enthalpy_flux
 
     type(physics_buffer_desc), pointer, intent(in) :: pbuf2d(:,:)
 
-    logical :: debug_enthalpy_flux=.true.                  !+tht
+    logical :: debug_enthalpy_flux=.false.
     integer :: istage
+
     ! outfld calls in diag_phys_writeout
     call addfld (cnst_name(1), (/ 'lev' /), 'A', 'kg/kg',    cnst_longname(1))
     call addfld ('NSTEP',      horiz_only,  'A', 'timestep', 'Model timestep')
@@ -225,20 +226,19 @@ contains
     call addfld (apcnst(1), (/ 'lev' /), 'A','kg/kg',         trim(cnst_longname(1))//' (after physics)')
     call addfld ('TFIX',    horiz_only,  'A', 'K/s',          'T fixer (T equivalent of Energy correction)')
     call addfld ('TTEND_TOT', (/ 'lev' /), 'A', 'K/s',        'Total temperature tendency')
-!+tht
+
     call addfld('EBREAK'    ,  horiz_only, 'A','W/m2',  &
                               'Global-mean energy-nonconservation (W/m2)'                            )
-   !if (compute_enthalpy_flux) then
-     call addfld('PTTEND_DME', (/ 'lev' /), 'A', 'K/s ', &
-                               'T-tendency due to water fluxes (end of tphysac)'                      )
-     call addfld('IETEND_DME',  horiz_only, 'A','W/m2 ', &
-                               'Column enthalpy tendency due to water fluxes (end of tphysac)'        )
-     call addfld('EFLX    '  ,  horiz_only, 'A','W/m2 ', &
-                               'Surface water material enthalpy flux (end of tphysac)'                )
-     call addfld('MFLX    '  ,  horiz_only, 'A','W/m2 ', &
-                              'Mass flux due to dry mass adjustment / water changes (end of tphysac)')
-   !endif
-!-tht
+    !if (compute_enthalpy_flux) then
+       call addfld('PTTEND_DME', (/ 'lev' /), 'A', 'K/s ', &
+            'T-tendency due to water fluxes (end of tphysac)'                      )
+       call addfld('IETEND_DME',  horiz_only, 'A','W/m2 ', &
+            'Column enthalpy tendency due to water fluxes (end of tphysac)'        )
+       call addfld('EFLX    '  ,  horiz_only, 'A','W/m2 ', &
+            'Surface water material enthalpy flux (end of tphysac)'                )
+       call addfld('MFLX    '  ,  horiz_only, 'A','W/m2 ', &
+            'Mass flux due to dry mass adjustment / water changes (end of tphysac)')
+    !end if
 
     ! outfld calls in diag_phys_tend_writeout
     call addfld ('UTEND_TOT', (/ 'lev' /), 'A', 'm/s2',       'Total zonal wind tendency')
@@ -408,49 +408,43 @@ contains
     call addfld( 'CPAIRV', (/ 'lev' /), 'I', 'J/K/kg', 'Variable specific heat cap air' )
     call addfld( 'RAIRV', (/ 'lev' /), 'I', 'J/K/kg', 'Variable dry air gas constant' )
 
-!+tht temp diag for material enthalpy fluxes (debug)
-   !if (compute_enthalpy_flux) then
-     if(debug_enthalpy_flux) then
-  !+pel
-      call addfld('enth_prec_ac_hice',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_ac_hliq',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_bc_hice',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_bc_hliq',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_ac_fice',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_ac_fliq',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_bc_fice',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_prec_bc_fliq',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fevap'       ,horiz_only, 'A', 'W/m2', '' )
-  !-pel
-      call addfld('enth_frain_bc_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fsnow_bc_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fwatr_bc_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_frain_ac_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fsnow_ac_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fwatr_ac_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_frain_tt_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fsnow_tt_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_fwatr_tt_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hevap_atm'   ,horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hevap_ocn'   ,horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hrain_bc_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hsnow_bc_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hwatr_bc_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hrain_ac_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hsnow_ac_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hwatr_ac_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hrain_tt_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hsnow_tt_err',horiz_only, 'A', 'W/m2', '' )
-      call addfld('enth_hwatr_tt_err',horiz_only, 'A', 'W/m2', '' )
-     endif
-  !+pel
-     call addfld('te_tnd'           , horiz_only, 'A', 'W/m2', 'Total column integrated energy tendency from CAM physics' )
-     call addfld('dEdt_dme'         , horiz_only, 'A', 'W/m2', 'Column integrated dEdt from water update')
-     call addfld('dEdt_physics'     , horiz_only, 'A', 'W/m2', '' )!xxx diags will remove
-     call addfld('dEdt_efix_physics', horiz_only, 'A', 'W/m2', 'Column integrated physics energy fixer dEdt from enthalpy fixer' )
-  !-pel
-   !endif
-!-tht
+    if (compute_enthalpy_flux) then
+       if(debug_enthalpy_flux) then
+          call addfld('enth_prec_ac_hice',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_ac_hliq',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_bc_hice',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_bc_hliq',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_ac_fice',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_ac_fliq',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_bc_fice',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_prec_bc_fliq',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fevap'       ,horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_frain_bc_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fsnow_bc_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fwatr_bc_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_frain_ac_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fsnow_ac_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fwatr_ac_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_frain_tt_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fsnow_tt_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_fwatr_tt_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hevap_atm'   ,horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hevap_ocn'   ,horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hrain_bc_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hsnow_bc_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hwatr_bc_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hrain_ac_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hsnow_ac_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hwatr_ac_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hrain_tt_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hsnow_tt_err',horiz_only, 'A', 'W/m2', '' )
+          call addfld('enth_hwatr_tt_err',horiz_only, 'A', 'W/m2', '' )
+       endif
+       call addfld('te_tnd'           , horiz_only, 'A', 'W/m2', 'Total column integrated energy tendency from CAM physics' )
+       call addfld('dEdt_dme'         , horiz_only, 'A', 'W/m2', 'Column integrated dEdt from water update')
+       call addfld('dEdt_physics'     , horiz_only, 'A', 'W/m2', '' )!xxx diags will remove
+       call addfld('dEdt_efix_physics', horiz_only, 'A', 'W/m2', 'Column integrated physics energy fixer dEdt from enthalpy fixer' )
+    endif
 
     if (thermo_budget_history) then
        !
@@ -2104,7 +2098,7 @@ contains
     real(r8) :: ftem2(pcols)      ! Temporary workspace for outfld variables
     real(r8) :: ftem3(pcols,pver) ! Temporary workspace for outfld variables
     real(r8) :: heat_glob         ! global energy integral (FV only)
-    real(r8) :: tedif_glob        ! tht energy flux from fixer
+    real(r8) :: tedif_glob        ! energy flux from fixer
     ! CAM pointers to get variables from the physics buffer
     real(r8), pointer, dimension(:,:) :: t_ttend
     real(r8), pointer, dimension(:,:) :: t_utend
@@ -2125,11 +2119,9 @@ contains
     ! Total physics tendency for Temperature
     ! (remove global fixer tendency from total for FV and SE dycores)
 
-!+tht
     call check_energy_get_integrals(heat_glob_out=heat_glob,tedif_glob_out=tedif_glob) !+tedif
     ftem2(:ncol)  = tedif_glob/ztodt
     call outfld('EBREAK', ftem2, pcols, lchnk)
-!-tht
     ftem2(:ncol)  = heat_glob/cpair
     call outfld('TFIX', ftem2, pcols, lchnk)
 
