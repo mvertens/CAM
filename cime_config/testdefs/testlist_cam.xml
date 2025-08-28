@@ -86,6 +86,15 @@
       <option name="comment">Test of secondary ice microphysics</option>
     </options>
   </test>
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln27_P256" testmods="cam/outfrq9s_zm">
+    <machines>
+      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
+    </machines>
+    <options>
+      <option name="wallclock">00:20:00</option>
+      <option name="comment">Test ZM modifications from Tomas Tonazzio</option>
+    </options>
+  </test>
   <test compset="NF1850ghg_fates-sp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>

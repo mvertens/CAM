@@ -455,6 +455,8 @@ if ($print>=2) {
 # Composition of air
 add_default($nl, 'dry_air_species');
 add_default($nl, 'water_species_in_air');
+# Enthalpy flux
+add_default($nl, 'compute_enthalpy_flux');
 # Spectral Element dycore
 my $dyn = $cfg->get('dyn');
 
@@ -3891,6 +3893,14 @@ if (!$simple_phys) {
     add_default($nl, 'zmconv_capelmt');
     add_default($nl, 'zmconv_tau');
     add_default($nl, 'zmconv_parcel_hscale');
+    # CAMNOR thermo begin
+    add_default($nl, 'zmconv_use_moist_plume_thermo');
+    add_default($nl, 'zmconv_retrigger' );
+    add_default($nl, 'zmconv_tiedke_lnd');
+    add_default($nl, 'zmconv_entrmn'    );
+    add_default($nl, 'zmconv_alfadet'   );
+    add_default($nl, 'zmconv_plclmin'   );
+    # CAMNOR thermo end
 }
 
 # moist convection rainwater coefficients
