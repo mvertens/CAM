@@ -61,10 +61,10 @@ module zm_conv_intr
       prec_dp_idx,   &
       snow_dp_idx,   &
       mconzm_idx           ! convective mass flux
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    integer :: dp_ntprp_idx = 0
    integer :: dp_ntsnp_idx = 0
-! CAMNOR thermo end
+   ! CAMNOR thermo end
 
    real(r8), parameter :: unset_r8 = huge(1.0_r8)
    real(r8) :: zmconv_c0_lnd = unset_r8
@@ -81,14 +81,14 @@ module zm_conv_intr
    logical  :: zmconv_parcel_pbl = .false.    ! switch for parcel pbl calculation
    real(r8) :: zmconv_parcel_hscale = unset_r8! Fraction of PBL depth over which to mix initial parcel
    real(r8) :: zmconv_tau = unset_r8          ! Timescale for convection
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    real(r8) :: zmconv_tiedke_lnd = unset_r8
    real(r8) :: zmconv_entrmn     = 2e-4_r8
    real(r8) :: zmconv_alfadet    = 1e-1_r8
    real(r8) :: zmconv_plclmin    = 6.e2_r8
    logical  :: zmconv_use_moist_plume_thermo = .false.
    logical  :: zmconv_retrigger  = .false.
-! CAMNOR thermo end
+   ! CAMNOR thermo end
 
 !  indices for fields in the physics buffer
    integer  ::    cld_idx          = 0
@@ -140,10 +140,10 @@ subroutine zm_conv_register
 
 ! Flux of precipitation from deep convection (kg/m2/s)
    call pbuf_add_field('DP_FLXPRC','global',dtype_r8,(/pcols,pverp/),dp_flxprc_idx)
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    call pbuf_add_field('dp_ntprp','physpkg',dtype_r8,(/pcols,pver /),dp_ntprp_idx)
    call pbuf_add_field('dp_ntsnp','physpkg',dtype_r8,(/pcols,pver /),dp_ntsnp_idx)
-! CAMNOR thermo end
+   ! CAMNOR thermo end
 
 ! Flux of snow from deep convection (kg/m2/s)
    call pbuf_add_field('DP_FLXSNW','global',dtype_r8,(/pcols,pverp/),dp_flxsnw_idx)
@@ -180,14 +180,14 @@ subroutine zm_conv_readnl(nlfile)
                         zmconv_momcu, zmconv_momcd, &
                         zmconv_dmpdz, zmconv_tiedke_add, zmconv_capelmt, &
                         zmconv_parcel_pbl, zmconv_parcel_hscale, zmconv_tau
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    namelist /zmconv_nl/ zmconv_tiedke_lnd, & !
                         zmconv_use_moist_plume_thermo, & !
                         zmconv_retrigger , & !
                         zmconv_entrmn    , & ! maximum convective entrainment rate
                         zmconv_alfadet   , & ! convective detrainment/entrainment ratio
                         zmconv_plclmin       ! don't convect if LCL above this level (p<plclmin [mb])
-! CAMNOR thermo end
+   ! CAMNOR thermo end
    !-----------------------------------------------------------------------------
 
    if (masterproc) then
@@ -229,7 +229,7 @@ subroutine zm_conv_readnl(nlfile)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_parcel_hscale")
    call mpi_bcast(zmconv_tau,               1, mpi_real8, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_tau")
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    call mpi_bcast(zmconv_use_moist_plume_thermo,        1, mpi_logical, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_use_moist_plume_thermo")
    call mpi_bcast(zmconv_retrigger ,        1, mpi_logical, masterprocid, mpicom, ierr)
@@ -242,7 +242,7 @@ subroutine zm_conv_readnl(nlfile)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_alfadet")
    call mpi_bcast(zmconv_plclmin   ,   1, mpi_real8, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_plclmin")
-! CAMNOR thermo end
+   ! CAMNOR thermo end
 end subroutine zm_conv_readnl
 
 !=========================================================================================
@@ -256,6 +256,7 @@ subroutine zm_conv_init(pref_edge)
   use cam_history,    only: addfld, add_default, horiz_only
   use ppgrid,         only: pcols, pver
   use zm_convr,       only: zm_convr_init
+  use zm_conv_evap,   only: zm_conv_evap_init
   use pmgrid,         only: plev,plevp
   use spmd_utils,     only: masterproc
   use phys_control,   only: phys_deepconv_pbl, phys_getopts, cam_physpkg_is
@@ -329,9 +330,9 @@ subroutine zm_conv_init(pref_edge)
     call addfld ('ZMICVD',   (/ 'lev' /),  'A', 'm/s', 'ZM in-cloud V downdrafts')
 
     call addfld ('DLFZM'   ,(/ 'lev' /), 'A','kg/kg/s ','Detrained liquid water from ZM convection')
-! CAMNOR thermo begin
+    ! CAMNOR thermo begin
     call addfld ('EURT',     (/ 'lev' /),  'A', '1/m', 'ZM plume ensemble entrainment rate')
-! CAMNOR thermo end
+    ! CAMNOR thermo end
 
     call phys_getopts( history_budget_out = history_budget, &
                        history_budget_histfile_num_out = history_budget_histfile_num)
@@ -382,25 +383,38 @@ subroutine zm_conv_init(pref_edge)
     end if
 
     no_deep_pbl = phys_deepconv_pbl()
-    call zm_convr_init(plev, plevp, cpair, cpliq, cpwv, epsilo, gravit, latvap, tmelt, rair, &
+    call zm_convr_init(plev, plevp, cpair,                             &
+                  ! CAMNOR thermo begin
+                  cpliq, cpwv,                                         &
+                  ! CAMNOR thermo end
+                  epsilo, gravit, latvap, tmelt, rair,                 &
                   pref_edge,zmconv_c0_lnd, zmconv_c0_ocn, zmconv_ke, zmconv_ke_lnd, &
-                  zmconv_momcu, zmconv_momcd, zmconv_num_cin,  &
-                  no_deep_pbl, zmconv_tiedke_add, &
-! CAMNOR thermo begin
-                  zmconv_tiedke_lnd,             &
-                  zmconv_entrmn    ,             &
-                  zmconv_alfadet   ,             &
-                  zmconv_plclmin   ,             &
-                  zmconv_use_moist_plume_thermo, &
-                  zmconv_retrigger ,             &
-! CAMNOR thermo end
-                  zmconv_capelmt, zmconv_dmpdz, &
+                  zmconv_momcu, zmconv_momcd, zmconv_num_cin,          &
+                  no_deep_pbl, zmconv_tiedke_add,                      &
+                  ! CAMNOR thermo begin
+                  zmconv_tiedke_lnd,                                   &
+                  zmconv_entrmn    ,                                   &
+                  zmconv_alfadet   ,                                   &
+                  zmconv_plclmin   ,                                   &
+                  zmconv_use_moist_plume_thermo,                       &
+                  zmconv_retrigger ,                                   &
+                  ! CAMNOR thermo end
+                  zmconv_capelmt, zmconv_dmpdz,                        &
                   zmconv_parcel_pbl, zmconv_parcel_hscale, zmconv_tau, &
                   masterproc, iulog, errmsg, errflg)
 
       if (errflg /= 0) then
          call endrun('From zm_convr_init:'  // errmsg)
       end if
+
+      ! CAMNOR thermo begin
+      call zm_conv_evap_init(zmconv_use_moist_plume_thermo, zmconv_retrigger, &
+           errmsg, errflg)
+
+      if (errflg /= 0) then
+         call endrun('From zm_conv_evap_init:'  // errmsg)
+      end if
+      ! CAMNOR thermo end
 
     cld_idx         = pbuf_get_index('CLD')
     fracis_idx      = pbuf_get_index('FRACIS')
@@ -424,9 +438,9 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
 
    use time_manager,  only: get_nstep, is_first_step
    use physics_buffer, only: pbuf_get_field, physics_buffer_desc, pbuf_old_tim_idx
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    use physics_buffer, only: pbuf_set_field
-! CAMNOR thermo end
+   ! CAMNOR thermo end
    use constituents,  only: pcnst, cnst_get_ind, cnst_is_convtran1
    use physconst,     only: gravit, latice, latvap, tmelt, cpwv, cpliq, rh2o
    use phys_grid,     only: get_rlat_all_p, get_rlon_all_p
@@ -511,9 +525,9 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
 
    real(r8) :: lat_all(pcols), long_all(pcols)
 
-! CAMNOR thermo begin
+   ! CAMNOR thermo begin
    real(r8) :: eurt(pcols,pver) ! 3D entrainment rate
-! CAMNOR thermo end
+   ! CAMNOR thermo end
 
    ! history output fields
    real(r8) :: cape(pcols)        ! w  convective available potential energy.
@@ -632,9 +646,9 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
                     mu(:ncol,:), md(:ncol,:), du(:ncol,:), eu(:ncol,:), ed(:ncol,:),       &
                     dp(:ncol,:), dsubcld(:ncol), jt(:ncol), maxg(:ncol), ideep(:ncol), &
                     ql(:ncol,:),  rliq(:ncol), landfrac(:ncol),                          &
-! CAMNOR thermo begin
+                    ! CAMNOR thermo begin
                     eurt(:ncol,:), &
-! CAMNOR thermo end
+                    ! CAMNOR thermo end
                     rice(:ncol), lengath, scheme_name, errmsg, errflg)
 
    if (errflg /= 0) then
@@ -650,9 +664,9 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
    end do
 
    call outfld('CAPE', cape, pcols, lchnk)        ! RBN - CAPE output
-! CAMNOR thermo begin
-   call outfld('EURT', eurt(:,:), pcols, lchnk)
-! CAMNOR thermo end
+   ! CAMNOR thermo begin
+   call outfld('EURT', eurt(:ncol,:), ncol, lchnk)
+   ! CAMNOR thermo end
 
 !
 ! Output fractional occurance of ZM convection
@@ -747,10 +761,10 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
          scheme_name, errmsg, errflg)
 
     evapcdp(:ncol,:pver) = ptend_loc%q(:ncol,:pver,1)
-! CAMNOR thermo begin
+    ! CAMNOR thermo begin
     call pbuf_set_field(pbuf, dp_ntprp_idx, ntprprd)
     call pbuf_set_field(pbuf, dp_ntsnp_idx, ntsnprd)
-! CAMNOR thermo begin
+    ! CAMNOR thermo begin
 
 !
 ! Write out variables from zm_conv_evap_run
