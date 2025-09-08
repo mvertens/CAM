@@ -38,6 +38,7 @@ module air_composition
 
    integer, protected, public :: dry_air_species_num
    integer, protected, public :: water_species_in_air_num
+   logical, protected, public :: compute_enthalpy_flux
 
    ! Thermodynamic variables
    integer,               protected, public :: thermodynamic_active_species_num = unseti
@@ -105,7 +106,7 @@ module air_composition
    real(r8), public, protected, allocatable :: cappav(:,:,:)
    ! mbarv: composition dependent atmosphere mean mass
    real(r8), public, protected, allocatable :: mbarv(:,:,:)
-   ! cp_or_cv_dycore:  enthalpy or internal energy scaling factor for 
+   ! cp_or_cv_dycore:  enthalpy or internal energy scaling factor for
    !                   energy consistency
    real(r8), public, protected, allocatable :: cp_or_cv_dycore(:,:,:)
    !
@@ -140,7 +141,7 @@ CONTAINS
    subroutine air_composition_readnl(nlfile)
       use namelist_utils, only: find_group_name
       use spmd_utils,     only: masterproc, mpicom, masterprocid
-      use spmd_utils,     only: mpi_character
+      use spmd_utils,     only: mpi_character, mpi_logical
       use cam_logfile,    only: iulog
 
       ! Dummy argument: filepath for file containing namelist input
@@ -155,6 +156,7 @@ CONTAINS
 
       ! Variable components of dry air and water species in air
       namelist /air_composition_nl/ dry_air_species, water_species_in_air
+      namelist /air_composition_nl/ compute_enthalpy_flux
       !-----------------------------------------------------------------------
 
       banner = repeat('*', lsize)
@@ -163,6 +165,7 @@ CONTAINS
       ! Read variable components of dry air and water species in air
       dry_air_species = (/ (' ', indx = 1, num_names_max) /)
       water_species_in_air = (/ (' ', indx = 1, num_names_max) /)
+      compute_enthalpy_flux = .false.
 
       if (masterproc) then
          open(newunit=unitn, file=trim(nlfile), status='old')
@@ -183,6 +186,9 @@ CONTAINS
            len(water_species_in_air)*num_names_max, mpi_character,            &
            masterprocid, mpicom, ierr)
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: water_species_in_air")
+      call mpi_bcast(compute_enthalpy_flux, 1, mpi_logical,                   &
+           masterprocid, mpicom, ierr)
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: compute_enthalpy_flux")
 
       dry_air_species_num = 0
       water_species_in_air_num = 0
@@ -220,6 +226,10 @@ CONTAINS
          do indx = 1, water_species_in_air_num
             write(iulog, *) '   ', trim(water_species_in_air(indx))
          end do
+         if (compute_enthalpy_flux) then
+            write(iulog, *) ' '
+            write(iulog, *) 'CAM computes enthalpy flux and sends to surface.'
+         end if
          write(iulog, *) bline
          write(iulog, *) banner
       end if
@@ -674,7 +684,7 @@ CONTAINS
         call get_R(mmr(:ncol,:,:), thermodynamic_active_species_idx, &
              cp_or_cv_dycore(:ncol,:,lchnk), fact=to_dry_factor, Rdry=rairv(:ncol,:,lchnk))
         !
-        ! internal energy coefficient for MPAS 
+        ! internal energy coefficient for MPAS
         ! (equation 92 in Eldred et al. 2023; https://rmets.onlinelibrary.wiley.com/doi/epdf/10.1002/qj.4353)
         !
         cp_or_cv_dycore(:ncol,:,lchnk)=cp_or_cv_dycore(:ncol,:,lchnk)*&
