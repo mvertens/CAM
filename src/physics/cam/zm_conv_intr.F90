@@ -61,10 +61,6 @@ module zm_conv_intr
       prec_dp_idx,   &
       snow_dp_idx,   &
       mconzm_idx           ! convective mass flux
-   ! CAMNOR thermo begin
-   integer :: dp_ntprp_idx = 0
-   integer :: dp_ntsnp_idx = 0
-   ! CAMNOR thermo end
 
    real(r8), parameter :: unset_r8 = huge(1.0_r8)
    real(r8) :: zmconv_c0_lnd = unset_r8
@@ -140,10 +136,6 @@ subroutine zm_conv_register
 
 ! Flux of precipitation from deep convection (kg/m2/s)
    call pbuf_add_field('DP_FLXPRC','global',dtype_r8,(/pcols,pverp/),dp_flxprc_idx)
-   ! CAMNOR thermo begin
-   call pbuf_add_field('dp_ntprp','physpkg',dtype_r8,(/pcols,pver /),dp_ntprp_idx)
-   call pbuf_add_field('dp_ntsnp','physpkg',dtype_r8,(/pcols,pver /),dp_ntsnp_idx)
-   ! CAMNOR thermo end
 
 ! Flux of snow from deep convection (kg/m2/s)
    call pbuf_add_field('DP_FLXSNW','global',dtype_r8,(/pcols,pverp/),dp_flxsnw_idx)
@@ -761,10 +753,6 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
          scheme_name, errmsg, errflg)
 
     evapcdp(:ncol,:pver) = ptend_loc%q(:ncol,:pver,1)
-    ! CAMNOR thermo begin
-    call pbuf_set_field(pbuf, dp_ntprp_idx, ntprprd)
-    call pbuf_set_field(pbuf, dp_ntsnp_idx, ntsnprd)
-    ! CAMNOR thermo begin
 
 !
 ! Write out variables from zm_conv_evap_run
