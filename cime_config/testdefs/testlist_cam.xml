@@ -86,7 +86,7 @@
       <option name="comment">Test of secondary ice microphysics</option>
     </options>
   </test>
-  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln27_P256" testmods="cam/outfrq9s_zm">
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln18_P256" testmods="cam/outfrq9s_zm">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
