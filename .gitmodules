@@ -32,12 +32,10 @@
 
 [submodule "atmos_phys"]
     path = src/atmos_phys
-#    url = https://github.com/ESCOMP/atmospheric_physics
-#    fxtag = atmos_phys0_12_000
-    url = git@github.com:gold2718/atmospheric_physics
-    fxtag = ZM_mods
+    url = https://github.com/NorESMhub/atmospheric_physics
+    fxtag = atmos_phys0_14_001_noresm_v0
     fxrequired = AlwaysRequired
-    fxDONOTUSEurl = https://github.com/ESCOMP/atmospheric_physics
+    fxDONOTUSEurl = https://github.com/NorESMhub/atmospheric_physics
 
 [submodule "carma"]
     path = src/physics/carma/base
@@ -240,7 +238,7 @@
 [submodule "cmeps"]
     path = components/cmeps
     url = https://github.com/NorESMhub/CMEPS.git
-    fxtag = cmeps1.0.39_noresm_v5
+    fxtag = cmeps1.0.39_noresm_v6
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CMEPS.git
 
