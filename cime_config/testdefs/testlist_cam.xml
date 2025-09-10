@@ -103,7 +103,7 @@
       <option name="wallclock">00:40:00</option>
     </options>
   </test>
-  <test compset="NF1850ghg_fates-nocomp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+  <test compset="NF1850ghg_fates-nocomp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld5" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
