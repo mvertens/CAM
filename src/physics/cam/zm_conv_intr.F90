@@ -8,7 +8,7 @@ module zm_conv_intr
 ! January 2010 modified by J. Kay to add COSP simulator fields to physics buffer
 !---------------------------------------------------------------------------------
    use shr_kind_mod, only: r8=>shr_kind_r8
-   use physconst,    only: cpair, epsilo, gravit, latvap, tmelt, rair
+   use physconst,    only: cpair, cpliq, cpwv, epsilo, gravit, latvap, tmelt, rair
    use ppgrid,       only: pver, pcols, pverp, begchunk, endchunk
    use zm_conv_evap,         only: zm_conv_evap_run
    use zm_convr,             only: zm_convr_init, zm_convr_run
@@ -74,10 +74,17 @@ module zm_conv_intr
    real(r8) :: zmconv_dmpdz = unset_r8        ! Parcel fractional mass entrainment rate
    real(r8) :: zmconv_tiedke_add = unset_r8   ! Convective parcel temperature perturbation
    real(r8) :: zmconv_capelmt = unset_r8      ! Triggering thereshold for ZM convection
-   logical  :: zmconv_parcel_pbl = .false.           ! switch for parcel pbl calculation
-   real(r8) :: zmconv_parcel_hscale = unset_r8       ! Fraction of PBL depth over which to mix initial parcel
+   logical  :: zmconv_parcel_pbl = .false.    ! switch for parcel pbl calculation
+   real(r8) :: zmconv_parcel_hscale = unset_r8! Fraction of PBL depth over which to mix initial parcel
    real(r8) :: zmconv_tau = unset_r8          ! Timescale for convection
-
+   ! CAMNOR thermo begin
+   real(r8) :: zmconv_tiedke_lnd = unset_r8
+   real(r8) :: zmconv_entrmn     = 2e-4_r8
+   real(r8) :: zmconv_alfadet    = 1e-1_r8
+   real(r8) :: zmconv_plclmin    = 6.e2_r8
+   logical  :: zmconv_use_moist_plume_thermo = .false.
+   logical  :: zmconv_retrigger  = .false.
+   ! CAMNOR thermo end
 
 !  indices for fields in the physics buffer
    integer  ::    cld_idx          = 0
@@ -164,7 +171,15 @@ subroutine zm_conv_readnl(nlfile)
                         zmconv_ke, zmconv_ke_lnd,  &
                         zmconv_momcu, zmconv_momcd, &
                         zmconv_dmpdz, zmconv_tiedke_add, zmconv_capelmt, &
-                        zmconv_parcel_pbl,  zmconv_parcel_hscale, zmconv_tau
+                        zmconv_parcel_pbl, zmconv_parcel_hscale, zmconv_tau
+   ! CAMNOR thermo begin
+   namelist /zmconv_nl/ zmconv_tiedke_lnd, & !
+                        zmconv_use_moist_plume_thermo, & !
+                        zmconv_retrigger , & !
+                        zmconv_entrmn    , & ! maximum convective entrainment rate
+                        zmconv_alfadet   , & ! convective detrainment/entrainment ratio
+                        zmconv_plclmin       ! don't convect if LCL above this level (p<plclmin [mb])
+   ! CAMNOR thermo end
    !-----------------------------------------------------------------------------
 
    if (masterproc) then
@@ -173,11 +188,10 @@ subroutine zm_conv_readnl(nlfile)
       if (ierr == 0) then
          read(unitn, zmconv_nl, iostat=ierr)
          if (ierr /= 0) then
-            call endrun(subname // ':: ERROR reading namelist')
+            call endrun(subname // ':: ERROR reading zmconv_nl namelist')
          end if
       end if
       close(unitn)
-
    end if
 
    ! Broadcast namelist variables
@@ -207,7 +221,20 @@ subroutine zm_conv_readnl(nlfile)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_parcel_hscale")
    call mpi_bcast(zmconv_tau,               1, mpi_real8, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_tau")
-
+   ! CAMNOR thermo begin
+   call mpi_bcast(zmconv_use_moist_plume_thermo,        1, mpi_logical, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_use_moist_plume_thermo")
+   call mpi_bcast(zmconv_retrigger ,        1, mpi_logical, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_retrigger")
+   call mpi_bcast(zmconv_tiedke_lnd,   1, mpi_real8, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_tiedke_lnd")
+   call mpi_bcast(zmconv_entrmn    ,   1, mpi_real8, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_entrmn")
+   call mpi_bcast(zmconv_alfadet   ,   1, mpi_real8, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_alfadet")
+   call mpi_bcast(zmconv_plclmin   ,   1, mpi_real8, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun("zm_conv_readnl: FATAL: mpi_bcast: zmconv_plclmin")
+   ! CAMNOR thermo end
 end subroutine zm_conv_readnl
 
 !=========================================================================================
@@ -221,6 +248,7 @@ subroutine zm_conv_init(pref_edge)
   use cam_history,    only: addfld, add_default, horiz_only
   use ppgrid,         only: pcols, pver
   use zm_convr,       only: zm_convr_init
+  use zm_conv_evap,   only: zm_conv_evap_init
   use pmgrid,         only: plev,plevp
   use spmd_utils,     only: masterproc
   use phys_control,   only: phys_deepconv_pbl, phys_getopts, cam_physpkg_is
@@ -294,6 +322,9 @@ subroutine zm_conv_init(pref_edge)
     call addfld ('ZMICVD',   (/ 'lev' /),  'A', 'm/s', 'ZM in-cloud V downdrafts')
 
     call addfld ('DLFZM'   ,(/ 'lev' /), 'A','kg/kg/s ','Detrained liquid water from ZM convection')
+    ! CAMNOR thermo begin
+    call addfld ('EURT',     (/ 'lev' /),  'A', '1/m', 'ZM plume ensemble entrainment rate')
+    ! CAMNOR thermo end
 
     call phys_getopts( history_budget_out = history_budget, &
                        history_budget_histfile_num_out = history_budget_histfile_num)
@@ -344,16 +375,38 @@ subroutine zm_conv_init(pref_edge)
     end if
 
     no_deep_pbl = phys_deepconv_pbl()
-    call zm_convr_init(plev, plevp, cpair, epsilo, gravit, latvap, tmelt, rair, &
+    call zm_convr_init(plev, plevp, cpair,                             &
+                  ! CAMNOR thermo begin
+                  cpliq, cpwv,                                         &
+                  ! CAMNOR thermo end
+                  epsilo, gravit, latvap, tmelt, rair,                 &
                   pref_edge,zmconv_c0_lnd, zmconv_c0_ocn, zmconv_ke, zmconv_ke_lnd, &
-                  zmconv_momcu, zmconv_momcd, zmconv_num_cin,  &
-                  no_deep_pbl, zmconv_tiedke_add, &
-                  zmconv_capelmt, zmconv_dmpdz,zmconv_parcel_pbl, zmconv_parcel_hscale, zmconv_tau, &
+                  zmconv_momcu, zmconv_momcd, zmconv_num_cin,          &
+                  no_deep_pbl, zmconv_tiedke_add,                      &
+                  ! CAMNOR thermo begin
+                  zmconv_tiedke_lnd,                                   &
+                  zmconv_entrmn    ,                                   &
+                  zmconv_alfadet   ,                                   &
+                  zmconv_plclmin   ,                                   &
+                  zmconv_use_moist_plume_thermo,                       &
+                  zmconv_retrigger ,                                   &
+                  ! CAMNOR thermo end
+                  zmconv_capelmt, zmconv_dmpdz,                        &
+                  zmconv_parcel_pbl, zmconv_parcel_hscale, zmconv_tau, &
                   masterproc, iulog, errmsg, errflg)
 
       if (errflg /= 0) then
          call endrun('From zm_convr_init:'  // errmsg)
       end if
+
+      ! CAMNOR thermo begin
+      call zm_conv_evap_init(zmconv_use_moist_plume_thermo, zmconv_retrigger, &
+           errmsg, errflg)
+
+      if (errflg /= 0) then
+         call endrun('From zm_conv_evap_init:'  // errmsg)
+      end if
+      ! CAMNOR thermo end
 
     cld_idx         = pbuf_get_index('CLD')
     fracis_idx      = pbuf_get_index('FRACIS')
@@ -376,7 +429,10 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
    use physics_types, only: physics_ptend_sum, physics_ptend_dealloc
 
    use time_manager,  only: get_nstep, is_first_step
-   use physics_buffer, only : pbuf_get_field, physics_buffer_desc, pbuf_old_tim_idx
+   use physics_buffer, only: pbuf_get_field, physics_buffer_desc, pbuf_old_tim_idx
+   ! CAMNOR thermo begin
+   use physics_buffer, only: pbuf_set_field
+   ! CAMNOR thermo end
    use constituents,  only: pcnst, cnst_get_ind, cnst_is_convtran1
    use physconst,     only: gravit, latice, latvap, tmelt, cpwv, cpliq, rh2o
    use phys_grid,     only: get_rlat_all_p, get_rlon_all_p
@@ -460,6 +516,10 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
    real(r8) :: pcont(pcols), pconb(pcols), freqzm(pcols)
 
    real(r8) :: lat_all(pcols), long_all(pcols)
+
+   ! CAMNOR thermo begin
+   real(r8) :: eurt(pcols,pver) ! 3D entrainment rate
+   ! CAMNOR thermo end
 
    ! history output fields
    real(r8) :: cape(pcols)        ! w  convective available potential energy.
@@ -576,8 +636,11 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
                     ztodt, mcon(:ncol,:), cme(:ncol,:), cape(:ncol),      &
                     tpert(:ncol), dlf(:ncol,:), dif(:ncol,:), zdu(:ncol,:), rprd(:ncol,:), &
                     mu(:ncol,:), md(:ncol,:), du(:ncol,:), eu(:ncol,:), ed(:ncol,:),       &
-                    dp(:ncol,:), dsubcld(:ncol), jt(:ncol), maxg(:ncol), ideep(:ncol),    &
+                    dp(:ncol,:), dsubcld(:ncol), jt(:ncol), maxg(:ncol), ideep(:ncol), &
                     ql(:ncol,:),  rliq(:ncol), landfrac(:ncol),                          &
+                    ! CAMNOR thermo begin
+                    eurt(:ncol,:), &
+                    ! CAMNOR thermo end
                     rice(:ncol), lengath, scheme_name, errmsg, errflg)
 
    if (errflg /= 0) then
@@ -593,6 +656,10 @@ subroutine zm_conv_tend(pblh    ,mcon    ,cme     , &
    end do
 
    call outfld('CAPE', cape, pcols, lchnk)        ! RBN - CAPE output
+   ! CAMNOR thermo begin
+   call outfld('EURT', eurt(:ncol,:), ncol, lchnk)
+   ! CAMNOR thermo end
+
 !
 ! Output fractional occurance of ZM convection
 !

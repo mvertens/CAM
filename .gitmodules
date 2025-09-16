@@ -32,10 +32,10 @@
 
 [submodule "atmos_phys"]
     path = src/atmos_phys
-    url = https://github.com/ESCOMP/atmospheric_physics
-    fxtag = atmos_phys0_12_000
+    url = https://github.com/NorESMhub/atmospheric_physics
+    fxtag = atmos_phys0_14_001_noresm_v0
     fxrequired = AlwaysRequired
-    fxDONOTUSEurl = https://github.com/ESCOMP/atmospheric_physics
+    fxDONOTUSEurl = https://github.com/NorESMhub/atmospheric_physics
 
 [submodule "carma"]
     path = src/physics/carma/base
@@ -181,7 +181,7 @@
 [submodule "ccs_config"]
     path = ccs_config
     url = https://github.com/NorESMhub/ccs_config_noresm.git
-    fxtag = ccs_config_noresm0.0.45
+    fxtag = ccs_config_noresm0.0.51
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/ccs_config_noresm.git
 
@@ -210,45 +210,41 @@
 [submodule "cdeps"]
     path = components/cdeps
     url = https://github.com/NorESMHub/CDEPS.git
-    fxtag = cdeps1.0.70_noresm_v5
+    fxtag = cdeps1.0.70_noresm_v7
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMHub/CDEPS.git
 
 [submodule "cice6"]
     path = components/cice
     url = https://github.com/NorESMhub/NorESM_CICE
-    fxtag = cesm_cice6_5_0_20240702_noresm_v4
+    fxtag = noresm_cice6_6_0_20250522_v2
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/NorESM_CICE
 
 [submodule "cism"]
     path = components/cism
     url = https://github.com/NorESMhub/CISM-wrapper
-    fxtag = cismwrap_2_2_006_noresm_v0
+    fxtag = cismwrap_2_2_007_noresm_v0
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CISM-wrapper
 
 [submodule "clm"]
     path = components/clm
     url = https://github.com/NorESMhub/CTSM
-    fxtag = ctsm5.3.034_noresm_v7
+    fxtag = ctsm5.3.045_noresm_v11
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CTSM
 
 [submodule "cmeps"]
     path = components/cmeps
     url = https://github.com/NorESMhub/CMEPS.git
-    fxtag = cmeps1.0.39_noresm_v1
+    fxtag = cmeps1.0.39_noresm_v6
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CMEPS.git
 
 [submodule "mosart"]
     path = components/mosart
-    url = https://github.com/ESCOMP/MOSART
-    fxtag = mosart1.1.08
+    url = https://github.com/NorESMhub/MOSART
+    fxtag = mosart1.1.12_noresm_v0
     fxrequired = ToplevelRequired
-    fxDONOTUSEurl = https://github.com/ESCOMP/MOSART
-
-[submodule "tools/AeroTab"]
-    path = tools/AeroTab
-    url = https://github.com/NorESMhub/AeroTab
+    fxDONOTUSEurl = https://github.com/NorESMhub/MOSART

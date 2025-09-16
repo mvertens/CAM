@@ -455,6 +455,7 @@ if ($print>=2) {
 # Composition of air
 add_default($nl, 'dry_air_species');
 add_default($nl, 'water_species_in_air');
+# Enthalpy flux
 add_default($nl, 'compute_enthalpy_flux');
 # Spectral Element dycore
 my $dyn = $cfg->get('dyn');
@@ -3892,14 +3893,14 @@ if (!$simple_phys) {
     add_default($nl, 'zmconv_capelmt');
     add_default($nl, 'zmconv_tau');
     add_default($nl, 'zmconv_parcel_hscale');
-#+tht
-    add_default($nl, 'zmconv_tht_thermo');
+    # CAMNOR thermo begin
+    add_default($nl, 'zmconv_use_moist_plume_thermo');
     add_default($nl, 'zmconv_retrigger' );
     add_default($nl, 'zmconv_tiedke_lnd');
     add_default($nl, 'zmconv_entrmn'    );
     add_default($nl, 'zmconv_alfadet'   );
     add_default($nl, 'zmconv_plclmin'   );
-#-tht
+    # CAMNOR thermo end
 }
 
 # moist convection rainwater coefficients
@@ -4546,6 +4547,12 @@ add_default($nl, 'history_chemistry');
 add_default($nl, 'history_chemspecies_srf');
 add_default($nl, 'history_clubb');
 add_default($nl, 'history_dust');
+add_default($nl, 'history_aerosol_base');
+add_default($nl, 'history_aerosol_decomposed');
+add_default($nl, 'history_gas');
+add_default($nl, 'history_aerosol_forcing');
+add_default($nl, 'history_aerosol_radiation');
+add_default($nl, 'history_aerosol_debug_output');
 
 # The history output for the AMWG variability diagnostics assumes that auxilliary history
 # files h1, h2, and h3 contain daily, 6-hrly, and 3-hrly output respectively.  If this output

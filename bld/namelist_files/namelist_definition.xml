@@ -3300,11 +3300,13 @@ Tunable parcel temperature perturbation in ZM deep convection scheme in units of
 Default: 0.5K perturbation
 </entry>
 
+<!-- CAMNOR thermo begin -->
 <entry id="zmconv_tiedke_lnd" type="real" category="conv"
        group="zmconv_nl" valid_values="" >
-tht: parcel temp perturbation over land in ZM deep convection scheme in units of (K).
+Parcel temp perturbation over land in ZM deep convection scheme in units of (K).
 Default: 1.0K perturbation
 </entry>
+<!-- CAMNOR thermo end -->
 
 <entry id="zmconv_capelmt" type="real" category="conv"
        group="zmconv_nl" valid_values="" >
@@ -3330,31 +3332,37 @@ Convective adjustment timescale in units of (s)
 Default: 3600.0 s
 </entry>
 
-<entry id="zmconv_tht_thermo" type="logical" category="conv"
+<!-- CAMNOR thermo begin -->
+<entry id="zmconv_use_moist_plume_thermo" type="logical" category="conv"
        group="zmconv_nl" valid_values="" >
-tht: use moist td to compute plume-ensemble properties
+Account for freezing in plume-ensemble buoyancy
+Use moist thermodynamics to compute plume-ensemble properties
 Default: .false.
 </entry>
+
 <entry id="zmconv_retrigger"  type="logical" category="conv"
        group="zmconv_nl" valid_values="" >
-tht: iterate plume-ensemble computation and trigger functions
-Default: .false. 
+Iterate plume-ensemble computation and trigger functions
+Default: .false.
 </entry>
+
 <entry id="zmconv_entrmn"     type="real"    category="conv"
        group="zmconv_nl" valid_values="" >
-tht: previously undeclared par: max entr. rate for plume-ens
-Default: 2e-4
+Maximum entrainment rate for plume ensemble
+Default: 2e-4 m-1
 </entry>
+
 <entry id="zmconv_alfadet"    type="real"    category="conv"
        group="zmconv_nl" valid_values="" >
-tht: previously undeclared param: detrainment/entrainment
+Convective detrainment/entrainment ratio
 Default: 0.1
 </entry>
 <entry id="zmconv_plclmin"    type="real"    category="conv"
        group="zmconv_nl" valid_values="" >
-tht: previously undeclared param: min LCL pressure to allow zm
-Default: 6e2 mbar
+Minimum LCL pressure to allow ZM deep convection
+Default: 600 hPa
 </entry>
+<!-- CAMNOR thermo end -->
 
 <!-- Cloud sedimentation -->
 
@@ -5763,6 +5771,47 @@ Default: .false.
 <entry id="history_chemspecies_srf" type="logical"  category="diagnostics"
        group="phys_ctl_nl" valid_values="" >
 Switch to turn on/off default output chemical species mixing ratios in the surface layer.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_base" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of; mass mixing ratios and column burdens for compounded aerosols (BC, DUST, OM, SALT, SULFATE)
+and gas-phase column burdens from OsloAero; summation fields for emission/source, wet and dry deposition.
+Also controls output of other key aerosol-specific output fields.
+Default: .true.
+</entry>
+
+<entry id="history_aerosol_decomposed" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of decomposed aerosols from OsloAero.
+Default: .false.
+</entry>
+
+<entry id="history_gas" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of 3D gasphase aerosols from OsloAero.
+NOTE; the 2D column burdens are triggered by history_aerosol_base.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_forcing" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of forcing specific species in OsloAero.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_radiation" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output of aerosol radiative properties.
+Default: .false.
+</entry>
+
+<entry id="history_aerosol_debug_output" type="logical" category="diagnostics"
+       group="phys_ctl_nl" valid_values="" >
+Switch to turn on/off output for debugging summation from OsloAero. Some summation fields are compounded of variables passed through
+the physics buffer. This flag provides the lagged output of these variables. Also controls summations used across multiple
+summation fields.
 Default: .false.
 </entry>
 
@@ -8230,6 +8279,15 @@ Default: FALSE
 <entry id="apply_lunar_tides" type="logical" category="waccm_phys"
        group="lunar_tides_opts" valid_values="" >
 Switch to apply lunar tidal tendencies to neutral winds.
+Default: FALSE
+</entry>
+
+<!-- Enthalpy flux -->
+
+<entry id="compute_enthalpy_flux" type="logical"  category="physconst"
+       group="air_composition_nl" valid_values="" >
+Enthalpy flux terms explicitly computed and added in the atmosphere and
+passed to an active ocean component.
 Default: FALSE
 </entry>
 

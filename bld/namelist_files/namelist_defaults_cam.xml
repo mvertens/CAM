@@ -2796,6 +2796,15 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <zmconv_plclmin>      6.e2  </zmconv_plclmin>
 <!-- -tht zm parameters-->
 
+<!-- CAMNOR thermo begin -->
+<zmconv_tiedke_lnd             > 1.0     </zmconv_tiedke_lnd>
+<zmconv_use_moist_plume_thermo > .false. </zmconv_use_moist_plume_thermo>
+<zmconv_retrigger              > .false. </zmconv_retrigger>
+<zmconv_entrmn                 > 2.e-4   </zmconv_entrmn>
+<zmconv_alfadet                > 0.1     </zmconv_alfadet>
+<zmconv_plclmin                > 6.e2    </zmconv_plclmin>
+<!-- CAMNOR thermo end -->
+
 <!-- Cloud sedimentation -->
 
 <cldsed_ice_stokes_fac                                    > 1.0D0 </cldsed_ice_stokes_fac>
@@ -2986,6 +2995,12 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <history_chemspecies_srf>      .true.   </history_chemspecies_srf>
 <history_clubb>                .true.   </history_clubb>
 <history_dust>                 .false.  </history_dust>
+<history_aerosol_base>         .true.   </history_aerosol_base>
+<history_aerosol_decomposed>   .false.  </history_aerosol_decomposed>
+<history_gas>                  .false.  </history_gas>
+<history_aerosol_forcing>      .false.  </history_aerosol_forcing>
+<history_aerosol_radiation>    .false.  </history_aerosol_radiation>
+<history_aerosol_debug_output> .false.  </history_aerosol_debug_output>
 
 <cam_snapshot_before_num>  -1 </cam_snapshot_before_num>
 <cam_snapshot_after_num>   -1 </cam_snapshot_after_num>
@@ -3005,6 +3020,7 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <water_species_in_air microphys="mg2"                    >'Q','CLDLIQ','CLDICE','RAINQM','SNOWQM'         </water_species_in_air>
 <water_species_in_air microphys="mg3"                    >'Q','CLDLIQ','CLDICE','RAINQM','SNOWQM','GRAUQM'</water_species_in_air>
 
+<!-- Enthalpy flux -->
 <compute_enthalpy_flux> .false. </compute_enthalpy_flux>
 
 <!-- ================================================================== -->

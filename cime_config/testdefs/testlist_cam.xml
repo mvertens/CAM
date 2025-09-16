@@ -27,14 +27,6 @@
     </options>
   </test>
 
-  <test compset="NF2000" grid="ne30pg3_ne30pg3_mtn14" name="SMS_D_Ln9" testmods="cam/outfrq9s">
-    <machines>
-      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
-    </machines>
-    <options>
-      <option name="wallclock">00:30:00</option>
-    </options>
-  </test>
   <test compset="NF2000" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
@@ -69,6 +61,14 @@
       <option name="wallclock">00:20:00</option>
     </options>
   </test>
+  <test compset="NF1850" grid="ne30pg3_ne30pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s_aero_history">
+    <machines>
+      <machine name="betzy" compiler="gnu" category="aux_cam_noresm"/>
+    </machines>
+    <options>
+      <option name="wallclock">00:20:00</option>
+    </options>
+  </test>
   <test compset="NF1850mam4" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
@@ -86,6 +86,15 @@
       <option name="comment">Test of secondary ice microphysics</option>
     </options>
   </test>
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln18_P256" testmods="cam/outfrq9s_zm">
+    <machines>
+      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
+    </machines>
+    <options>
+      <option name="wallclock">00:20:00</option>
+      <option name="comment">Test ZM modifications from Tomas Tonazzio</option>
+    </options>
+  </test>
   <test compset="NF1850ghg_fates-sp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
@@ -94,7 +103,7 @@
       <option name="wallclock">00:40:00</option>
     </options>
   </test>
-  <test compset="NF1850ghg_fates-nocomp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+  <test compset="NF1850ghg_fates-nocomp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld5" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
@@ -103,21 +112,20 @@
     </options>
   </test>
 
-<!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@                 -->
-<!--              CAM test-supported COMPSETS                 -->
-<!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@                 -->
-
-  <test compset="F1850" grid="f19_f19_mtn14" name="ERP_D_Ln9_P256" testmods="cam/outfrq9s">
+  <test compset="NF1850" grid="ne3pg3_ne3pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
-      <machine name="betzy" compiler="intel" category="prealpha_noresm"/>
     </machines>
     <options>
       <option name="wallclock">00:20:00</option>
     </options>
   </test>
 
-  <test compset="F2000climo" grid="ne30pg3_ne30pg3_mtn14" name="SMS_D_Ln9_P256" testmods="cam/outfrq9s">
+<!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@                 -->
+<!--              CAM test-supported COMPSETS                 -->
+<!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@                 -->
+
+  <test compset="F1850" grid="f19_f19_mtn14" name="ERP_D_Ln9_P256" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
       <machine name="betzy" compiler="intel" category="prealpha_noresm"/>
