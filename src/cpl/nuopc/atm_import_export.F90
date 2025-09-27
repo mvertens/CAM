@@ -622,14 +622,15 @@ contains
        ! ***NOTE:*** if cam_compute_enthalpy_flux is .false. and if in
        ! CMEPS med_computes_enthalpy_flux is .true., then the mediator
        ! will compute it if the ocean requests it and add a correction
-       ! to the sensible heat sent to cam. This is the case if cam is coupled to MOM6.
+       ! to the sensible heat sent to cam.
+       ! This is the case if CAM is coupled to MOM6.
        ! However, it is not the case if CAM is coupled to BLOM.
 
        if (compute_enthalpy_flux) then
-          ! ocean-point hevap (compute_enthalpy_flux = T)
+          ! ocean-point hevap
           call state_getfldptr(importState, 'Faox_evap', fldptr=fldptr_evop, rc=rc)
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
-          ! enthalpy of runoff(compute_enthalpy_flux = T)
+          ! enthalpy of runoff
           call state_getfldptr(importState, 'Faxx_hrof', fldptr=fldptr_hrof, rc=rc)
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
           g = 1

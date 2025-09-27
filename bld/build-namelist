@@ -455,8 +455,7 @@ if ($print>=2) {
 # Composition of air
 add_default($nl, 'dry_air_species');
 add_default($nl, 'water_species_in_air');
-# Enthalpy flux
-add_default($nl, 'compute_enthalpy_flux');
+
 # Spectral Element dycore
 my $dyn = $cfg->get('dyn');
 

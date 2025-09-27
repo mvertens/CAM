@@ -3020,9 +3020,6 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <water_species_in_air microphys="mg2"                    >'Q','CLDLIQ','CLDICE','RAINQM','SNOWQM'         </water_species_in_air>
 <water_species_in_air microphys="mg3"                    >'Q','CLDLIQ','CLDICE','RAINQM','SNOWQM','GRAUQM'</water_species_in_air>
 
-<!-- Enthalpy flux -->
-<compute_enthalpy_flux> .false. </compute_enthalpy_flux>
-
 <!-- ================================================================== -->
 <!-- Defaults for FV3                                                   -->
 <!-- ================================================================== -->

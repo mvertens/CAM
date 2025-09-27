@@ -8282,15 +8282,6 @@ Switch to apply lunar tidal tendencies to neutral winds.
 Default: FALSE
 </entry>
 
-<!-- Enthalpy flux -->
-
-<entry id="compute_enthalpy_flux" type="logical"  category="physconst"
-       group="air_composition_nl" valid_values="" >
-Enthalpy flux terms explicitly computed and added in the atmosphere and
-passed to an active ocean component.
-Default: FALSE
-</entry>
-
 <!-- Dry air major species -->
 
 <entry id="dry_air_species" type="char*6(20)"  category="physconst"
@@ -8311,13 +8302,6 @@ List of water species that are included in "moist" air.  This is currently
 used only by the SE dycore to generalize the computation of the moist air
 mass and thermodynamic properties.
 Default: Set by build-namelist.
-</entry>
-
-<entry id="compute_enthalpy_flux" type="logical"  category="physconst"
-       group="air_composition_nl" valid_values="" >
-Enthalpy flux terms explicitly computed and added in atmosphere and
-passed to MOM6
-Default: TRUE
 </entry>
 
 <!-- SE dycore -->

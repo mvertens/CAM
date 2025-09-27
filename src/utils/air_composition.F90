@@ -25,8 +25,6 @@ module air_composition
    public :: get_R
    ! get_mbarv: molecular weight of dry air
    public :: get_mbarv
-
-   logical, public :: compute_enthalpy_flux
    !
    ! for book keeping of enthalpy variables in physics buffer
    !
@@ -41,6 +39,8 @@ module air_composition
    integer,  parameter :: unseti = -HUGE(1)
    real(r8), parameter :: unsetr = HUGE(1.0_r8)
 
+   logical, public :: compute_enthalpy_flux ! set by CMEPS
+
    ! composition of air
    !
    integer, parameter :: num_names_max = 20 ! Should match namelist definition
@@ -49,7 +49,6 @@ module air_composition
 
    integer, protected, public :: dry_air_species_num
    integer, protected, public :: water_species_in_air_num
-   logical, protected, public :: compute_enthalpy_flux
 
    ! Thermodynamic variables
    integer,               protected, public :: thermodynamic_active_species_num = unseti
@@ -177,7 +176,6 @@ CONTAINS
 
       ! Variable components of dry air and water species in air
       namelist /air_composition_nl/ dry_air_species, water_species_in_air
-      namelist /air_composition_nl/ compute_enthalpy_flux
       !-----------------------------------------------------------------------
 
       banner = repeat('*', lsize)
@@ -186,7 +184,6 @@ CONTAINS
       ! Read variable components of dry air and water species in air
       dry_air_species = (/ (' ', indx = 1, num_names_max) /)
       water_species_in_air = (/ (' ', indx = 1, num_names_max) /)
-      compute_enthalpy_flux = .false.
 
       if (masterproc) then
          open(newunit=unitn, file=trim(nlfile), status='old')
@@ -199,9 +196,6 @@ CONTAINS
          end if
          close(unitn)
       end if
-
-      call mpi_bcast(compute_enthalpy_flux, 1, mpi_logical, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: compute_enthalpy_flux")
 
       call mpi_bcast(dry_air_species, len(dry_air_species)*num_names_max,     &
            mpi_character, masterprocid, mpicom, ierr)
