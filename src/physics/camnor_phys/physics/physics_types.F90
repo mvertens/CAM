@@ -58,7 +58,7 @@ module physics_types
   integer, parameter, public :: dyn_te_idx = 2
 
   integer, parameter, public :: num_hflx = 4
-  
+
   integer, parameter, public :: ihrain = 1  ! index for enthalpy flux associated with liquid precipitation
   integer, parameter, public :: ihsnow = 2  ! index for enthalpy flux associated with frozen precipiation
   integer, parameter, public :: ifrain = 3  ! index for flux of liquid precipitation
@@ -109,7 +109,7 @@ module physics_types
                            ! Second dimension is (phys_te_idx) CAM physics total energy and
                            ! (dyn_te_idx) dycore total energy computed in physics
           te_ini,         &! vertically integrated total (kinetic + static) energy of initial state
-          te_cur           ! vertically integrated total (kinetic + static) energy of current state          
+          te_cur           ! vertically integrated total (kinetic + static) energy of current state
      real(r8), dimension(:  ),allocatable          :: &
           tw_ini,         &! vertically integrated total water of initial state
           tw_cur           ! vertically integrated total water of new state
@@ -192,14 +192,14 @@ module physics_types
  ! 5 possibilities (-> = currently reccommended):
  !    1) conserve_dycore=.false., conserve_physics=.false. (no conservation = current CAM)
  !    2) conserve_dycore=.true., bndry_flx_surface=.true.     (full conservation, bad climatology)
- ! -> 3) conserve_dycore=.true., bndry_flx_local=.true.    (requires fixer to match correct surface fluxes) 
+ ! -> 3) conserve_dycore=.true., bndry_flx_local=.true.    (requires fixer to match correct surface fluxes)
  !    4) conserve_physics=.true., bndry_flx_local=.true.   (as 3., plus fixer for atmo energy)
  !    5) conserve_physics=.true., bndry_flx_surface=.true. (no advantage wrt option 2)
  ! N.B. old case CONDEPSF=CONDEPS_REF (with CONDEPSS consistent with dycore) not allowed here, since its
  !      rationale isn't clear. For FV, only three of these options (e.g. 1,2,3) are distinct.
   logical, parameter :: conserve_dycore  =.true. &
-                       ,bndry_flx_surface=.true. 
-                      !,bndry_flx_surface=.true.  
+                       ,bndry_flx_surface=.true.
+                      !,bndry_flx_surface=.true.
   logical, parameter :: conserve_physics =(.not.conserve_dycore).and..true. &
                        ,bndry_flx_local  = .not.bndry_flx_surface
 !-tht
@@ -245,7 +245,7 @@ contains
     use scamMod,         only: scm_crm_mode, single_column
     use phys_control,    only: phys_getopts
     use cam_thermo,      only: cam_thermo_dry_air_update  ! Routine which updates physconst variables (WACCM-X)
-    use cam_thermo,      only: get_conserved_energy,inv_conserved_energy  !+tht
+    use cam_thermo,      only: get_conserved_energy, inv_conserved_energy
     use air_composition, only: dry_air_species_num
     use air_composition, only: thermodynamic_active_species_num, thermodynamic_active_species_idx
     use air_composition, only: compute_enthalpy_flux
@@ -1271,7 +1271,7 @@ end subroutine physics_ptend_copy
   end subroutine physics_cnst_limit
 
 !===============================================================================
-!+tht: gatekeeper module to control options for dme adjustment 
+!+tht: gatekeeper module to control options for dme adjustment
   subroutine physics_dme_adjust(state, tend, qini, liqini, iceini, dt &
                                , dme_energy_adjust , step &
                                , ntrnprd, ntsnprd &
@@ -1283,7 +1283,7 @@ end subroutine physics_ptend_copy
                                , dycore_is_hydrostatic)
 
 !use phys_control, only: phys_getopts
-! 25.06.14  Added new formulation of Thomas Toniazzo (Bjerknes Centre / NORCE)  
+! 25.06.14  Added new formulation of Thomas Toniazzo (Bjerknes Centre / NORCE)
 ! obligate args
       type(physics_state), intent(inout) :: state
       type(physics_tend ), intent(inout) :: tend
@@ -1306,18 +1306,18 @@ end subroutine physics_ptend_copy
 
       real(r8), intent(out), optional :: eflx_out(pcols)       ! column (surfce) enthalpy flux from bflx (sanity check)
       real(r8), intent(out), optional :: mflx_out(pcols)       ! column (surfce) enthalpy flux from bflx (sanity check)
-! local work space 
+! local work space
       integer :: ncol,icol
      !real(r8)           :: eflx_out(pcols)       ! column (surfce) enthalpy flux from bflx (sanity check)
       real(r8)           :: tevp    (pcols)       ! temperature for surface evaporation
       real(r8)           :: tprc    (pcols)       ! temperature for precipitation at surface
       real(r8)           :: htx_cond(pcols,pver)  ! enthalpy tendency due to heat exchange with "condensates"
-      real(r8)           :: mdq     (pcols,pver)  ! total water tendency 
-      logical            :: hydrostatic       =.true. 
+      real(r8)           :: mdq     (pcols,pver)  ! total water tendency
+      logical            :: hydrostatic       =.true.
       real(r8), parameter :: rtiny = 1e-04_r8    ! a small number (relative to total q change)
 
 
-      if(present(dycore_is_hydrostatic)) hydrostatic     =dycore_is_hydrostatic   
+      if(present(dycore_is_hydrostatic)) hydrostatic     =dycore_is_hydrostatic
 
       if (present(dme_energy_adjust)) then
        if (dme_energy_adjust) then
@@ -1390,13 +1390,13 @@ end subroutine physics_ptend_copy
                               ,cam_thermo_water_update
     use dyn_tests_utils, only: vc_dycore, vc_height, vc_dry_pressure
 
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Diagnose boundary enthalpy flux and local heating rates associated to
     ! atmospheric moisture change
-    ! 
+    !
     ! Method
-    !        1. boundary enthalpy flux is *local* total enthalpy (\epsilon dp/g) 
+    !        1. boundary enthalpy flux is *local* total enthalpy (\epsilon dp/g)
     !        2. same as 1., but with different specific enthalpy of boundary mass exchange,
     !          CONDEPS, and a matching heat exchange betweeen air and condensated
     !          = (\epsilon - CONDEPS) dp/g (sign is for a heat source for air).
@@ -1425,12 +1425,12 @@ end subroutine physics_ptend_copy
     real(r8),            intent(out  ) :: htx_cond(pcols,pver) ! exchange enthalpy increment for dme_adjust
     real(r8),            intent(out  ) :: mdq     (pcols,pver) ! total water       increment for dme_adjust
     character(len=*),optional,intent(in)::step !which call in physpkg
-    real(r8), intent(out)           :: eflx_out(pcols)         ! diagnostic: boundary enthalpy flux 
-    real(r8), intent(out)           :: mflx_out(pcols)         ! diagnostic: boundary enthalpy flux 
+    real(r8), intent(out)           :: eflx_out(pcols)         ! diagnostic: boundary enthalpy flux
+    real(r8), intent(out)           :: mflx_out(pcols)         ! diagnostic: boundary enthalpy flux
     real(r8), intent(in) , optional :: ntrnprd(pcols,pver)! net precip (liq+ice) production in layer
     real(r8), intent(in) , optional :: ntsnprd(pcols,pver)! net snow production in layer
-    real(r8), intent(in) , optional :: eflx    (pcols)         ! input     : boundary enthalpy flux 
-    real(r8), intent(in) , optional :: mflx    (pcols)         ! input     : boundary mass     flux 
+    real(r8), intent(in) , optional :: eflx    (pcols)         ! input     : boundary enthalpy flux
+    real(r8), intent(in) , optional :: mflx    (pcols)         ! input     : boundary mass     flux
 
     !---------------------------Local workspace-----------------------------
 
@@ -1456,7 +1456,7 @@ end subroutine physics_ptend_copy
     real(r8) :: tot_water_chg(pcols) ! work array: total water change
     integer  :: m_cnst
 
-    real(r8) :: ps_old(pcols)   ! old surface pressure 
+    real(r8) :: ps_old(pcols)   ! old surface pressure
 
     real(r8) :: pdel_new(pcols,pver) ! Layer thickness (pint(k+1) - pint(k))
     real(r8) :: dvap    (pcols,pver) ! wv  mass adjustment
@@ -1482,16 +1482,16 @@ end subroutine physics_ptend_copy
 
     real(r8) :: uf(pcols), vf(pcols) ! work arrays
 
-    real(r8) :: pint_old(pcols,pver+1)! work array 
-   !real(r8) :: tbot(pcols)        ! work array 
-    real(r8) :: dummy(pcols,pver)     ! work array 
+    real(r8) :: pint_old(pcols,pver+1)! work array
+   !real(r8) :: tbot(pcols)        ! work array
+    real(r8) :: dummy(pcols,pver)     ! work array
 
     integer  :: is_invalid(pcols)
     logical , parameter  :: conserve = conserve_dycore .or. conserve_physics
     real(r8), parameter :: rtiny = 1e-14_r8    ! a small number (relative to total q change)
- 
+
 ! set to T to use distribute implied heating over column section to the surface
-    logical, parameter :: l_nolocdcpttend=.true. 
+    logical, parameter :: l_nolocdcpttend=.true.
 
     logical, parameter :: logorrhoic=.false. ! T -> talk to log, a lot
 
@@ -1548,9 +1548,9 @@ end subroutine physics_ptend_copy
         m = thermodynamic_active_species_idx(m_cnst)
         tot_water(:ncol,2) = tot_water(:ncol,2)+state%q(:ncol,k,m)
        end do
-       mdq(:ncol,k)=(tot_water(:ncol,2)-tot_water(:ncol,1)) 
+       mdq(:ncol,k)=(tot_water(:ncol,2)-tot_water(:ncol,1))
 
-       dvap(:ncol,k) = state%q(:ncol,k,ixq) - qini(:ncol,k) 
+       dvap(:ncol,k) = state%q(:ncol,k,ixq) - qini(:ncol,k)
        dliq(:ncol,k) = -liqini(:ncol,k)
        do m_cnst=1,thermodynamic_active_species_liq_num
         m = thermodynamic_active_species_liq_idx(m_cnst)
@@ -1573,16 +1573,16 @@ end subroutine physics_ptend_copy
     if (present(mflx)) then
       if (any(abs(mflx(:ncol)+dcwat(:ncol)/dt).gt.rtiny)) then
         k=maxloc(abs(mflx(:ncol)*dt+dcwat(:ncol)),1)
-        if (masterproc.and.logorrhoic) &    ! for testing 
+        if (masterproc.and.logorrhoic) &    ! for testing
          print*,'bad water in, change ('//trim(step)//'): ',-mflx(k)*dt,dcwat(k)
-      endif 
+      endif
       where(dcwat(:ncol)*mflx(:ncol).gt.0._r8)
         is_invalid(:ncol)=1
       endwhere
       if (maxval(is_invalid(:ncol)).gt.0) then
         k=maxloc(abs(is_invalid(:ncol)*eflx(:ncol)),1)
         if (abs(eflx(k)).gt.rtiny) then
-          if (masterproc.and.logorrhoic) &    ! for testing 
+          if (masterproc.and.logorrhoic) &    ! for testing
            print*,'ignored eflx ('//trim(step)//'): ',k,eflx(k)
         endif
       endif
@@ -1677,7 +1677,7 @@ end subroutine physics_ptend_copy
       elsewhere
        dcqm(:ncol)=0._r8
       endwhere
-      do k=1,pver 
+      do k=1,pver
          where(mdqr(:ncol,k)*dcwatr(:ncol).gt.0._r8)
            condepsf(:ncol,k) = condepsf(:ncol,k)+eflx_out(:ncol)/dcwatr(:ncol)*mdqr(:ncol,k)*dcqm(:ncol)
          endwhere
@@ -1712,25 +1712,25 @@ end subroutine physics_ptend_copy
       enddo
     endif
 
-   ! new surface pressure 
-    state%ps(:ncol) = state%pint(:ncol,1) 
+   ! new surface pressure
+    state%ps(:ncol) = state%pint(:ncol,1)
     do k = 1, pver
       state%ps(:ncol) = state%ps(:ncol) + state%pdel(:ncol,k)*(1._r8 + mdq(:ncol,k))
     end do
 
    ! heat exchange with condensates
-    htx_cond(:ncol,:) = 0._r8 
+    htx_cond(:ncol,:) = 0._r8
     do k = 1, pver
      do i=1,ncol
       if(l_nolocdcpttend)then
       ! diff. between destination enthalpy and LOCAL     enthalpy (or zero) is distributed in column below
-       if(k.eq.1) then 
+       if(k.eq.1) then
         condepsf(i,k)=(condepsf(i,k)-condepss(i,k)) &
                     *state%pdel(i,k)/(state%ps(i)-state%pint(i,k))
        else
         condepsf(i,k)=(condepsf(i,k)-condepss(i,k)) &
                     *state%pdel(i,k)/(state%ps(i)-state%pint(i,k))   &
-                     +condepsf(i,k-1) 
+                     +condepsf(i,k-1)
        endif
       else
        condepsf(i,k)=(condepsf(i,k)-condepss(i,k))/(1._r8+mdq(i,k))
@@ -1744,11 +1744,11 @@ end subroutine physics_ptend_copy
 
      ! compute new total pressure variables
      state%pint  (:ncol,k+1) = state%pint(:ncol,k  ) + pdel_new(:ncol,k)
- 
+
     end do
 
-  ! original pressure 
-    state%ps  (:ncol)   = ps_old  (:ncol)  
+  ! original pressure
+    state%ps  (:ncol)   = ps_old  (:ncol)
     state%pint(:ncol,:) = pint_old(:ncol,:)
 
   end subroutine physics_dme_bflx
@@ -1773,11 +1773,11 @@ end subroutine physics_ptend_copy
     use dycore,          only: dycore_is ! might be rm'd when code is cleaned up
     use cam_history,     only: outfld
 
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Adjust the dry mass in each layer back to the value of physics input state
     !          Adjust air specific enthalpy accordingly. Diagnose boundary enthalpy flux.
-    ! 
+    !
     ! Method
     !     Revised adjustment towards consistency with local energy conservation.
     !     Hydrostatic pressure work, de = alpha * dp, where alpha is the specific volume
@@ -1807,7 +1807,7 @@ end subroutine physics_ptend_copy
     type(physics_state), intent(inout) :: state
     type(physics_tend ), intent(inout) :: tend
     real(r8),            intent(in   ) :: dt                  ! model physics timestep
-    real(r8), intent(in)               :: htx_cond(pcols,pver)! exchange heating with q's leaving/entering column 
+    real(r8), intent(in)               :: htx_cond(pcols,pver)! exchange heating with q's leaving/entering column
     real(r8), intent(in)               :: mdq     (pcols,pver) ! mass adjustment
     real(r8),            intent(in   ) :: qini(pcols,pver)     ! initial specific humidity
     real(r8),            intent(in   ) :: liqini(pcols,pver)   ! initial total liquid
@@ -1815,7 +1815,7 @@ end subroutine physics_ptend_copy
     character(len=*),optional,intent(in)::step !which call in physpkg
     real(r8), intent(out), optional    :: ent_tnd (pcols)     ! diagnostic: column-integrated enthalpy tendency
     real(r8), intent(out), optional    :: pdel_rf (pcols,pver)! diagnostic: ratio  old pdel / new pdel
-    logical , intent(in) , optional    :: hydrostatic         ! flag to set energy function to hydrostatic  
+    logical , intent(in) , optional    :: hydrostatic         ! flag to set energy function to hydrostatic
 
     !---------------------------Local workspace-----------------------------
 
@@ -1843,7 +1843,7 @@ end subroutine physics_ptend_copy
     real(r8) :: tot_water_chg(pcols) ! total water change
     integer  :: m_cnst
 
-    real(r8) :: ps_old(pcols)   ! old surface pressure 
+    real(r8) :: ps_old(pcols)   ! old surface pressure
 
     real(r8) :: pdel_new(pcols,pver) ! Layer thickness (pint(k+1) - pint(k))
 
@@ -1881,7 +1881,7 @@ end subroutine physics_ptend_copy
     if (conserve_dycore) then
       vcoord=vc_dycore
       cpm(:ncol,:)=cp_or_cv_dycore(:ncol,:,lchnk)
-    else 
+    else
       vcoord=vc_physics
       cpm(:ncol,:)=cpairv(:ncol,:,lchnk)
     endif
@@ -1890,7 +1890,7 @@ end subroutine physics_ptend_copy
       tp(:ncol,k) = state%t(:ncol,k)
     enddo
 
-      call get_conserved_energy(levels_are_moist & 
+      call get_conserved_energy(levels_are_moist &
                                ,1 ,pver &
                                ,cpm(:ncol,:) &
                                ,state%t(:ncol,:) ,state%q(:ncol,:,:) ,state%pdel(:ncol,:) &
@@ -1908,9 +1908,9 @@ end subroutine physics_ptend_copy
         m = thermodynamic_active_species_idx(m_cnst)
         tot_water(:ncol) = tot_water(:ncol)+state%q(:ncol,k,m)
       enddo
-   ! new surface pressure 
+   ! new surface pressure
       state%ps(:ncol) = state%ps(:ncol) + state%pdel(:ncol,k)*(1._r8 + mdq(:ncol,k))
-   ! make all tracers wet 
+   ! make all tracers wet
       do m=1,pcnst
         if (cnst_type(m).eq.'dry') &
           state%q(:ncol,k,m) = state%q(:ncol,k,m)*(1._r8-tot_water(:ncol))
@@ -1933,7 +1933,7 @@ end subroutine physics_ptend_copy
 !------------------- start adjustment loop ------------------------------------------
     do k = 1, pver
 
-     ! new Dp (=:Dp") 
+     ! new Dp (=:Dp")
        pdel_new(:ncol,k) = state%pdel(:ncol,k)*(1._r8 + mdq(:ncol,k))
 
        fdq(:ncol)        = pdel_new(:ncol,k)/state%pdel(:ncol,k)       ! this is Dp"/Dp
@@ -2011,7 +2011,7 @@ end subroutine physics_ptend_copy
       enddo
     enddo
 
-   !call QNEG3 (cf physics_update) 
+   !call QNEG3 (cf physics_update)
     do m = 1, pcnst
       if (m /= ixnumice  .and.  m /= ixnumliq .and. &
           m /= ixnumrain .and.  m /= ixnumsnow ) then
@@ -2038,7 +2038,7 @@ end subroutine physics_ptend_copy
                              ,pdel_new(:ncol,:) ,tp(:ncol,:) &
                              ,flatent=latent(:ncol,:)*0._r8 &
                              ,phis=state%phis(:ncol) ,gph=zm(:ncol,:) &
-                             ,vcoord=vcoord ,refstate='liq' & 
+                             ,vcoord=vcoord ,refstate='liq' &
                              ,U=state%u(:ncol,:) ,V=state%v(:ncol,:))
 
     if ( waccmx_is('ionosphere') .or. waccmx_is('neutral') ) then
@@ -2157,10 +2157,10 @@ end subroutine physics_ptend_copy
       do k = 1, pver
         !tht: removed heavily misleading comment
         state%ps(:ncol) = state%pint(:ncol,1)
-        
+
         ! adjustment factor is just change in water vapor
         fdq(:ncol) = 1._r8 + state%q(:ncol,k,1) - qini(:ncol,k)
-        
+
         ! adjust constituents to conserve mass in each layer
         do m = 1, pcnst
           state%q(:ncol,k,m) = state%q(:ncol,k,m) / fdq(:ncol)
