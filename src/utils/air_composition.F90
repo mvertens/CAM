@@ -39,7 +39,7 @@ module air_composition
    integer,  parameter :: unseti = -HUGE(1)
    real(r8), parameter :: unsetr = HUGE(1.0_r8)
 
-   logical, public :: compute_enthalpy_flux ! set by CMEPS
+   logical, protected,  public :: compute_enthalpy_flux
 
    ! composition of air
    !
@@ -259,23 +259,28 @@ CONTAINS
 
    !===========================================================================
 
-   subroutine air_composition_init()
+   subroutine air_composition_init(compute_enthalpy_flux_in)
+
       use string_utils, only: int2str
       use spmd_utils,   only: masterproc
       use cam_logfile,  only: iulog
       use physconst,    only: r_universal, cpair, rair, cpwv, rh2o, cpliq, cpice, mwdry, cpwv, latice, latvap, tmelt
       use constituents, only: cnst_get_ind, cnst_mw
       use ppgrid,       only: pcols, pver, begchunk, endchunk
+
+      ! Arguments
+      logical, intent(in) :: compute_enthalpy_flux_in
+
+      ! Local variables
       integer  :: icnst, ix, isize, ierr, idx
       integer  :: liq_num, ice_num
       integer  :: liq_idx(water_species_in_air_num)
       integer  :: ice_idx(water_species_in_air_num)
       logical  :: has_liq, has_ice
       real(r8) :: mw
-
+      !
       character(len=*), parameter :: subname = 'composition_init'
       character(len=*), parameter :: errstr = subname//": failed to allocate "
-
       !
       ! define cp and R for species in species_name
       !
@@ -297,6 +302,10 @@ CONTAINS
       real(r8), parameter :: dof3 = 6._r8
       real(r8), parameter :: cv3 = 0.5_r8 * r_universal * dof3
       real(r8), parameter :: cp3 = 0.5_r8 * r_universal * (2._r8 + dof3)
+      !-----------------------------------------------------------------------
+
+      ! Set module variable compute_enthalpy_flux
+      compute_enthalpy_flux = compute_enthalpy_flux_in
 
       liq_num = 0
       ice_num = 0

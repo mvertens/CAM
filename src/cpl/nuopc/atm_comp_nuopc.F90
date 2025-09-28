@@ -69,7 +69,6 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
-   use air_composition     , only : compute_enthalpy_flux
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -127,6 +126,8 @@ module atm_comp_nuopc
   character(len=*) , parameter :: orb_fixed_year       = 'fixed_year'
   character(len=*) , parameter :: orb_variable_year    = 'variable_year'
   character(len=*) , parameter :: orb_fixed_parameters = 'fixed_parameters'
+
+  logical :: compute_enthalpy_flux ! If true, CAM computes enthalpy flux
 
   real(R8) , parameter         :: grid_tol = 1.e-2_r8 ! tolerance for calculated lat/lon vs read in
 
@@ -660,6 +661,7 @@ contains
          branch_run_in=branch_run, post_assim_in=dart_mode, &
          calendar=calendar, brnch_retain_casename=brnch_retain_casename, &
          aqua_planet=aqua_planet, dms_from_ocn=dms_from_ocn, &
+         compute_enthalpy_flux=compute_enthalpy_flux, &
          single_column=single_column, scmlat=scol_lat, scmlon=scol_lon, &
          eccen=eccen, obliqr=obliqr, lambm0=lambm0, mvelpp=mvelpp,  &
          perpetual_run=perpetual_run, perpetual_ymd=perpetual_ymd, &
