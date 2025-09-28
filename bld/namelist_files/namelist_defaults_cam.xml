@@ -3001,6 +3001,7 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <history_aerosol_forcing>      .false.  </history_aerosol_forcing>
 <history_aerosol_radiation>    .false.  </history_aerosol_radiation>
 <history_aerosol_debug_output> .false.  </history_aerosol_debug_output>
+<history_enthalpy_flux>        .false.  </history_enthalpy_flux>
 
 <cam_snapshot_before_num>  -1 </cam_snapshot_before_num>
 <cam_snapshot_after_num>   -1 </cam_snapshot_after_num>

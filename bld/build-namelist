@@ -4552,6 +4552,7 @@ add_default($nl, 'history_gas');
 add_default($nl, 'history_aerosol_forcing');
 add_default($nl, 'history_aerosol_radiation');
 add_default($nl, 'history_aerosol_debug_output');
+add_default($nl, 'history_enthalpy_flux');
 
 # The history output for the AMWG variability diagnostics assumes that auxilliary history
 # files h1, h2, and h3 contain daily, 6-hrly, and 3-hrly output respectively.  If this output
