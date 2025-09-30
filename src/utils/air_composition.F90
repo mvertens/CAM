@@ -26,7 +26,7 @@ module air_composition
    ! get_mbarv: molecular weight of dry air
    public :: get_mbarv
    !
-   ! for book keeping of enthalpy variables in physics buffer
+   ! enthalpy variables in physics buffer
    !
    integer, parameter, public :: num_enthalpy_vars = 4  ! index for enthalpy flux associated with liquid precipitation
    integer, parameter, public :: hliq_idx = 1  ! index for enthalpy flux associated with liquid precipitation
@@ -34,12 +34,13 @@ module air_composition
    integer, parameter, public :: fliq_idx = 3  ! index for flux of liquid precipitation
    integer, parameter, public :: fice_idx = 4  ! index for flux of frozen precipitation
 
+   logical, protected, public :: compute_enthalpy_flux ! obtained from nuopc mediator
+
    private :: air_species_info
 
    integer,  parameter :: unseti = -HUGE(1)
    real(r8), parameter :: unsetr = HUGE(1.0_r8)
 
-   logical, protected,  public :: compute_enthalpy_flux
 
    ! composition of air
    !
@@ -204,9 +205,6 @@ CONTAINS
            len(water_species_in_air)*num_names_max, mpi_character,            &
            masterprocid, mpicom, ierr)
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: water_species_in_air")
-      call mpi_bcast(compute_enthalpy_flux, 1, mpi_logical,                   &
-           masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: compute_enthalpy_flux")
 
       dry_air_species_num = 0
       water_species_in_air_num = 0
@@ -225,9 +223,6 @@ CONTAINS
            dry_air_species_num + water_species_in_air_num
 
       if (masterproc) then
-         if (compute_enthalpy_flux) then
-            write(iulog, *) "Computing enthalpy flux: compute_enthalpy_flux=",compute_enthalpy_flux
-         endif
          write(iulog, *) banner
          write(iulog, *) bline
 
@@ -247,10 +242,6 @@ CONTAINS
          do indx = 1, water_species_in_air_num
             write(iulog, *) '   ', trim(water_species_in_air(indx))
          end do
-         if (compute_enthalpy_flux) then
-            write(iulog, *) ' '
-            write(iulog, *) 'CAM computes enthalpy flux and sends to surface.'
-         end if
          write(iulog, *) bline
          write(iulog, *) banner
       end if
@@ -267,6 +258,7 @@ CONTAINS
       use physconst,    only: r_universal, cpair, rair, cpwv, rh2o, cpliq, cpice, mwdry, cpwv, latice, latvap, tmelt
       use constituents, only: cnst_get_ind, cnst_mw
       use ppgrid,       only: pcols, pver, begchunk, endchunk
+      use spmd_utils,   only: masterproc
 
       ! Arguments
       logical, intent(in) :: compute_enthalpy_flux_in
@@ -306,6 +298,14 @@ CONTAINS
 
       ! Set module variable compute_enthalpy_flux
       compute_enthalpy_flux = compute_enthalpy_flux_in
+      if (masterproc) then
+         if (compute_enthalpy_flux) then
+            write(iulog, *) ' '
+            write(iulog, *) 'CAM computes enthalpy flux and sends it to surface.'
+         else
+            write(iulog, *) 'CAM does not compute enthalpy flux. '
+         end if
+      end if
 
       liq_num = 0
       ice_num = 0
