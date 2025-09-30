@@ -10,6 +10,7 @@ module air_composition
    private
    save
 
+   public  :: air_composition_register ! sets module variable compute_enthalpy_flux
    public  :: air_composition_readnl
    public  :: air_composition_init
    public  :: dry_air_composition_update
@@ -34,7 +35,7 @@ module air_composition
    integer, parameter, public :: fliq_idx = 3  ! index for flux of liquid precipitation
    integer, parameter, public :: fice_idx = 4  ! index for flux of frozen precipitation
 
-   logical, protected, public :: compute_enthalpy_flux ! obtained from nuopc mediator
+   logical, protected, public :: compute_enthalpy_flux = .false. ! obtained from nuopc mediator
 
    private :: air_species_info
 
@@ -158,8 +159,29 @@ module air_composition
 
 CONTAINS
 
-   ! Read namelist variables.
+   subroutine air_composition_register(compute_enthalpy_flux_in)
+      use spmd_utils,  only: masterproc
+      use cam_logfile, only: iulog
+
+      logical, intent(in) :: compute_enthalpy_flux_in
+
+      ! Set module variable compute_enthalpy_flux
+      compute_enthalpy_flux = compute_enthalpy_flux_in
+      if (masterproc) then
+         if (compute_enthalpy_flux) then
+            write(iulog, *) ' '
+            write(iulog, *) 'CAM computes enthalpy flux and sends it to surface.'
+         else
+            write(iulog, *) 'CAM does not compute enthalpy flux. '
+         end if
+      end if
+
+   end subroutine air_composition_register
+
+   !===========================================================================
+
    subroutine air_composition_readnl(nlfile)
+      ! Read namelist variables.
       use namelist_utils, only: find_group_name
       use spmd_utils,     only: masterproc, mpicom, masterprocid
       use spmd_utils,     only: mpi_character, mpi_logical
@@ -250,7 +272,7 @@ CONTAINS
 
    !===========================================================================
 
-   subroutine air_composition_init(compute_enthalpy_flux_in)
+   subroutine air_composition_init()
 
       use string_utils, only: int2str
       use spmd_utils,   only: masterproc
@@ -258,10 +280,6 @@ CONTAINS
       use physconst,    only: r_universal, cpair, rair, cpwv, rh2o, cpliq, cpice, mwdry, cpwv, latice, latvap, tmelt
       use constituents, only: cnst_get_ind, cnst_mw
       use ppgrid,       only: pcols, pver, begchunk, endchunk
-      use spmd_utils,   only: masterproc
-
-      ! Arguments
-      logical, intent(in) :: compute_enthalpy_flux_in
 
       ! Local variables
       integer  :: icnst, ix, isize, ierr, idx
@@ -295,17 +313,6 @@ CONTAINS
       real(r8), parameter :: cv3 = 0.5_r8 * r_universal * dof3
       real(r8), parameter :: cp3 = 0.5_r8 * r_universal * (2._r8 + dof3)
       !-----------------------------------------------------------------------
-
-      ! Set module variable compute_enthalpy_flux
-      compute_enthalpy_flux = compute_enthalpy_flux_in
-      if (masterproc) then
-         if (compute_enthalpy_flux) then
-            write(iulog, *) ' '
-            write(iulog, *) 'CAM computes enthalpy flux and sends it to surface.'
-         else
-            write(iulog, *) 'CAM does not compute enthalpy flux. '
-         end if
-      end if
 
       liq_num = 0
       ice_num = 0

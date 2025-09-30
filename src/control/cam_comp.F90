@@ -28,6 +28,7 @@ use offline_driver,    only: offline_driver_init, offline_driver_dorun, offline_
 use perf_mod
 use cam_logfile,       only: iulog
 use cam_abortutils,    only: endrun
+use air_composition,   only: air_composition_register
 
 implicit none
 private
@@ -170,14 +171,18 @@ subroutine cam_init(                                             &
    ! Register zonal average grid for phys TEM diagnostics
    call phys_grid_ctem_reg()
 
+   ! Need to call this before phys_register - sets module variable
+   ! compute_enthalpy_flux in air_composition_register
+   call air_composition_register(compute_enthalpy_flux)
+
    ! Register advected tracers and physics buffer fields
-   call phys_register ()
+   call phys_register()
 
    ! Initialize ghg surface values before default initial distributions
    ! are set in dyn_init
    call chem_surfvals_init()
 
-   call air_composition_init(compute_enthalpy_flux)
+   call air_composition_init()
 
    ! initialize ionosphere
    call ionosphere_init()
