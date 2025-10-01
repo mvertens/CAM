@@ -5,6 +5,30 @@ module dme_adjust_camnor
 
   public :: dme_adjust_camnor_run
 
+  logical :: levels_are_moist=.true. ! TODO: put in namelist?
+
+  ! 5 possibilities (-> = currently reccommended):
+  !    1) conserve_dycore=.false. , conserve_physics=.false.  (no conservation = current CAM)
+  !    2) conserve_dycore=.true.  , bndry_flx_surface=.true.  (full conservation, bad climatology)
+  ! -> 3) conserve_dycore=.true.  , bndry_flx_local=.true.    (requires fixer to match correct surface fluxes)
+  !    4) conserve_physics=.true. , bndry_flx_local=.true.    (as 3., plus fixer for atmo energy)
+  !    5) conserve_physics=.true. , bndry_flx_surface=.true.  (no advantage wrt option 2)
+
+  ! N.B. old case CONDEPSF=CONDEPS_REF (with CONDEPSS consistent with dycore) not allowed here, since its
+  !      rationale isn't clear. For FV, only three of these options (e.g. 1,2,3) are distinct.
+
+  logical, parameter :: conserve_dycore   = .true.
+  logical, parameter :: bndry_flx_surface = .true.
+  logical, parameter :: conserve_physics  = .not. conserve_dycore
+  logical, parameter :: bndry_flx_local   = .not. bndry_flx_surface
+  logical, parameter :: conserve = conserve_dycore .or. conserve_physics
+
+  real(r8), parameter :: rtiny = 1e-14_r8    ! a small number (relative to total q change)
+
+  ! set to T to use distribute implied heating over column section to the surface
+  logical, parameter  :: l_nolocdcpttend=.true.
+  logical, parameter  :: logorrhoic=.false. ! T -> talk to log, a lot
+
 contains
 
   subroutine dme_adjust_camnor_run(lchnk, ncol, &
@@ -63,7 +87,7 @@ contains
     use dyn_tests_utils, only: vc_dycore, vc_physics
     use qneg_module,     only: qneg3
     use cam_history,     only: outfld
-    use physconst,       only: cpair, cpwv, cpliq, cpice, gravit
+    use physconst,       only: cpair, cpwv, cpliq, cpice, gravit, zvir
     !
     ! Arguments
     !
@@ -79,8 +103,8 @@ contains
     real(r8),         intent(out)   :: state_lnpmid(:,:)
     real(r8),         intent(in)    :: state_phis(:)
     real(r8),         intent(inout) :: state_ps(:)
-    real(r8),         intent(in)    :: state_zm(:,:)
-    real(r8),         intent(in)    :: state_zi(:,:)
+    real(r8),         intent(inout) :: state_zm(:,:)
+    real(r8),         intent(inout) :: state_zi(:,:)
     real(r8),         intent(inout) :: state_t(:,:)
     real(r8),         intent(inout) :: state_u(:,:)
     real(r8),         intent(inout) :: state_v(:,:)
@@ -133,22 +157,6 @@ contains
     real(r8) :: htx_cond(pcols,pver) ! enthalpy tendency due to heat exchange with "condensates"
     real(r8) :: mdq(pcols,pver)      ! total water tendency
     logical  :: hydrostatic = .true.
-
-    logical :: levels_are_moist=.true. ! TODO: put in namelist?
-    ! 5 possibilities (-> = currently reccommended):
-    !    1) conserve_dycore=.false. , conserve_physics=.false.  (no conservation = current CAM)
-    !    2) conserve_dycore=.true.  , bndry_flx_surface=.true.  (full conservation, bad climatology)
-    ! -> 3) conserve_dycore=.true.  , bndry_flx_local=.true.    (requires fixer to match correct surface fluxes)
-    !    4) conserve_physics=.true. , bndry_flx_local=.true.    (as 3., plus fixer for atmo energy)
-    !    5) conserve_physics=.true. , bndry_flx_surface=.true.  (no advantage wrt option 2)
-
-    ! N.B. old case CONDEPSF=CONDEPS_REF (with CONDEPSS consistent with dycore) not allowed here, since its
-    !      rationale isn't clear. For FV, only three of these options (e.g. 1,2,3) are distinct.
-
-    logical, parameter :: conserve_dycore   = .true.
-    logical, parameter :: bndry_flx_surface = .true.
-    logical, parameter :: conserve_physics  = .not. conserve_dycore
-    logical, parameter :: bndry_flx_local   = .not. bndry_flx_surface
     !-----------------------------------------------------------------------
 
     ! Diagnose boundary enthalpy flux and local heating rates associated to
@@ -490,12 +498,6 @@ contains
       real(r8) :: pint_old(pcols,pver+1)  ! work array
       real(r8) :: dummy(pcols,pver)       ! work array
       integer  :: is_invalid(pcols)
-      !
-      logical , parameter :: conserve = conserve_dycore .or. conserve_physics
-      real(r8), parameter :: rtiny = 1e-14_r8    ! a small number (relative to total q change)
-      ! set to T to use distribute implied heating over column section to the surface
-      logical, parameter  :: l_nolocdcpttend=.true.
-      logical, parameter  :: logorrhoic=.false. ! T -> talk to log, a lot
       !-----------------------------------------------------------------------
 
       ! store old pressure
@@ -603,7 +605,7 @@ contains
          dcwatr(:ncol) = 0._r8
          do k=1,pver
             mdqr(:ncol,k)=mdq(:ncol,k)+ntrnprd(:ncol,k)+ntsnprd(:ncol,k) ! residual: integrates to vapour change
-            if      (conserve_physics.or..not.l_nolocdcpttend)  then
+            if      (conserve_physics .or. .not. l_nolocdcpttend)  then
                condepss(:ncol,k) = condeps_ref(:ncol,k)*mdq (:ncol,k)
             else if (conserve_dycore) then
                condcp  (:ncol,k) = dvap  (:ncol,k)*cpwv +dliq (:ncol,k)*cpliq+dice (:ncol,k)*cpice
@@ -658,7 +660,7 @@ contains
          enddo
       endif
 
-      if (conserve .and. present(eflx) .and. present(mflx)) then ! partition arbitrarily based on sign match
+      if (conserve) then ! partition arbitrarily based on sign match
          ! EFLX_OUT here: work array for part of input EFLX not accounted for by NTSN/RNPR
          eflx_out(:ncol  ) = eflx(:ncol)*dt
          do k = 1, pver
