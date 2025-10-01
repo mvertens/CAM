@@ -144,7 +144,9 @@ contains
 
     ! Diagnose boundary enthalpy flux and local heating rates associated to
     ! atmospheric moisture change
-    call dme_bflx(state, tend, qini, liqini, iceini, tevap, tprec, dt, &
+    call dme_bflx(lchnk, ncol, &
+         state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
+         qini, liqini, iceini, tevap, tprec, dt, &
          htx_cond, mdq, step, ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
          mflx=mflx, eflx=eflx, eflx_out=eflx_out, mflx_out=mflx_out)
 
