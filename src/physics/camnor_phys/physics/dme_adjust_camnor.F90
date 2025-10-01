@@ -126,6 +126,7 @@ contains
     real(r8) :: mdq(pcols,pver)      ! total water tendency
     logical  :: hydrostatic = .true.
 
+    logical :: levels_are_moist=.true. ! TODO: put in namelist?
     ! 5 possibilities (-> = currently reccommended):
     !    1) conserve_dycore=.false. , conserve_physics=.false.  (no conservation = current CAM)
     !    2) conserve_dycore=.true.  , bndry_flx_surface=.true.  (full conservation, bad climatology)
@@ -422,8 +423,8 @@ contains
       integer,          intent(in)    :: lchnk
       integer,          intent(in)    :: ncol
       real(r8),         intent(inout) :: state_ps(:)
-      real(r8),         intent(inout) :: state_pint(:)
-      real(r8),         intent(in)    :: state_zm(:,:)
+      real(r8),         intent(inout) :: state_pint(:,:)
+      real(r8),         intent(in)    :: state_zm(:)
       real(r8),         intent(in)    :: state_q(:,:)
       real(r8),         intent(in)    :: state_pdel(:,:)
       real(r8),         intent(in)    :: state_phis(:)
