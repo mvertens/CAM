@@ -53,7 +53,7 @@ contains
     use air_composition, only: dry_air_species_num
     use air_composition, only: thermodynamic_active_species_num
     use air_composItion, only: thermodynamic_active_species_idx
-    use air_composition, only: cpairv, cp_or_cv_dycore
+    use air_composition, only: cpairv, rairv, cp_or_cv_dycore 
     use constituents,    only: cnst_get_ind, cnst_type
     use cam_thermo,      only: inv_conserved_energy
     use cam_thermo,      only: get_conserved_energy
@@ -168,29 +168,29 @@ contains
     ps_old  (:ncol) = state_ps(:ncol)
     state_ps(:ncol) = state_pint(:ncol,1)
 
-    zm(:ncol,:) = state_zm(:ncol,:)
+    zm(:ncol,:) = state_zm(:ncol,:) !  TODO - remoe and use state_zm instead below
 
     if (conserve_dycore) then
        vcoord=vc_dycore
-       cpm(:ncol,:)=cp_or_cv_dycore(:ncol,:,lchnk)
+       cpm(:ncol,:) = cp_or_cv_dycore(:ncol,:,lchnk)
     else
        vcoord=vc_physics
-       cpm(:ncol,:)=cpairv(:ncol,:,lchnk)
+       cpm(:ncol,:) = cpairv(:ncol,:,lchnk)
     endif
 
     do k = 1, pver
-       tp(:ncol,k) = state_t(:ncol,k)
+       tp(:ncol,k) = state_t(:ncol,k)  ! TODO - remoe and use state_t instead below
     enddo
 
     call get_conserved_energy(levels_are_moist, &
-         1 ,pver, &
+         1, pver, &
          cpm(:ncol,:), &
-         state_t(:ncol,:) ,state_q(:ncol,:,:) ,state_pdel(:ncol,:), &
-         pdel_new(:ncol,:) ,state_s(:ncol,:), &
+         state_t(:ncol,:), state_q(:ncol,:,:) ,state_pdel(:ncol,:), &
+         pdel_new(:ncol,:), state_s(:ncol,:), &
          qini=qini(:ncol,:), liqini=liqini(:ncol,:), iceini=iceini(:ncol,:), &
-         phis=state_phis(:ncol), gph=zm(:ncol,:), &
+         phis=state_phis(:ncol) ,gph=zm(:ncol,:), &
          U=state_u(:ncol,:), V=state_v(:ncol,:), rairv=rairv(:ncol,:,lchnk), &
-         vcoord=vcoord ,refstate='liq', &
+         vcoord=vcoord, refstate='liq', &
          flatent=latent(:ncol,:), temce=emce(:ncol,:))
 
     do k = 1, pver
@@ -211,9 +211,9 @@ contains
     enddo
 
     ! lagrangian & advective pressure change at top interface
-    pdot  (:ncol) = 0._r8
-    pdzp  (:ncol) = 0._r8
-    edot  (:ncol) = 0._r8
+    pdot(:ncol) = 0._r8
+    pdzp(:ncol) = 0._r8
+    edot(:ncol) = 0._r8
 
     ! store old enthalpy integral
     ent_tnd(:ncol)=0._r8
@@ -232,15 +232,15 @@ contains
        fdq(:ncol) = pdel_new(:ncol,k)/state_pdel(:ncol,k)       ! this is Dp"/Dp
 
        ! wind adjustment increments
-       uf (:ncol) = 0.
-       vf (:ncol) = 0.
+       uf(:ncol) = 0.
+       vf(:ncol) = 0.
 
        ! u,vtmp set to pre-physics u,v from the updated values and the tendencies
        utmp(:ncol) = state_u(:ncol,k) - dt * tend_dudt(:ncol,k)
        vtmp(:ncol) = state_v(:ncol,k) - dt * tend_dvdt(:ncol,k)
 
        ! adjust specific enthalpy
-       te (:ncol,k) = 0._r8
+       te(:ncol,k) = 0._r8
 
        ! lagrangian pressure change *zi at upper interfac
        pdzp(:ncol) =  pdot(:ncol)*gravit*state_zi(:ncol,k)
