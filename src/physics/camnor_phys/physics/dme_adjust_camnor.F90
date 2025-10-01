@@ -331,7 +331,7 @@ contains
        cpm(:ncol,:)=cp_or_cv_dycore(:ncol,:,lchnk)
     endif
 
-    call inv_conserved_energy(levels_are_moist &
+    call inv_conserved_energy(levels_are_moist, &
          1, pver, &
          e(:ncol,:), &
          cpm(:ncol,:), &
@@ -380,8 +380,8 @@ contains
 
     !===============================================================================
 
-    subroutine dme_bflx(lchnk, ncol&
-         state-ps, state-pint, state_zm, state_q, state_pdel, state_phis, state_t, &
+    subroutine dme_bflx(lchnk, ncol, &
+         state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevp, tprc, dt, htx_cond, mdq, &
          step, eflx_out , mflx_out, ntrnprd, ntsnprd, mflx, eflx)
 
