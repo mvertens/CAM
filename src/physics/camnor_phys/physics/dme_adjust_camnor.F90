@@ -76,7 +76,7 @@ contains
     real(r8),         intent(inout) :: state_u(:,:)
     real(r8),         intent(inout) :: state_v(:,:)
     real(r8),         intent(inout) :: state_pdel(:,:)
-    real(r8),         intent(inout) :: state_q(:,:)
+    real(r8),         intent(inout) :: state_q(:,:,:)
     real(r8),         intent(inout) :: state_s(:,:)
     real(r8),         intent(inout) :: tend_dudt(:,:)
     real(r8),         intent(inout) :: tend_dvdt(:,:)
@@ -424,8 +424,8 @@ contains
       integer,          intent(in)    :: ncol
       real(r8),         intent(inout) :: state_ps(:)
       real(r8),         intent(inout) :: state_pint(:,:)
-      real(r8),         intent(in)    :: state_zm(:)
-      real(r8),         intent(in)    :: state_q(:,:)
+      real(r8),         intent(in)    :: state_zm(:,:)
+      real(r8),         intent(in)    :: state_q(:,:,:)
       real(r8),         intent(in)    :: state_pdel(:,:)
       real(r8),         intent(in)    :: state_phis(:)
       real(r8),         intent(in)    :: state_t(:,:)
@@ -516,7 +516,7 @@ contains
               state_t(:ncol,:) ,state_q(:ncol,:,:) ,state_pdel(:ncol,:), &
               pdel_new(:ncol,:) ,te(:ncol,:), &
               qini=qini(:ncol,:),liqini=liqini(:ncol,:),iceini=iceini(:ncol,:), &
-              phis=state_phis(:ncol) ,gph=zm(:ncol,:), &
+              phis=state_phis(:ncol), gph=zm(:ncol,:), &
               U=state_u(:ncol,:) ,V=state_v(:ncol,:), &
               refstate='liq', &
               flatent=dummy, temce=emce, rairv=rairv(:ncol,:,lchnk))
