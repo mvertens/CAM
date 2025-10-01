@@ -55,6 +55,7 @@ module check_energy
 
   public :: check_energy_cam_fix            ! add heating rate required for global mean total energy conservation
 
+  ! This routine adjusts enthalpy if compute_enthalpy_flux = .true.
   public :: enthalpy_adjustment
 
   ! Private module data
@@ -927,6 +928,8 @@ end subroutine check_energy_readnl
   subroutine enthalpy_adjustment(ncol, lchnk, state, cam_in, cam_out, pbuf, ztodt, itim_old,&
        qini,totliqini,toticeini,tend)
 
+    ! This routine is called by routine tphysac and is only called if compute_enthalpy_flux is .true.
+
     use camsrfexch,      only: cam_in_t, cam_out_t, get_prec_vars
     use physics_buffer,  only: pbuf_get_index, physics_buffer_desc, pbuf_set_field, pbuf_get_field
     use cam_abortutils,  only: endrun
@@ -939,22 +942,22 @@ end subroutine check_energy_readnl
     use physconst,       only: rga, latvap, latice
     use dyn_tests_utils, only: vc_dycore
     use cam_thermo,      only: get_hydrostatic_energy
-    use physics_types,   only: physics_dme_adjust, dyn_te_idx
+    use physics_types,   only: physics_dme_adjust_camnor, dyn_te_idx
     use cam_thermo,      only: cam_thermo_water_update
     use cam_history,     only: outfld
     use cam_budget,      only: thermo_budget_history
     use time_manager,    only: get_nstep
 
     ! Arguments
-    integer,             intent(in)    :: ncol, lchnk
-    type(physics_state), intent(inout) :: state
-    type(cam_in_t),      intent(in   ) :: cam_in
-    type(cam_out_t),     intent(inout) :: cam_out
-    type(physics_buffer_desc), pointer :: pbuf(:)
-    real(r8),            intent(in)    :: ztodt
-    integer,             intent(in)    :: itim_old
-    real(r8), dimension(pcols,pver), intent(in) :: qini, totliqini, toticeini
-    type(physics_tend )    , intent(inout) :: tend
+    integer,                         intent(in)    :: ncol, lchnk
+    type(physics_state),             intent(inout) :: state
+    type(cam_in_t),                  intent(in   ) :: cam_in
+    type(cam_out_t),                 intent(inout) :: cam_out
+    type(physics_buffer_desc),       pointer       :: pbuf(:)
+    real(r8),                        intent(in)    :: ztodt
+    integer,                         intent(in)    :: itim_old
+    real(r8), dimension(pcols,pver), intent(in)    :: qini, totliqini, toticeini
+    type(physics_tend )    ,         intent(inout) :: tend
 
     ! Local variables
     integer:: enthalpy_prec_bc_idx, enthalpy_prec_ac_idx, enthalpy_evop_idx
@@ -1162,17 +1165,20 @@ end subroutine check_energy_readnl
     snsrc_tot(:ncol,:) = snsrc_pbc(:ncol,:)+snsrc_pac(:ncol,:)
     !- picerp rof sdleif fubp teg
 
-    call physics_dme_adjust(state, tend, qini, totliqini, toticeini, ztodt &
-         , dme_energy_adjust=.true.,step='bc+ac' &
-         , ntrnprd=rnsrc_tot*ztodt   &
-         , ntsnprd=snsrc_tot*ztodt   &
-         , tevap=tevp, tprec=tprc &
-         , mflx=water_flux_bc+water_flux_ac     &
-         , eflx=enthalpy_flux_atm               &
-         , mflx_out=mflx_out &
-         , eflx_out=eflx_out &
-         , ent_tnd=dsema &
-         , pdel_rf=pdel_rf )
+    !  Adjust the dry mass in each layer back to the value of physics input state
+    !  Adjust air specific enthalpy accordingly. Diagnose boundary enthalpy flux.
+    call physics_dme_adjust_camnor(state, tend, qini, totliqini, toticeini, ztodt &
+          step='bc+ac', &
+          ntrnprd=rnsrc_tot*ztodt, &
+          ntsnprd=snsrc_tot*ztodt, &
+          tevap=tevp, &
+          tprec=tprc, &
+          mflx=water_flux_bc+water_flux_ac,  &
+          eflx=enthalpy_flux_atm, &
+          mflx_out=mflx_out, &
+          eflx_out=eflx_out, &
+          ent_tnd=dsema, &
+          pdel_rf=pdel_rf )
 
     call outfld('IETEND_DME', dsema            , pcols, lchnk)
     call outfld('EFLX'      , enthalpy_flux_atm                 , pcols, lchnk)
