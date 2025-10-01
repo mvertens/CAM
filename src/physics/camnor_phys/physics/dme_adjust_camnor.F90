@@ -1,5 +1,7 @@
 module dme_adjust_camnor
 
+  use shr_kind_mod,  only: r8 => shr_kind_r8
+
   implicit none
   private          ! Make default type private to the module
 
@@ -67,7 +69,6 @@ contains
     !
     !-----------------------------------------------------------------------
 
-    use shr_kind_mod,    only: r8 => shr_kind_r8
     use constituents,    only: pcnst, qmin
     use cam_logfile,     only: iulog
     use cam_abortutils,  only: endrun
