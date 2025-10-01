@@ -8,9 +8,10 @@ module dme_adjust_camnor
 contains
 
   subroutine dme_adjust_camnor_run(lchnk, ncol, &
-       state_psetcols, state_pint, state_lnpint, state_lnpmid, &
+       state_psetcols, state_pint, state_pmid, &
+       state_pdel, state_rpdel, state_lnpint, state_lnpmid, &
        state_ps, state_phis, state_zm, state_zi, &
-       state_t, state_u, state_v, state_pdel, state_q, state_s, &
+       state_t, state_u, state_v, state_q, state_s, &
        tend_dudt, tend_dvdt, tend_dtdt, &
        qini, liqini, iceini, dt, &
        step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
@@ -71,6 +72,8 @@ contains
     integer,          intent(in)    :: state_psetcols
     real(r8),         intent(inout) :: state_pint(:,:)
     real(r8),         intent(out)   :: state_pmid(:,:)
+    real(r8),         intent(inout) :: state_pdel(:,:)
+    real(r8),         intent(out)   :: state_rpdel(:,:)
     real(r8),         intent(out)   :: state_lnpint(:,:)
     real(r8),         intent(out)   :: state_lnpmid(:,:)
     real(r8),         intent(in)    :: state_phis(:)
@@ -80,7 +83,6 @@ contains
     real(r8),         intent(inout) :: state_t(:,:)
     real(r8),         intent(inout) :: state_u(:,:)
     real(r8),         intent(inout) :: state_v(:,:)
-    real(r8),         intent(inout) :: state_pdel(:,:)
     real(r8),         intent(inout) :: state_q(:,:,:)
     real(r8),         intent(inout) :: state_s(:,:)
     real(r8),         intent(inout) :: tend_dudt(:,:)
