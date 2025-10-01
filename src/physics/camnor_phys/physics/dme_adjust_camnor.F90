@@ -8,7 +8,8 @@ module dme_adjust_camnor
 contains
 
   subroutine dme_adjust_camnor_run(lchnk, ncol, &
-       state_psetcols, state_pint, state_ps, state_phis, state_zm, state_zi, &
+       state_psetcols, state_pint, state_lnpint, state_lnpmid, &
+       state_ps, state_phis, state_zm, state_zi, &
        state_t, state_u, state_v, state_pdel, state_q, state_s, &
        tend_dudt, tend_dvdt, tend_dtdt, &
        qini, liqini, iceini, dt, &
@@ -68,10 +69,12 @@ contains
     integer,          intent(in)    :: ncol
     integer,          intent(in)    :: state_psetcols
     real(r8),         intent(inout) :: state_pint(:,:)
+    real(r8),         intent(out)   :: state_lnpint(:,:)
+    real(r8),         intent(out)   :: state_lnpmid(:,:)
     real(r8),         intent(in)    :: state_phis(:)
     real(r8),         intent(inout) :: state_ps(:)
     real(r8),         intent(in)    :: state_zm(:,:)
-    real(r8),         intent(in)    :: state_zi(:)
+    real(r8),         intent(in)    :: state_zi(:,:)
     real(r8),         intent(inout) :: state_t(:,:)
     real(r8),         intent(inout) :: state_u(:,:)
     real(r8),         intent(inout) :: state_v(:,:)
@@ -416,7 +419,7 @@ contains
       use air_composition, only: thermodynamic_active_species_ice_num
       use air_composition, only: dry_air_species_num
       use air_composition, only: t00a, h00a
-      use physconst,       only: cpair, cpwv, cpliq, cpice
+      use physconst,       only: cpair, cpwv, cpliq, cpice, gravit
       !
       ! Arguments
       !
