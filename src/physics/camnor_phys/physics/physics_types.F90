@@ -1409,7 +1409,7 @@ end subroutine physics_ptend_copy
 
     call dme_adjust_camnor_run(state%lcnhk, state%ncol, &
          state%psetcols, state%pint, state%pmid, &
-         state%pdel, state%rpdel, state%lnpint, state%lnpmid, &
+         state%pdel, state%rpdel, state%pdeldry,  state%lnpint, state%lnpmid, &
          state%ps, state%phis, state%zm, state%zi, &
          state%t, state%u, state%v, state%pdel state%q, state%s, &
          tend%dudt, tend%dvdt, tend%dtdt, &
