@@ -344,7 +344,7 @@ contains
 
     call inv_conserved_energy(levels_are_moist, &
          1, pver, &
-         e(:ncol,:), &
+         te(:ncol,:), &
          cpm(:ncol,:), &
          state_q(:ncol,:,:), state_pdel(:ncol,:), &
          pdel_new(:ncol,:), tp(:ncol,:), &
