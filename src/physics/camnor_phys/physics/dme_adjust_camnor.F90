@@ -70,7 +70,7 @@ contains
     real(r8),         intent(inout) :: state_pint(:,:)
     real(r8),         intent(in)    :: state_phis(:)
     real(r8),         intent(inout) :: state_ps(:)
-    real(r8),         intent(in)    :: state_zm(:)
+    real(r8),         intent(in)    :: state_zm(:,:)
     real(r8),         intent(in)    :: state_zi(:)
     real(r8),         intent(inout) :: state_t(:,:)
     real(r8),         intent(inout) :: state_u(:,:)
@@ -168,7 +168,7 @@ contains
     ps_old  (:ncol) = state_ps(:ncol)
     state_ps(:ncol) = state_pint(:ncol,1)
 
-    zm(:ncol,:)=state_zm(:ncol,:)
+    zm(:ncol,:) = state_zm(:ncol,:)
 
     if (conserve_dycore) then
        vcoord=vc_dycore
@@ -187,11 +187,11 @@ contains
          cpm(:ncol,:), &
          state_t(:ncol,:) ,state_q(:ncol,:,:) ,state_pdel(:ncol,:), &
          pdel_new(:ncol,:) ,state_s(:ncol,:), &
-         qini=qini(:ncol,:),liqini=liqini(:ncol,:),iceini=iceini(:ncol,:), &
-         phis=state_phis(:ncol) ,gph=zm(:ncol,:), &
-         U=state_u(:ncol,:) ,V=state_v(:ncol,:),rairv=rairv(:ncol,:,lchnk), &
+         qini=qini(:ncol,:), liqini=liqini(:ncol,:), iceini=iceini(:ncol,:), &
+         phis=state_phis(:ncol), gph=zm(:ncol,:), &
+         U=state_u(:ncol,:), V=state_v(:ncol,:), rairv=rairv(:ncol,:,lchnk), &
          vcoord=vcoord ,refstate='liq', &
-         flatent=latent(:ncol,:),temce=emce(:ncol,:))
+         flatent=latent(:ncol,:), temce=emce(:ncol,:))
 
     do k = 1, pver
        ! Dp'/Dp
