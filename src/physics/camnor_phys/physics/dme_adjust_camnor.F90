@@ -62,6 +62,7 @@ contains
     use dyn_tests_utils, only: vc_dycore, vc_physics
     use qneg_module,     only: qneg3
     use cam_history,     only: outfld
+    use physconst,       only: cpair, cpwv, cpliq, cpice, gravit
     !
     ! Arguments
     !
@@ -69,6 +70,7 @@ contains
     integer,          intent(in)    :: ncol
     integer,          intent(in)    :: state_psetcols
     real(r8),         intent(inout) :: state_pint(:,:)
+    real(r8),         intent(out)   :: state_pmid(:,:)
     real(r8),         intent(out)   :: state_lnpint(:,:)
     real(r8),         intent(out)   :: state_lnpmid(:,:)
     real(r8),         intent(in)    :: state_phis(:)
@@ -290,8 +292,8 @@ contains
        state_lnpint(:ncol,k+1) = log(state_pint(:ncol,k+1))
 
        ! also update pmid for geopotential
-       state_pmid  (:ncol,k  ) = .5_r8*(state_pint(:ncol,k)+state_pint(:ncol,k+1))
-       state_lnpmid(:ncol,k  ) = log(state_pmid(:ncol,k  ))
+       state_pmid  (:ncol,k) = .5_r8*(state_pint(:ncol,k)+state_pint(:ncol,k+1))
+       state_lnpmid(:ncol,k) = log(state_pmid(:ncol,k  ))
 
        pdel_rf(:ncol,k)=state_pdel(:ncol,k)/pdel_new(:ncol,k)
        state_pdel  (:ncol,k  ) = pdel_new(:ncol,k)
@@ -419,7 +421,6 @@ contains
       use air_composition, only: thermodynamic_active_species_ice_num
       use air_composition, only: dry_air_species_num
       use air_composition, only: t00a, h00a
-      use physconst,       only: cpair, cpwv, cpliq, cpice, gravit
       !
       ! Arguments
       !
