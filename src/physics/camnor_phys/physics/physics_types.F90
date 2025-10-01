@@ -1403,9 +1403,17 @@ end subroutine physics_ptend_copy
     real(r8),            intent(out)   :: pdel_rf(pcols,pver)  ! ratio  old pdel / new pdel
     !-----------------------------------------------------------------------
 
-    call dme_adjust_camnor_run(state, tend, qini, liqini, iceini, dt, &
-       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out &
-       ent_tnd, pdel_rf)
+    if (state%psetcols /= pcols) then
+       call endrun('physics_dme_adjust_camnor: cannot pass in a state which has sub-columns')
+    end if
+
+    call dme_adjust_camnor_run(state%lcnhk, state%ncol, &
+         state%psetcols, state%pint, state%ps, state%phis, state%zm, state%zi, &
+         state%t, state%u, state%v, state%pdel state%q, state%s, &
+         tend%dudt, tend%dvdt, tend%dtdt, &
+         qini, liqini, iceini, dt, &
+         step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out &
+         ent_tnd, pdel_rf)
 
   end subroutine physics_dme_adjust_camnor
 
