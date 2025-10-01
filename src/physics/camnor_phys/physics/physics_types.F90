@@ -1377,7 +1377,7 @@ end subroutine physics_ptend_copy
 !===============================================================================
 
   subroutine physics_dme_adjust_camnor(state, tend, qini, liqini, iceini, dt, &
-       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out &
+       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
        ent_tnd, pdel_rf)
 
     use dme_adjust_camnor, only: dme_adjust_camnor_run
@@ -1407,11 +1407,11 @@ end subroutine physics_ptend_copy
        call endrun('physics_dme_adjust_camnor: cannot pass in a state which has sub-columns')
     end if
 
-    call dme_adjust_camnor_run(state%lcnhk, state%ncol, &
+    call dme_adjust_camnor_run(state%lchnk, state%ncol, &
          state%psetcols, state%pint, state%pmid, &
          state%pdel, state%rpdel, state%pdeldry,  state%lnpint, state%lnpmid, &
          state%ps, state%phis, state%zm, state%zi, &
-         state%t, state%u, state%v, state%pdel state%q, state%s, &
+         state%t, state%u, state%v, state%pdel, state%q, state%s, &
          tend%dudt, tend%dvdt, tend%dtdt, &
          qini, liqini, iceini, dt, &
          step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out &
