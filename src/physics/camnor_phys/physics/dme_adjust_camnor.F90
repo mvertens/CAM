@@ -8,7 +8,7 @@ module dme_adjust_camnor
 contains
 
   subroutine dme_adjust_camnor_run(state, tend, qini, liqini, iceini, dt, &
-       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out &
+       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
        ent_tnd, pdel_rf)
     !-----------------------------------------------------------------------
     !
@@ -45,8 +45,9 @@ contains
     use ppgrid,          only: pcols, pver
     use geopotential,    only: geopotential_t
     use phys_control,    only: waccmx_is
-    use air_composition, only: dry_air_species_num, thermodynamic_active_species_num
-    use air_composItion, only: thermodynamic_active_species_idx,
+    use air_composition, only: dry_air_species_num
+    use air_composition, only: thermodynamic_active_species_num
+    use air_composItion, only: thermodynamic_active_species_idx
     use air_composition, only: cpairv, cp_or_cv_dycore
     use constituents,    only: cnst_get_ind, cnst_type
     use cam_thermo,      only: inv_conserved_energy
@@ -146,7 +147,7 @@ contains
     end if
 
     !------------------------------------
-    ! initialise adjustment loop 
+    ! initialise adjustment loop
     !------------------------------------
 
     lchnk = state%lchnk
