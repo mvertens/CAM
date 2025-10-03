@@ -163,8 +163,7 @@ contains
     ! Diagnose boundary enthalpy flux and local heating rates associated to
     ! atmospheric moisture change
     call dme_bflx(lchnk, ncol, &
-         state_ps, state_pint, state_pmid, &
-         state_zm, state_q, state_pdel, state_phis, state_t, &
+         state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevap, tprec, dt, &
          step, ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
          mflx=mflx, eflx=eflx, eflx_out=eflx_out, mflx_out=mflx_out, &
@@ -403,8 +402,7 @@ contains
     !===============================================================================
 
     subroutine dme_bflx(lchnk, ncol, &
-         state_ps, state_pint, state_pmid, &
-         state_zm, state_q, state_pdel, state_phis, state_t, &
+         state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevp, tprc, dt, &
          htx_cond, mdq, step, ntrnprd, ntsnprd, mflx, eflx, eflx_out, mflx_out)
 
@@ -658,7 +656,7 @@ contains
 
       if (conserve) then ! partition arbitrarily based on sign match
          ! EFLX_OUT here: work array for part of input EFLX not accounted for by NTSN/RNPR
-         eflx_out(:ncol  ) = eflx(:ncol)*dt
+         eflx_out(:ncol) = eflx(:ncol)*dt
          do k = 1, pver
             where(is_invalid(:ncol).eq.0)
                eflx_out(:ncol) = eflx_out(:ncol) - state_pdel(:ncol,k)/gravit*condepsf(:ncol,k)
