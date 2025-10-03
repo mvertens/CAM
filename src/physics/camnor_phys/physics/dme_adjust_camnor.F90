@@ -163,10 +163,12 @@ contains
     ! Diagnose boundary enthalpy flux and local heating rates associated to
     ! atmospheric moisture change
     call dme_bflx(lchnk, ncol, &
-         state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
+         state_ps, state_pint, state_pmid, &
+         state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevap, tprec, dt, &
-         htx_cond, mdq, step, ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
-         mflx=mflx, eflx=eflx, eflx_out=eflx_out, mflx_out=mflx_out)
+         step, ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
+         mflx=mflx, eflx=eflx, eflx_out=eflx_out, mflx_out=mflx_out, &
+         htx_cond=htx_cond, mdq=mdq )
 
     ! Ajust the dry mass in each layer back to the value of physics input state
     ! Adjust air specific enthalpy accordingly
@@ -403,8 +405,8 @@ contains
     subroutine dme_bflx(lchnk, ncol, &
          state_ps, state_pint, state_pmid, &
          state_zm, state_q, state_pdel, state_phis, state_t, &
-         qini, liqini, iceini, tevp, tprc, dt, htx_cond, mdq, &
-         step, eflx_out , mflx_out, ntrnprd, ntsnprd, mflx, eflx)
+         qini, liqini, iceini, tevp, tprc, dt, &
+         htx_cond, mdq, step, ntrnprd, ntsnprd, mflx, eflx, eflx_out, mflx_out)
 
       !-----------------------------------------------------------------------
       !
@@ -452,29 +454,26 @@ contains
       real(r8),         intent(in)    :: tevp(pcols)          ! temperature of evaporation at bottom of atmo
       real(r8),         intent(in)    :: tprc(pcols)          ! temperature of precipitation at bottom of atmo
       real(r8),         intent(in)    :: dt                   ! model physics timestep
-      real(r8),         intent(out)   :: htx_cond(pcols,pver) ! exchange enthalpy increment for dme_adjust
-      real(r8),         intent(out)   :: mdq(pcols,pver)      ! total water       increment for dme_adjust
       character(len=*), intent(in)    :: step                 ! which call in physpkg
-      real(r8),         intent(out)   :: eflx_out(pcols)      ! diagnostic: boundary enthalpy flux
-      real(r8),         intent(out)   :: mflx_out(pcols)      ! diagnostic: boundary enthalpy flux
       real(r8),         intent(in)    :: ntrnprd(pcols,pver)  ! net precip (liq+ice) production in layer
       real(r8),         intent(in)    :: ntsnprd(pcols,pver)  ! net snow production in layer
       real(r8),         intent(in)    :: eflx(pcols)          ! boundary enthalpy flux
       real(r8),         intent(in)    :: mflx(pcols)          ! boundary mass     flux
+      real(r8),         intent(out)   :: eflx_out(pcols)      ! diagnostic: boundary enthalpy flux
+      real(r8),         intent(out)   :: mflx_out(pcols)      ! diagnostic: boundary enthalpy flux
+      real(r8),         intent(out)   :: htx_cond(pcols,pver) ! exchange enthalpy increment for dme_adjust
+      real(r8),         intent(out)   :: mdq(pcols,pver)      ! total water       increment for dme_adjust
 
       !---------------------------Local workspace-----------------------------
 
       integer  :: i,k,m, ixq              ! Longitude, level indices
       integer  :: ierr                    ! error flag
       real(r8) :: fdq   (pcols)           ! mass adjustment factor
-      real(r8) :: utmp  (pcols)           ! temp variable for recalculating the initial u values
-      real(r8) :: vtmp  (pcols)           ! temp variable for recalculating the initial v values
       real(r8) :: dcvap(pcols)            ! total column vapour change
       real(r8) :: dcliq(pcols)            ! total column liquid change
       real(r8) :: dcice(pcols)            ! total column ice    change
       real(r8) :: dcwat(pcols)            ! total column water  change
       real(r8) :: dcwatr(pcols)           ! residual column water change (in excess of surface flux)
-      real(r8) :: zvirv(pcols,pver)       ! Local zvir array pointer
       real(r8) :: tot_water (pcols,2)     ! work array: total water (initial, present)
       integer  :: m_cnst
       real(r8) :: ps_old(pcols)           ! old surface pressure
@@ -491,12 +490,7 @@ contains
       real(r8) :: condeps_ref(pcols,pver) ! local specific enthalpy of "condensates" (mass source)
       real(r8) :: condepss   (pcols,pver) ! specific enthalpy of source reservoir for q changes
       real(r8) :: condepsf   (pcols,pver) ! specific enthalpy of final reservoir for q changes
-      real(r8) :: condmox_ref(pcols,pver) ! local specific x-momentum of "condensates" (mass source)
-      real(r8) :: condmox    (pcols,pver) ! specific x-momentum of moist reservoir with which q is exchanged
-      real(r8) :: condmoy_ref(pcols,pver) ! local specific y-momentum of "condensates" (mass source)
-      real(r8) :: condmoy    (pcols,pver) ! specific y-momentum of moist reservoir with which q is exchanged
       real(r8) :: condcp     (pcols,pver) ! species-increment-weighted cp
-      real(r8) :: uf(pcols), vf(pcols)    ! work arrays
       real(r8) :: pint_old(pcols,pver+1)  ! work array
       real(r8) :: dummy(pcols,pver)       ! work array
       integer  :: is_invalid(pcols)
