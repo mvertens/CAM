@@ -1380,6 +1380,9 @@ end subroutine physics_ptend_copy
        step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
        ent_tnd, pdel_rf)
 
+    ! Purpose: Diagnose boundary enthalpy flux and local heating rates associated to
+    ! atmospheric moisture change: Author: Thomas Toniazzo (17.07.21)
+
     use dme_adjust_camnor, only: dme_adjust_camnor_run
     !
     ! Arguments
@@ -1411,10 +1414,10 @@ end subroutine physics_ptend_copy
          state%psetcols, state%pint, state%pmid, &
          state%pdel, state%rpdel, state%pdeldry,  state%lnpint, state%lnpmid, &
          state%ps, state%phis, state%zm, state%zi, &
-         state%t, state%u, state%v, state%pdel, state%q, state%s, &
+         state%t, state%u, state%v, state%q, state%s, &
          tend%dudt, tend%dvdt, tend%dtdt, &
          qini, liqini, iceini, dt, &
-         step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out &
+         step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
          ent_tnd, pdel_rf)
 
   end subroutine physics_dme_adjust_camnor
