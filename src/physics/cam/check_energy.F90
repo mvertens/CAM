@@ -1167,7 +1167,8 @@ end subroutine check_energy_readnl
 
     !  Adjust the dry mass in each layer back to the value of physics input state
     !  Adjust air specific enthalpy accordingly. Diagnose boundary enthalpy flux.
-    call physics_dme_adjust_camnor(state, tend, qini, totliqini, toticeini, ztodt &
+    !  Author: Thomas Toniazzo (17.07.21)
+    call physics_dme_adjust_camnor(state, tend, qini, totliqini, toticeini, ztodt, &
           step='bc+ac', &
           ntrnprd=rnsrc_tot*ztodt, &
           ntsnprd=snsrc_tot*ztodt, &
