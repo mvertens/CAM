@@ -404,7 +404,8 @@ contains
     subroutine dme_bflx(lchnk, ncol, &
          state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevp, tprc, dt, &
-         step, ntrnprd, ntsnprd, mflx, eflx, mflx_out, eflx_out, htx_cond, mdq)
+         step, ntrnprd, ntsnprd, &
+         mflx, eflx, mflx_out, eflx_out, htx_cond, mdq)
 
       !-----------------------------------------------------------------------
       !
