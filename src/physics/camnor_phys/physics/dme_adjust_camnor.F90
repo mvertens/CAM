@@ -138,7 +138,6 @@ contains
     real(r8) :: vtmp(pcols)          ! temp variable for recalculating the initial v values
     real(r8) :: te(pcols,pver)       ! conserved energy in layer
     real(r8) :: emce(pcols,pver)     ! total enthalpy - conserved energy in layer
-    real(r8) :: zm(pcols,pver)       !(phi-phis)/g
     real(r8) :: cpm(pcols,pver)      ! moist air heat capacity
     real(r8) :: ttsc(pcols,pver)     ! moist air heat capacity
     integer  :: vcoord
@@ -186,8 +185,6 @@ contains
     ps_old  (:ncol) = state_ps(:ncol)
     state_ps(:ncol) = state_pint(:ncol,1)
 
-    zm(:ncol,:) = state_zm(:ncol,:) !  TODO - remoe and use state_zm instead below
-
     if (conserve_dycore) then
        vcoord=vc_dycore
        cpm(:ncol,:) = cp_or_cv_dycore(:ncol,:,lchnk)
@@ -206,7 +203,7 @@ contains
          state_t(:ncol,:), state_q(:ncol,:,:) ,state_pdel(:ncol,:), &
          pdel_new(:ncol,:), state_s(:ncol,:), &
          qini=qini(:ncol,:), liqini=liqini(:ncol,:), iceini=iceini(:ncol,:), &
-         phis=state_phis(:ncol) ,gph=zm(:ncol,:), &
+         phis=state_phis(:ncol) ,gph=state_state_zm(:ncol,:), &
          U=state_u(:ncol,:), V=state_v(:ncol,:), rairv=rairv(:ncol,:,lchnk), &
          vcoord=vcoord, refstate='liq', &
          flatent=latent(:ncol,:), temce=emce(:ncol,:))
@@ -359,7 +356,7 @@ contains
          state_q(:ncol,:,:), state_pdel(:ncol,:), &
          pdel_new(:ncol,:), tp(:ncol,:), &
          flatent=latent(:ncol,:)*0._r8, &
-         phis=state_phis(:ncol), gph=zm(:ncol,:), &
+         phis=state_phis(:ncol), gph=state_zm(:ncol,:), &
          vcoord=vcoord, refstate='liq', &
          U=state_u(:ncol,:), V=state_v(:ncol,:))
 
