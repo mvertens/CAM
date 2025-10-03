@@ -162,12 +162,12 @@ contains
 
     ! Diagnose boundary enthalpy flux and local heating rates associated to
     ! atmospheric moisture change
+
     call dme_bflx(lchnk, ncol, &
          state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevap, tprec, dt, &
          step, ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
-         mflx=mflx, eflx=eflx, eflx_out=eflx_out, mflx_out=mflx_out, &
-         htx_cond=htx_cond, mdq=mdq )
+         mflx=mflx, eflx=eflx, mflx_out=mflx_out, eflx_out=eflx_out, htx_cond=htx_cond, mdq=mdq )
 
     ! Ajust the dry mass in each layer back to the value of physics input state
     ! Adjust air specific enthalpy accordingly
@@ -404,7 +404,7 @@ contains
     subroutine dme_bflx(lchnk, ncol, &
          state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevp, tprc, dt, &
-         htx_cond, mdq, step, ntrnprd, ntsnprd, mflx, eflx, eflx_out, mflx_out)
+         step, ntrnprd, ntsnprd, mflx, eflx, mflx_out, eflx_out, htx_cond, mdq)
 
       !-----------------------------------------------------------------------
       !
@@ -532,6 +532,7 @@ contains
       dcliq(:ncol)=0._r8
       dcice(:ncol)=0._r8
       dcwat(:ncol)=0._r8
+
       ! heat associated with cp change
       do k = 1, pver
          ! mass increments Dp'/Dp
@@ -559,7 +560,6 @@ contains
          dcliq(:ncol)=dcliq(:ncol)+dliq(:ncol,k)*state_pdel(:ncol,k)/gravit
          dcice(:ncol)=dcice(:ncol)+dice(:ncol,k)*state_pdel(:ncol,k)/gravit
          dcwat(:ncol)=dcwat(:ncol)+ mdq(:ncol,k)*state_pdel(:ncol,k)/gravit
-
       end do
 
       is_invalid(:ncol)=0
@@ -599,7 +599,7 @@ contains
          dcwatr(:ncol) = 0._r8
          do k=1,pver
             mdqr(:ncol,k)=mdq(:ncol,k)+ntrnprd(:ncol,k)+ntsnprd(:ncol,k) ! residual: integrates to vapour change
-            if      (conserve_physics .or. .not. l_nolocdcpttend)  then
+            if (conserve_physics .or. .not. l_nolocdcpttend)  then
                condepss(:ncol,k) = condeps_ref(:ncol,k)*mdq (:ncol,k)
             else if (conserve_dycore) then
                condcp  (:ncol,k) = dvap  (:ncol,k)*cpwv +dliq (:ncol,k)*cpliq+dice (:ncol,k)*cpice
@@ -607,13 +607,13 @@ contains
                     +(zm(:ncol,k)*gravit+state_phis(:ncol))*mdq (:ncol,k)
                condepss(:ncol,k) = condepss(:ncol,k)+(cpliq*t00a+h00a)*mdq (:ncol,k)
             endif
-            if      (bndry_flx_surface) then
+            if (bndry_flx_surface) then
                condepsf(:ncol,k) =-(cpliq*(tprc(:ncol)-t00a  )+state_phis(:ncol))*ntrnprd(:ncol,k) &
                     -(cpice*(tprc(:ncol)-t00a  )+state_phis(:ncol))*ntsnprd(:ncol,k)
                condepsf(:ncol,k) = condepsf(:ncol,k)-(ntrnprd(:ncol,k)+ntsnprd(:ncol,k))*(cpliq*t00a+h00a)
                condepsf(:ncol,k) = condepsf(:ncol,k)+mdqr(:ncol,k)*(cpwv*(tevp(:ncol)-t00a)+state_phis(:ncol)+(cpliq*t00a+h00a))
             else if (bndry_flx_local)   then
-               if      (conserve_dycore)  then
+               if (conserve_dycore)  then
                   condepsf(:ncol,k) = -(cpliq*(state_t(:ncol,k)-t00a  )+zm(:ncol,k)*gravit+state_phis(:ncol))*ntrnprd(:ncol,k) &
                        -(cpice*(state_t(:ncol,k)-t00a  )+zm(:ncol,k)*gravit+state_phis(:ncol))*ntsnprd(:ncol,k)
                   condepsf(:ncol,k) = condepsf(:ncol,k) - &
