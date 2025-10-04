@@ -225,8 +225,10 @@ contains
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_rainl'    )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_snowc'    )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_snowl'    )
-    call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hmat'     ) ! enthalpy flux computed by cam
-    call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hlat'     ) ! var.lat.ht.part
+    if (compute_enthalpy_flux) then
+       call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hmat'     ) ! enthalpy flux computed by cam
+       call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hlat'     ) ! var.lat.ht.part
+    end if
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_lwdn'     )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_swndr'    )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_swvdr'    )
