@@ -135,6 +135,9 @@ contains
 
     ! Set module variable
     compute_enthalpy_flux = compute_enthalpy_flux_in
+    if (masterproc) then
+       write(iulog,'(2a,l)') trim(subname), 'compute_enthalpy_flux = ',compute_enthalpy_flux
+    end if
 
     call NUOPC_CompAttributeGet(gcomp, name='flds_co2a', value=cvalue, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return

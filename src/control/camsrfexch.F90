@@ -416,7 +416,7 @@ CONTAINS
 
 !======================================================================
 
-subroutine cam_export(state,cam_in,cam_out,pbuf)
+subroutine cam_export(state, cam_out, pbuf, cam_in)
 
    ! Transfer atmospheric fields into necessary surface data structures
 
@@ -437,10 +437,10 @@ subroutine cam_export(state,cam_in,cam_out,pbuf)
    implicit none
 
    ! Input arguments
-   type(physics_state),  intent(in) :: state
-   type (cam_in_t ),     intent(in)    :: cam_in
-   type (cam_out_t),     intent(inout) :: cam_out
-   type(physics_buffer_desc), pointer  :: pbuf(:)
+   type(physics_state),        intent(in)    :: state
+   type (cam_out_t),           intent(inout) :: cam_out
+   type(physics_buffer_desc),  pointer       :: pbuf(:)
+   type (cam_in_t ), optional, intent(in)    :: cam_in
 
    ! Local variables
 
@@ -513,29 +513,29 @@ subroutine cam_export(state,cam_in,cam_out,pbuf)
       cam_out%hsnow(:ncol) = -cam_out%hsnow(:ncol) + fice_tot(:ncol)*((h00o-h00a)+(cpliq-cpice)*(t00o-t00a)) ! into ocn; fice_tot is out of atm
       cam_out%hrain(:ncol) = -cam_out%hrain(:ncol) + fliq_tot(:ncol)* (h00o-h00a)! +0.                       ! into ocn; fliq_tot is out of atm
 
-      ! hevap is one time-step old, consistently with rest of enthalpy_prec_ac
-      enthalpy_evop_idx = pbuf_get_index('ENTHALPY_EVOP', errcode=i)
-      if (enthalpy_evop_idx==0) then
-         call endrun(sub//": pbuf for enthalpy evop not allocated")
+      if (present(cam_in)) then
+         ! hevap is one time-step old, consistently with rest of enthalpy_prec_ac
+         enthalpy_evop_idx = pbuf_get_index('ENTHALPY_EVOP', errcode=i)
+         if (enthalpy_evop_idx==0) then
+            call endrun(sub//": pbuf for enthalpy evop not allocated")
+         end if
+         call pbuf_get_field(pbuf, enthalpy_evop_idx, hevap_ocn)
+         cam_out%hevap(:ncol) = -hevap_ocn(:ncol) - cam_in%evap_ocn(:ncol)*((h00o-h00a)+(cpliq-cpwv )*(t00o-t00a)) ! into ocn; cflux is into atm
       end if
-      call pbuf_get_field(pbuf, enthalpy_evop_idx, hevap_ocn)
-      cam_out%hevap(:ncol) = -hevap_ocn(:ncol) - cam_in%evap_ocn(:ncol)*((h00o-h00a)+(cpliq-cpwv )*(t00o-t00a)) ! into ocn; cflux is into atm
-
-     !call outfld("hsnow_liq_ref"  , cam_out%hsnow, pcols   ,lchnk   )! debug
-     !call outfld("hrain_liq_ref"  , cam_out%hrain, pcols   ,lchnk   )! debug
-     !call outfld("hevap_liq_ref"  , cam_out%hevap, pcols   ,lchnk   )! debug
 
       cam_out%hmat(:ncol) = cam_out%hsnow(:ncol) + cam_out%hrain(:ncol) + cam_out%hevap(:ncol) ! this is into ocean
       ! variable latent heat component
-      !   N.B.: approximate due to difference between ts and tbot, also note lagged SST
+      ! N.B.: approximate due to difference between ts and tbot, also note lagged SST
       cam_out%hlat(:ncol) = cam_in%evap_ocn(:ncol)*(cpliq-cpwv )*(cam_in%sst(:ncol)-t00a) &
                                  -fice_tot (:ncol)*(cpliq-cpice)*(cam_in%sst(:ncol)-t00a)
    else
+
       call get_prec_vars(ncol,pbuf,&
            precc_out=cam_out%precc,precl_out=cam_out%precl,&
            precsc_out=cam_out%precsc,precsl_out=cam_out%precsl)
       cam_out%hmat(:ncol) = 0._r8
       cam_out%hlat(:ncol) = 0._r8
+
    end if
 
    srf_ozone_idx = pbuf_get_index('SRFOZONE', errcode=i)
