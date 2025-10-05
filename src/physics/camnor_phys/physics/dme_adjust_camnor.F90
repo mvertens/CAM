@@ -470,23 +470,22 @@ contains
       real(r8) :: dcice(pcols)            ! total column ice    change
       real(r8) :: dcwat(pcols)            ! total column water  change
       real(r8) :: dcwatr(pcols)           ! residual column water change (in excess of surface flux)
-      real(r8) :: tot_water (pcols,2)     ! work array: total water (initial, present)
-      integer  :: m_cnst
+      real(r8) :: tot_water(pcols,2)      ! work array: total water (initial, present)
+      integer  :: m_cnst                  ! index
       real(r8) :: ps_old(pcols)           ! old surface pressure
       real(r8) :: pdel_new(pcols,pver)    ! Layer thickness (pint(k+1) - pint(k))
-      real(r8) :: dvap    (pcols,pver)    ! wv  mass adjustment
-      real(r8) :: dliq    (pcols,pver)    ! liq mass adjustment
-      real(r8) :: dice    (pcols,pver)    ! ice mass adjustment
-      real(r8) :: dprat   (pcols)         ! Dp'/Dp'' (=1 in lagrangean adj)
-      real(r8) :: mdqr    (pcols,pver)    ! residual mass change (work array)
-      real(r8) :: dcqm    (pcols)         ! fraction of total/absolute mass change
-      real(r8) :: te         (pcols,pver) ! conserved energy in layer
-      real(r8) :: emce       (pcols,pver) ! total enthalpy - conserved energy in layer
-      real(r8) :: zm         (pcols,pver) ! (phi-phis)/g
+      real(r8) :: dvap(pcols,pver)        ! wv  mass adjustment
+      real(r8) :: dliq(pcols,pver)        ! liq mass adjustment
+      real(r8) :: dice(pcols,pver)        ! ice mass adjustment
+      real(r8) :: mdqr(pcols,pver)        ! residual mass change (work array)
+      real(r8) :: dcqm(pcols)             ! fraction of total/absolute mass change
+      real(r8) :: te(pcols,pver)          ! conserved energy in layer
+      real(r8) :: emce(pcols,pver)        ! total enthalpy - conserved energy in layer
+      real(r8) :: zm(pcols,pver)          ! (phi-phis)/g
       real(r8) :: condeps_ref(pcols,pver) ! local specific enthalpy of "condensates" (mass source)
-      real(r8) :: condepss   (pcols,pver) ! specific enthalpy of source reservoir for q changes
-      real(r8) :: condepsf   (pcols,pver) ! specific enthalpy of final reservoir for q changes
-      real(r8) :: condcp     (pcols,pver) ! species-increment-weighted cp
+      real(r8) :: condepss(pcols,pver)    ! specific enthalpy of source reservoir for q changes
+      real(r8) :: condepsf(pcols,pver)    ! specific enthalpy of final reservoir for q changes
+      real(r8) :: condcp(pcols,pver)      ! species-increment-weighted cp
       real(r8) :: pint_old(pcols,pver+1)  ! work array
       real(r8) :: dummy(pcols,pver)       ! work array
       integer  :: is_invalid(pcols)
@@ -642,7 +641,8 @@ contains
             endif
             if      (bndry_flx_surface) then
                condcp  (:ncol,k) = dvap (:ncol,k)*cpwv +dliq(:ncol,k)*cpliq+dice(:ncol,k)*cpice
-               condepsf(:ncol,k) = condcp(:ncol,k)*(tprc(:ncol)-t00a)+state_phis(:ncol)*mdq(:ncol,k)+dvap(:ncol,k)*cpwv*(tevp(:ncol)-tprc(:ncol))
+               condepsf(:ncol,k) = condcp(:ncol,k)*&
+                    (tprc(:ncol)-t00a)+state_phis(:ncol)*mdq(:ncol,k)+dvap(:ncol,k)*cpwv*(tevp(:ncol)-tprc(:ncol))
                condepsf(:ncol,k) = condepsf(:ncol,k)+(cpliq*t00a+h00a)*mdq(:ncol,k)
             else if (bndry_flx_local)   then
                condepsf(:ncol,k) = condepss(:ncol,k)
