@@ -31,6 +31,8 @@ module dme_adjust_camnor
   logical, parameter  :: l_nolocdcpttend=.true.
   logical, parameter  :: logorrhoic=.false. ! T -> talk to log, a lot
 
+  logical :: hydrostatic = .true.
+
 contains
 
   subroutine dme_adjust_camnor_run(lchnk, ncol, &
@@ -156,7 +158,6 @@ contains
     integer  :: ixnumsnow, ixnumrain
     real(r8) :: htx_cond(pcols,pver) ! enthalpy tendency due to heat exchange with "condensates"
     real(r8) :: mdq(pcols,pver)      ! total water tendency
-    logical  :: hydrostatic = .true.
     !-----------------------------------------------------------------------
 
     ! Diagnose boundary enthalpy flux and local heating rates associated to
@@ -244,13 +245,15 @@ contains
        ! new Dp (=:Dp")
        pdel_new(:ncol,k) = state_pdel(:ncol,k)*(1._r8 + mdq(:ncol,k))
 
-       fdq(:ncol) = pdel_new(:ncol,k)/state_pdel(:ncol,k)       ! this is Dp"/Dp
+
+       ! compute Dp"/Dp
+       fdq(:ncol) = pdel_new(:ncol,k)/state_pdel(:ncol,k)       
 
        ! wind adjustment increments
        uf(:ncol) = 0.
        vf(:ncol) = 0.
 
-       ! u,vtmp set to pre-physics u,v from the updated values and the tendencies
+       ! set utmp and vtmp pre-physics u,v from the updated values and the tendencies
        utmp(:ncol) = state_u(:ncol,k) - dt * tend_dudt(:ncol,k)
        vtmp(:ncol) = state_v(:ncol,k) - dt * tend_dvdt(:ncol,k)
 
@@ -258,10 +261,12 @@ contains
        te(:ncol,k) = 0._r8
 
        ! lagrangian pressure change *zi at upper interfac
-       pdzp(:ncol) =  pdot(:ncol)*gravit*state_zi(:ncol,k)
+       pdzp(:ncol) = pdot(:ncol)*gravit*state_zi(:ncol,k)
 
        ! lagrangian pressure change at next interface
-       if(hydrostatic)pdot(:ncol) = pdot(:ncol) + state_pdel(:ncol,k)*mdq(:ncol,k)
+       if (hydrostatic) then
+          pdot(:ncol) = pdot(:ncol) + state_pdel(:ncol,k)*mdq(:ncol,k)
+       end if
 
        ! layer increment = work (~alpha*dp)
        pdzp(:ncol) = (pdot(:ncol)*gravit*state_zi(:ncol,k+1)-pdzp(:ncol))/pdel_new(:ncol,k)
@@ -282,6 +287,7 @@ contains
           ! store unadjusted q for use in next k
           state_q(:ncol,k,m) = state_q(:ncol,k,m) / fdq(:ncol)
        end do
+
        ! adjust L-dependent part of local total enthalpy accordingly
        latent(:ncol,k) = latent(:ncol,k)/fdq(:ncol)
 
@@ -596,6 +602,7 @@ contains
          dcwatr(:ncol) = 0._r8
          do k=1,pver
             mdqr(:ncol,k)=mdq(:ncol,k)+ntrnprd(:ncol,k)+ntsnprd(:ncol,k) ! residual: integrates to vapour change
+
             if (conserve_physics .or. .not. l_nolocdcpttend)  then
                condepss(:ncol,k) = condeps_ref(:ncol,k)*mdq (:ncol,k)
             else if (conserve_dycore) then
@@ -604,6 +611,7 @@ contains
                     +(zm(:ncol,k)*gravit+state_phis(:ncol))*mdq (:ncol,k)
                condepss(:ncol,k) = condepss(:ncol,k)+(cpliq*t00a+h00a)*mdq (:ncol,k)
             endif
+
             if (bndry_flx_surface) then
                condepsf(:ncol,k) =-(cpliq*(tprc(:ncol)-t00a  )+state_phis(:ncol))*ntrnprd(:ncol,k) &
                     -(cpice*(tprc(:ncol)-t00a  )+state_phis(:ncol))*ntsnprd(:ncol,k)
@@ -622,6 +630,7 @@ contains
                   condepsf(:ncol,k) = condepsf(:ncol,k)+condeps_ref(:ncol,k)*mdqr(:ncol,k)
                endif
             endif
+
             ! residual column water change: integrates to surface evaporation
             dcwatr  (:ncol)   = dcwatr(:ncol)  + mdqr(:ncol,k)*state_pdel(:ncol,k)/gravit
          enddo
