@@ -1377,7 +1377,7 @@ end subroutine physics_ptend_copy
 !===============================================================================
 
   subroutine physics_dme_adjust_camnor(state, tend, qini, liqini, iceini, dt, &
-       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
+       ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
        ent_tnd, pdel_rf)
 
     ! Purpose: Diagnose boundary enthalpy flux and local heating rates associated to
@@ -1393,7 +1393,6 @@ end subroutine physics_ptend_copy
     real(r8),            intent(in)    :: liqini(pcols,pver)   ! initial total liquid
     real(r8),            intent(in)    :: iceini(pcols,pver)   ! initial total ice
     real(r8),            intent(in)    :: dt
-    character(len=*),    intent(in)    :: step                 ! which call in physpkg
     real(r8),            intent(in)    :: ntrnprd(pcols,pver)  ! net precip (liq+ice) production in layer
     real(r8),            intent(in)    :: ntsnprd(pcols,pver)  ! net snow production in layer
     real(r8),            intent(in)    :: tevap(pcols)         ! temperature of surface evaporation
@@ -1417,7 +1416,7 @@ end subroutine physics_ptend_copy
          state%t, state%u, state%v, state%q, state%s, &
          tend%dudt, tend%dvdt, tend%dtdt, &
          qini, liqini, iceini, dt, &
-         step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
+         ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
          ent_tnd, pdel_rf)
 
   end subroutine physics_dme_adjust_camnor

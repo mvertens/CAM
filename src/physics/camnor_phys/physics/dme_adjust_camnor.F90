@@ -29,7 +29,6 @@ module dme_adjust_camnor
 
   ! set to T to use distribute implied heating over column section to the surface
   logical, parameter  :: l_nolocdcpttend=.true.
-  logical, parameter  :: logorrhoic=.false. ! T -> talk to log, a lot
 
   logical :: hydrostatic = .true.
 
@@ -42,7 +41,7 @@ contains
        state_t, state_u, state_v, state_q, state_s, &
        tend_dudt, tend_dvdt, tend_dtdt, &
        qini, liqini, iceini, dt, &
-       step, ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
+       ntrnprd, ntsnprd, tevap, tprec, mflx, eflx, eflx_out, mflx_out, &
        ent_tnd, pdel_rf)
 
     !-----------------------------------------------------------------------
@@ -72,9 +71,6 @@ contains
     !-----------------------------------------------------------------------
 
     use constituents,    only: pcnst, qmin
-    use cam_logfile,     only: iulog
-    use cam_abortutils,  only: endrun
-    use spmd_utils,      only: masterproc
     use shr_const_mod,   only: shr_const_rwv
     use ppgrid,          only: pcols, pver
     use geopotential,    only: geopotential_t
@@ -120,7 +116,6 @@ contains
     real(r8),         intent(in)    :: liqini(pcols,pver)   ! initial total liquid
     real(r8),         intent(in)    :: iceini(pcols,pver)   ! initial total ice
     real(r8),         intent(in)    :: dt
-    character(len=*), intent(in)    :: step                 ! which call in physpkg
     real(r8),         intent(in)    :: ntrnprd(pcols,pver)  ! net precip (liq+ice) production in layer
     real(r8),         intent(in)    :: ntsnprd(pcols,pver)  ! net snow production in layer
     real(r8),         intent(in)    :: tevap(pcols)         ! temperature of surface evaporation
@@ -166,7 +161,7 @@ contains
     call dme_bflx(lchnk, ncol, &
          state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevap, tprec, dt, &
-         step, ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
+         ntrnprd=ntrnprd, ntsnprd=ntsnprd, &
          mflx=mflx, eflx=eflx, mflx_out=mflx_out, eflx_out=eflx_out, htx_cond=htx_cond, mdq=mdq )
 
     ! Ajust the dry mass in each layer back to the value of physics input state
@@ -375,9 +370,6 @@ contains
     ! diagnostics: dme T tendency
     ttsc(:ncol,:) = (tp(:ncol,:) - state_t(:ncol,:))/dt ! &
 
-    ! for tests: correct for effect of cp update on other physics ttend
-    ! -tend_dtdt(:ncol,:)*(ttsc(:ncol,:)-1._r8)
-
     call outfld('PTTEND_DME', ttsc, pcols, lchnk)
 
     ! update ttend and T (cf physics_update)
@@ -407,7 +399,7 @@ contains
     subroutine dme_bflx(lchnk, ncol, &
          state_ps, state_pint, state_zm, state_q, state_pdel, state_phis, state_t, &
          qini, liqini, iceini, tevp, tprc, dt, &
-         step, ntrnprd, ntsnprd, &
+         ntrnprd, ntsnprd, &
          mflx, eflx, mflx_out, eflx_out, htx_cond, mdq)
 
       !-----------------------------------------------------------------------
@@ -456,7 +448,6 @@ contains
       real(r8),         intent(in)    :: tevp(pcols)          ! temperature of evaporation at bottom of atmo
       real(r8),         intent(in)    :: tprc(pcols)          ! temperature of precipitation at bottom of atmo
       real(r8),         intent(in)    :: dt                   ! model physics timestep
-      character(len=*), intent(in)    :: step                 ! which call in physpkg
       real(r8),         intent(in)    :: ntrnprd(pcols,pver)  ! net precip (liq+ice) production in layer
       real(r8),         intent(in)    :: ntsnprd(pcols,pver)  ! net snow production in layer
       real(r8),         intent(in)    :: eflx(pcols)          ! boundary enthalpy flux
@@ -570,24 +561,6 @@ contains
          is_invalid(:ncol) = 1
       endwhere
 
-      ! For testing only
-      if (logorrhoic) then
-         if (any(abs(mflx(:ncol)+dcwat(:ncol)/dt) .gt. rtiny)) then
-            k = maxloc(abs(mflx(:ncol)*dt+dcwat(:ncol)),1)
-            if (masterproc) then
-               print*,'bad water in, change ('//trim(step)//'): ',-mflx(k)*dt,dcwat(k)
-            end if
-         endif
-         if (maxval(is_invalid(:ncol)) .gt. 0) then
-            k = maxloc(abs(is_invalid(:ncol)*eflx(:ncol)),1)
-            if (abs(eflx(k)).gt.rtiny) then
-               if (masterproc) then
-                  print*,'ignored eflx ('//trim(step)//'): ',k,eflx(k)
-               end if
-            endif
-         endif
-      end if
-
       ! local specific enthalpy
       if (conserve)  then
          do k = 1, pver
@@ -693,11 +666,11 @@ contains
       endif
 
       ! boundary flux of energy due to mass sources (diagnostic)
-      mflx_out(:ncol  ) = 0._r8
+      mflx_out(:ncol) = 0._r8
       do k = 1, pver
          where(is_invalid(:ncol).eq.0)
             ! boundary-flux diagnostic associated with water exchanged (column water gained/lost)
-            mflx_out(:ncol) = mflx_out(:ncol) + state_pdel(:ncol,k)/gravit*mdq     (:ncol,k)/dt
+            mflx_out(:ncol) = mflx_out(:ncol) + state_pdel(:ncol,k)/gravit*mdq(:ncol,k)/dt
          endwhere
       enddo
 

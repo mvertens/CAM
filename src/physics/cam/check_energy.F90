@@ -1169,7 +1169,6 @@ end subroutine check_energy_readnl
     !  Adjust air specific enthalpy accordingly. Diagnose boundary enthalpy flux.
     !  Author: Thomas Toniazzo (17.07.21)
     call physics_dme_adjust_camnor(state, tend, qini, totliqini, toticeini, ztodt, &
-          step='bc+ac', &
           ntrnprd=rnsrc_tot*ztodt, &
           ntsnprd=snsrc_tot*ztodt, &
           tevap=tevp, &
