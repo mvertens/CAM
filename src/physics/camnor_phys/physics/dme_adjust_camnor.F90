@@ -78,7 +78,7 @@ contains
     use air_composition, only: dry_air_species_num
     use air_composition, only: thermodynamic_active_species_num
     use air_composItion, only: thermodynamic_active_species_idx
-    use air_composition, only: cpairv, rairv, cp_or_cv_dycore 
+    use air_composition, only: cpairv, rairv, cp_or_cv_dycore
     use constituents,    only: cnst_get_ind, cnst_type
     use cam_thermo,      only: inv_conserved_energy
     use cam_thermo,      only: get_conserved_energy
@@ -199,7 +199,7 @@ contains
          state_t(:ncol,:), state_q(:ncol,:,:) ,state_pdel(:ncol,:), &
          pdel_new(:ncol,:), state_s(:ncol,:), &
          qini=qini(:ncol,:), liqini=liqini(:ncol,:), iceini=iceini(:ncol,:), &
-         phis=state_phis(:ncol) ,gph=state_state_zm(:ncol,:), &
+         phis=state_phis(:ncol), gph=state_zm(:ncol,:), &
          U=state_u(:ncol,:), V=state_v(:ncol,:), rairv=rairv(:ncol,:,lchnk), &
          vcoord=vcoord, refstate='liq', &
          flatent=latent(:ncol,:), temce=emce(:ncol,:))
@@ -242,7 +242,7 @@ contains
 
 
        ! compute Dp"/Dp
-       fdq(:ncol) = pdel_new(:ncol,k)/state_pdel(:ncol,k)       
+       fdq(:ncol) = pdel_new(:ncol,k)/state_pdel(:ncol,k)
 
        ! wind adjustment increments
        uf(:ncol) = 0.
