@@ -1587,6 +1587,7 @@ CONTAINS
       use physconst,       only: rga, latvap, latice
       use physconst,       only: cpliq, cpice, cpwv, tmelt
       use air_composition, only: t00a, h00a, h00a_vap, h00a_ice
+      use air_composition, only: compute_enthalpy_flux
 
       ! Dummy arguments
       ! tracer: tracer mixing ratio
@@ -1806,28 +1807,34 @@ CONTAINS
          select case (TRIM(enthalpy_reference_state))
          case('ice')
             te = te + (latsub * wv_vint) + (latice * liq_vint)
-            if (vcoord .ne. vc_moist_pressure) then
-               ! add t00 and h00 terms
-               te = te +  wv_vint*(cpice-cpwv )*t00a
-               te = te + liq_vint*(cpice-cpliq)*t00a
-               te = te + wtot_vint*h00a_ice
-            endif
+            if (compute_enthalpy_flux) then
+               if (vcoord .ne. vc_moist_pressure) then
+                  ! add t00 and h00 terms
+                  te = te +  wv_vint*(cpice-cpwv )*t00a
+                  te = te + liq_vint*(cpice-cpliq)*t00a
+                  te = te + wtot_vint*h00a_ice
+               endif
+            end if
          case('liq')
             te = te + (latvap * wv_vint) - (latice * ice_vint)
-            if (vcoord .ne. vc_moist_pressure) then
-               ! add t00 and h00 terms
-               te = te +  wv_vint*(cpliq-cpwv )*t00a
-               te = te + ice_vint*(cpliq-cpice)*t00a
-               te = te + wtot_vint*h00a
-            endif
+            if (compute_enthalpy_flux) then
+               if (vcoord .ne. vc_moist_pressure) then
+                  ! add t00 and h00 terms
+                  te = te +  wv_vint*(cpliq-cpwv )*t00a
+                  te = te + ice_vint*(cpliq-cpice)*t00a
+                  te = te + wtot_vint*h00a
+               endif
+            end if
          case('vap')
             te = te - (latvap * liq_vint) - (latsub * ice_vint)
-            if(vcoord .ne. vc_moist_pressure) then
-               ! add t00 and h00 terms
-               te = te + liq_vint*(cpwv -cpliq)*t00a
-               te = te + ice_vint*(cpwv -cpice)*t00a
-               te = te + wtot_vint*h00a_vap
-            endif
+            if (compute_enthalpy_flux) then
+               if (vcoord .ne. vc_moist_pressure) then
+                  ! add t00 and h00 terms
+                  te = te + liq_vint*(cpwv -cpliq)*t00a
+                  te = te + ice_vint*(cpwv -cpice)*t00a
+                  te = te + wtot_vint*h00a_vap
+               endif
+            end if
          case default
             write(iulog, *) subname, ' enthalpy reference state not ',        &
                  'supported: ', TRIM(enthalpy_reference_state)

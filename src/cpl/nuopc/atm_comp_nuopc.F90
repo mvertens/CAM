@@ -320,7 +320,7 @@ contains
     if (isPresent .and. isSet) then
        read (cvalue,*) mediator_present
        if (mediator_present) then
-          call advertise_fields(gcomp, flds_scalar_name, rc)
+          call advertise_fields(gcomp, flds_scalar_name, compute_enthalpy_flux, rc)
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
        end if
     else

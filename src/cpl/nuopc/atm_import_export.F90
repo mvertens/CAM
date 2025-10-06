@@ -27,7 +27,6 @@ module atm_import_export
   use atm_stream_ndep   , only : ndep_stream_active
   use chemistry         , only : chem_has_ndep_flx
   use cam_control_mod   , only : aqua_planet, simple_phys
-  use air_composition   , only : compute_enthalpy_flux
 
   implicit none
   private ! except
@@ -67,6 +66,8 @@ module atm_import_export
   logical, public        :: brf_from_ocn = .false.   ! brf is obtained from ocean as atm import data
   logical, public        :: n2o_from_ocn = .false.   ! n2o is obtained from ocean as atm import data
   logical, public        :: nh3_from_ocn = .false.   ! nh3 is obtained from ocean as atm import data
+  logical, protected     :: compute_enthalpy_flux = .false.
+
   character(*),parameter :: F01 = "('(cam_import_export) ',a,i8,2x,i8,2x,d21.14)"
   character(*),parameter :: F02 = "('(cam_import_export) ',a,i8,2x,i8,2x,i8,2x,d21.14)"
   character(*),parameter :: u_FILE_u = __FILE__
@@ -100,11 +101,12 @@ contains
   !-----------------------------------------------------------
   ! advertise fields
   !-----------------------------------------------------------
-  subroutine advertise_fields(gcomp, flds_scalar_name, rc)
+  subroutine advertise_fields(gcomp, flds_scalar_name, compute_enthalpy_flux_in, rc)
 
     ! input/output variables
     type(ESMF_GridComp)            :: gcomp
     character(len=*) , intent(in)  :: flds_scalar_name
+    logical          , intent(in)  :: compute_enthalpy_flux_in
     integer          , intent(out) :: rc
 
     ! local variables
@@ -130,6 +132,12 @@ contains
     !--------------------------------
     ! determine necessary toggles for below
     !--------------------------------
+
+    ! Set module variable
+    compute_enthalpy_flux = compute_enthalpy_flux_in
+    if (masterproc) then
+       write(iulog,'(2a,l)') trim(subname), 'compute_enthalpy_flux = ',compute_enthalpy_flux
+    end if
 
     call NUOPC_CompAttributeGet(gcomp, name='flds_co2a', value=cvalue, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -220,8 +228,10 @@ contains
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_rainl'    )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_snowc'    )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_snowl'    )
-    call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hmat'     ) ! enthalpy flux computed by cam
-    call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hlat'     ) ! var.lat.ht.part
+    if (compute_enthalpy_flux) then
+       call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hmat'     ) ! enthalpy flux computed by cam
+       call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_hlat'     ) ! var.lat.ht.part
+    end if
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_lwdn'     )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_swndr'    )
     call fldlist_add(fldsFrAtm_num, fldsFrAtm, 'Faxa_swvdr'    )
@@ -304,8 +314,10 @@ contains
     call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faxx_sen'  )
     call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faxx_lwup' )
     call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faxx_evap' )
-    call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faox_evap' )
-    call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faxx_hrof' )
+    if (compute_enthalpy_flux) then
+       call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faox_evap' )
+       call fldlist_add(fldsToAtm_num, fldsToAtm, 'Faxx_hrof' )
+    end if
 
     ! dust fluxes from land (4 sizes)
     call fldlist_add(fldsToAtm_num, fldsToAtm, 'Fall_flxdst', ungridded_lbound=1, ungridded_ubound=4)
@@ -619,7 +631,7 @@ contains
        call state_getfldptr(importState, 'Faxx_evap', fldptr=fldptr_evap, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-       ! ***NOTE:*** if cam_compute_enthalpy_flux is .false. and if in
+       ! ***NOTE:*** if atm_compute_enthalpy_flux is .false. and if in
        ! CMEPS med_computes_enthalpy_flux is .true., then the mediator
        ! will compute it if the ocean requests it and add a correction
        ! to the sensible heat sent to cam.
