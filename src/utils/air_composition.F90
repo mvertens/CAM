@@ -35,8 +35,6 @@ module air_composition
    integer, parameter, public :: fliq_idx = 3  ! index for flux of liquid precipitation
    integer, parameter, public :: fice_idx = 4  ! index for flux of frozen precipitation
 
-   logical, protected, public :: compute_enthalpy_flux = .false. ! obtained from nuopc mediator
-
    private :: air_species_info
 
    integer,  parameter :: unseti = -HUGE(1)
@@ -98,6 +96,7 @@ module air_composition
 
    ! explicitly declare reference enthalpies and temperatures for atmosphere and ocean
    ! only used if compute_enthalpy_flux is true
+   logical , public, protected :: compute_enthalpy_flux = .false. ! obtained from nuopc mediator
    real(r8), public, protected :: t00o = unsetr     ! Water enthalpy reference temperature, ocean (K)
    real(r8), public, protected :: t00a = unsetr     ! Water enthalpy reference temperature, atmosphere (K)
    real(r8), public, protected :: h00o = unsetr     ! Material enthalpy zero, liquid reference state, ocean water (J/kg)
@@ -668,7 +667,7 @@ CONTAINS
          call endrun(subname//': water_species_in_air_num /= 1+liq_num+ice_num')
       end if
 
-      if (compute_enthalpy_fluxes) then
+      if (compute_enthalpy_flux) then
 
          ! Initialising t00's and h00's
          ! N.B. latent heats should be adjusted to t00a, but unless t00a=tmelt, this will break all physics

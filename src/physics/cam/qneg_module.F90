@@ -391,18 +391,14 @@ contains
           qflx (i,1) = qflx (i,1) - excess(i)
           lhflx(i) = lhflx(i) - excess(i)*latvap
           shflx(i) = shflx(i) + excess(i)*latvap
+          if (present(seflx)) then
+             seflx(i) = seflx(i) + excess(i)*(latvap+latice)
+          end if
           if (index > 0) then
              qneg4_warn_num(index) = qneg4_warn_num(index) + 1
           end if
        end if
     end do
-    if (present(seflx)) then
-       do i = 1, ncol
-          if (excess(i) < 0._r8) then
-             seflx(i) = seflx(i) + excess(i)*(latvap+latice)
-          end if
-       end do
-    end if
 
     ! Maybe output bad values
     if ((cnst_outfld((2*pcnst)+1)) .and. (worst < worst_reset)) then
