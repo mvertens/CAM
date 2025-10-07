@@ -2082,6 +2082,7 @@ contains
 
     use check_energy,    only: check_energy_get_integrals
     use physconst,       only: cpair
+    use air_composition, only: compute_enthalpy_flux
 
     ! Arguments
 
