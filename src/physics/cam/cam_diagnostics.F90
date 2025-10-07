@@ -227,9 +227,9 @@ contains
     call addfld ('TFIX',    horiz_only,  'A', 'K/s',          'T fixer (T equivalent of Energy correction)')
     call addfld ('TTEND_TOT', (/ 'lev' /), 'A', 'K/s',        'Total temperature tendency')
 
-    call addfld('EBREAK'    ,  horiz_only, 'A','W/m2',  &
-                              'Global-mean energy-nonconservation (W/m2)'                            )
     if (compute_enthalpy_flux) then
+       call addfld('EBREAK'    ,  horiz_only, 'A','W/m2',  &
+            'Global-mean energy-nonconservation (W/m2)'                            )
        call addfld('PTTEND_DME', (/ 'lev' /), 'A', 'K/s ', &
             'T-tendency due to water fluxes (end of tphysac)'                      )
        call addfld('IETEND_DME',  horiz_only, 'A','W/m2 ', &
@@ -2119,11 +2119,17 @@ contains
     ! Total physics tendency for Temperature
     ! (remove global fixer tendency from total for FV and SE dycores)
 
-    call check_energy_get_integrals(heat_glob_out=heat_glob,tedif_glob_out=tedif_glob) !+tedif
-    ftem2(:ncol)  = tedif_glob/ztodt
-    call outfld('EBREAK', ftem2, pcols, lchnk)
-    ftem2(:ncol)  = heat_glob/cpair
-    call outfld('TFIX', ftem2, pcols, lchnk)
+    if (compute_enthalpy_flux) then
+       call check_energy_get_integrals(heat_glob_out=heat_glob, tedif_glob_out=tedif_glob)
+       ftem2(:ncol)  = tedif_glob/ztodt
+       call outfld('EBREAK', ftem2, pcols, lchnk)
+       ftem2(:ncol)  = heat_glob/cpair
+       call outfld('TFIX', ftem2, pcols, lchnk)
+    else
+       call check_energy_get_integrals( heat_glob_out=heat_glob )
+       ftem2(:ncol) = heat_glob/cpair
+       call outfld('TFIX', ftem2, pcols, lchnk)
+    end if
 
     ftem3(:ncol,:pver)  = tend%dtdt(:ncol,:pver) - heat_glob/cpair
     call outfld('PTTEND',ftem3, pcols, lchnk )
