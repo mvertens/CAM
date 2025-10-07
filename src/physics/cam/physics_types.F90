@@ -432,46 +432,29 @@ contains
     if(ptend%ls) then
 
        if(compute_enthalpy_flux) then
-          !use conserved energy
-          call get_conserved_energy(levels_are_moist, ptend%top_level, ptend%bot_level  &
-               , cpairv_loc(:ncol,:), state%T(:ncol,:), state%q(:ncol,:,:), state%pdel(:ncol,:) &
-               , pdel(:ncol,:), te(:ncol,:))
-          te(:ncol,ptend%top_level:ptend%bot_level)=te(:ncol,ptend%top_level:ptend%bot_level) &
-               +ptend%s(:ncol,ptend%top_level:ptend%bot_level)*dt
-          call inv_conserved_energy(levels_are_moist, ptend%top_level, ptend%bot_level  &
-               , te(:ncol,:), cpairv_loc(:ncol,:), state%q(:ncol,:,:), state%pdel(:ncol,:) &
-               , pdel(:ncol,:), t_tmp(:ncol,:))
-          if (present(tend)) &
-               tend%dtdt(:ncol,ptend%top_level:ptend%bot_level)=tend%dtdt(:ncol,ptend%top_level:ptend%bot_level) + &
-               (T_tmp(:ncol,ptend%top_level:ptend%bot_level) &
-               -state%t(:ncol,ptend%top_level:ptend%bot_level))/dt
-          state%T(:ncol,ptend%top_level:ptend%bot_level)=T_tmp(:ncol,ptend%top_level:ptend%bot_level)
-       end if
-
-       ! if(compute_enthalpy_flux) then
-       !    !use conserved energy
-       !    call get_conserved_energy(levels_are_moist, ptend%top_level, ptend%bot_level,  &
-       !         cpairv_loc(:ncol,:), state%T(:ncol,:), state%q(:ncol,:,:), state%pdel(:ncol,:), &
-       !         pdel(:ncol,:), te(:ncol,:))
-       !    te(:ncol,ptend%top_level:ptend%bot_level) = te(:ncol,ptend%top_level:ptend%bot_level) + &
-       !         ptend%s(:ncol,ptend%top_level:ptend%bot_level)*dt
-       !    call inv_conserved_energy(levels_are_moist, ptend%top_level, ptend%bot_level,  &
-       !          te(:ncol,:), cpairv_loc(:ncol,:), state%q(:ncol,:,:), state%pdel(:ncol,:), &
-       !          pdel(:ncol,:), t_tmp(:ncol,:))
-       !    if (present(tend)) then
-       !       tend%dtdt(:ncol,ptend%top_level:ptend%bot_level) = tend%dtdt(:ncol,ptend%top_level:ptend%bot_level) + &
-       !            (T_tmp(:ncol,ptend%top_level:ptend%bot_level) - &
-       !            state%t(:ncol,ptend%top_level:ptend%bot_level))/dt
-       !    end if
-       !    state%T(:ncol,ptend%top_level:ptend%bot_level) = T_tmp(:ncol,ptend%top_level:ptend%bot_level)
-       ! else
-       !    do k = ptend%top_level, ptend%bot_level
-       !       state%t(:ncol,k) = state%t(:ncol,k) + ptend%s(:ncol,k)*dt/cpairv_loc(:ncol,k)
-       !       if (present(tend)) then
-       !          tend%dtdt(:ncol,k) = tend%dtdt(:ncol,k) + ptend%s(:ncol,k)/cpairv_loc(:ncol,k)
-       !       end if
-       !    end do
-       ! endif
+          !use conserved energy (pe and te are output variables in get_conserved_energy call)
+          call get_conserved_energy(levels_are_moist, ptend%top_level, ptend%bot_level,  &
+               cpairv_loc(:ncol,:), state%T(:ncol,:), state%q(:ncol,:,:), state%pdel(:ncol,:), &
+               pdel(:ncol,:), te(:ncol,:))
+          te(:ncol,ptend%top_level:ptend%bot_level) = te(:ncol,ptend%top_level:ptend%bot_level) + &
+               ptend%s(:ncol,ptend%top_level:ptend%bot_level)*dt
+          call inv_conserved_energy(levels_are_moist, ptend%top_level, ptend%bot_level,  &
+                te(:ncol,:), cpairv_loc(:ncol,:), state%q(:ncol,:,:), state%pdel(:ncol,:), &
+                pdel(:ncol,:), t_tmp(:ncol,:))
+          if (present(tend)) then
+             tend%dtdt(:ncol,ptend%top_level:ptend%bot_level) = tend%dtdt(:ncol,ptend%top_level:ptend%bot_level) + &
+                  (T_tmp(:ncol,ptend%top_level:ptend%bot_level) - &
+                  state%t(:ncol,ptend%top_level:ptend%bot_level))/dt
+          end if
+          state%T(:ncol,ptend%top_level:ptend%bot_level) = T_tmp(:ncol,ptend%top_level:ptend%bot_level)
+       else
+          do k = ptend%top_level, ptend%bot_level
+             state%t(:ncol,k) = state%t(:ncol,k) + ptend%s(:ncol,k)*dt/cpairv_loc(:ncol,k)
+             if (present(tend)) then
+                tend%dtdt(:ncol,k) = tend%dtdt(:ncol,k) + ptend%s(:ncol,k)/cpairv_loc(:ncol,k)
+             end if
+          end do
+       endif
 
     end if
 

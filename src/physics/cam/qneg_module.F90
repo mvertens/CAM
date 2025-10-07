@@ -325,7 +325,7 @@ contains
     ! Author: J. Olson
     !
     !-----------------------------------------------------------------------
-    use physconst,    only: gravit, latvap, latice !+tht
+    use physconst,    only: gravit, latvap, latice
     use constituents, only: qmin
     use cam_history,  only: outfld
 
