@@ -97,12 +97,13 @@ module air_composition
    real(r8), public, protected :: mbar = unsetr   ! Mean mass at mid level
 
    ! explicitly declare reference enthalpies and temperatures for atmosphere and ocean
-   real(r8), public, protected :: t00o            ! Water enthalpy reference temperature, ocean (K)
-   real(r8), public, protected :: t00a            ! Water enthalpy reference temperature, atmosphere (K)
-   real(r8), public, protected :: h00o            ! Material enthalpy zero, liquid reference state, ocean water (J/kg)
-   real(r8), public, protected :: h00a            ! Material enthalpy zero, liquid reference state, atmos water (J/kg)
-   real(r8), public, protected :: h00a_vap        ! Material enthalpy zero, vapor reference state, atmos (J/kg)
-   real(r8), public, protected :: h00a_ice        ! Material enthalpy zero, vapor reference state, atmos (J/kg)
+   ! only used if compute_enthalpy_flux is true
+   real(r8), public, protected :: t00o = unsetr     ! Water enthalpy reference temperature, ocean (K)
+   real(r8), public, protected :: t00a = unsetr     ! Water enthalpy reference temperature, atmosphere (K)
+   real(r8), public, protected :: h00o = unsetr     ! Material enthalpy zero, liquid reference state, ocean water (J/kg)
+   real(r8), public, protected :: h00a = unsetr     ! Material enthalpy zero, liquid reference state, atmos water (J/kg)
+   real(r8), public, protected :: h00a_vap = unsetr ! Material enthalpy zero, vapor reference state, atmos (J/kg)
+   real(r8), public, protected :: h00a_ice = unsetr ! Material enthalpy zero, vapor reference state, atmos (J/kg)
 
    ! coefficients in expressions for molecular diffusion coefficients
    ! kv1,..,kv3 are coefficients for kmvis calculation
@@ -667,55 +668,48 @@ CONTAINS
          call endrun(subname//': water_species_in_air_num /= 1+liq_num+ice_num')
       end if
 
-      ! hard-wiring here
-      enthalpy_reference_state = 'ice'
-      if (masterproc) then
-         write(iulog,'(a)')'Enthalpy reference state           : '//trim(enthalpy_reference_state)
-      end if
+      if (compute_enthalpy_fluxes) then
 
-      ! Initialising t00's, h00's here
-      ! N.B. latent heats should be adjusted to t00a, but unless t00a=tmelt,
-      !      this will break all physics
-      !  physics and SE dycore make different, mutually inconsistent,
-      !  hard-wired assumptions on t00 and h00:
-      !  physics      : t00=tmelt, h00(ice)=L(ice; liq, T=tmelt)
-      !  dynamics (SE): t00=0, h00=0
-      !  As a result, any water non-conservation in the dycore results in fixer
-      !  increments, proportional to h00a as set below.
+         ! Initialising t00's and h00's
+         ! N.B. latent heats should be adjusted to t00a, but unless t00a=tmelt, this will break all physics
+         !  physics and SE dycore make different, mutually inconsistent,
+         !  hard-wired assumptions on t00 and h00:
+         !  physics      : t00=tmelt, h00(ice)=L(ice; liq, T=tmelt)
+         !  dynamics (SE): t00=0, h00=0
+         !  As a result, any water non-conservation in the dycore results in fixer
+         !  increments, proportional to h00a as set below.
 
-      ! ocean choice for enthalpy at T=0 (liquid reference phase)
-      t00o = tmelt
-      h00o = -cpliq*t00o
+         ! ocean choice for enthalpy at T=0 (liquid reference phase)
+         t00o = tmelt
+         h00o = -cpliq*t00o
 
-      ! atmo choices for enthalpy at T=0 (liquid ref. phase):
-      if (.not.compute_enthalpy_flux)then
-         t00a     = 0._r8
-         h00a     = 0._r8
-         h00a_ice = 0._r8
-         h00a_vap = 0._r8
-      else
+         ! atmo choices for enthalpy at T=0 (liquid reference phase):
          t00a  = tmelt
-         h00a  =  -cpliq*t00a
+         h00a  = -cpliq*t00a
+
+         ! hard-wiring here
+         enthalpy_reference_state = 'ice' ! TODO (mvertens): should this be a namelist variable?
          if (enthalpy_reference_state == 'ice') then
-           !h00a =-((cpliq-cpice)*t00a - latice) ! cam default h00a_ice=0 (minimizes fixer increments)
-            h00a =  -cpliq*t00a                  ! conserve single formula for global energy
-         else if (enthalpy_reference_state.eq.'vap') then
+            h00a =  -cpliq*t00a  ! conserve single formula for global energy
+         else if (enthalpy_reference_state == 'vap') then
             h00a =-((cpliq-cpwv )*t00a + latvap)
          endif
+
          ! the following ensure that the value of atmospheric enthalpy is independent of reference state
          h00a_vap = h00a + ((cpliq-cpwv )*t00a + latvap)
          h00a_ice = h00a + ((cpliq-cpice)*t00a - latice)
-      endif
 
-      if (masterproc) then
-         write(iulog, *) '              ocean t00o: ', t00o
-         write(iulog, *) '              ocean h00o: ', h00o
-         write(iulog, *) 'atmos. enthalpy_reference_state: ', trim(enthalpy_reference_state)
-         write(iulog, *) '                    t00a: ', t00a
-         write(iulog, *) '                    h00a: ', h00a
-         write(iulog, *) '                h00a_ice: ', h00a_ice
-         write(iulog, *) '                h00a_vap: ', h00a_vap
-      endif
+         if (masterproc) then
+            write(iulog, *) '              ocean t00o: ', t00o
+            write(iulog, *) '              ocean h00o: ', h00o
+            write(iulog, *) 'atmos. enthalpy_reference_state: ', trim(enthalpy_reference_state)
+            write(iulog, *) '                    t00a: ', t00a
+            write(iulog, *) '                    h00a: ', h00a
+            write(iulog, *) '                h00a_ice: ', h00a_ice
+            write(iulog, *) '                h00a_vap: ', h00a_vap
+         endif
+
+      end if
 
    end subroutine air_composition_init
 

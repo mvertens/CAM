@@ -32,6 +32,7 @@ module cam_thermo
    !     https://opensky.ucar.edu/islandora/object/articles:21929
 
    public :: get_conserved_energy, inv_conserved_energy
+
    ! cam_thermo_init: Initialize constituent dependent properties
    public :: cam_thermo_init
    ! cam_thermo_dry_air_update: Update dry air composition dependent properties
