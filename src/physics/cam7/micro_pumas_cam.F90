@@ -2764,9 +2764,9 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
          icimrst(i,k)   = min( state_loc%q(i,k,ixcldice) / max(mincld,icecldf(i,k)),0.005_r8 )
          icwmrst(i,k)   = min( state_loc%q(i,k,ixcldliq) / max(mincld,liqcldf(i,k)),0.005_r8 )
          icinc(i,k)     = state_loc%q(i,k,ixnumice) / max(mincld,icecldf(i,k)) * &
-              state_loc%pmid(i,k) / (287.15_r8*state_loc%t(i,k))
+              state_loc%pmid(i,k) / (rair*state_loc%t(i,k))
          icwnc(i,k)     = state_loc%q(i,k,ixnumliq) / max(mincld,liqcldf(i,k)) * &
-              state_loc%pmid(i,k) / (287.15_r8*state_loc%t(i,k))
+              state_loc%pmid(i,k) / (rair*state_loc%t(i,k))
          ! Calculate micro_pumas_cam cloud water paths in each layer
          ! Note: uses stratiform cloud fraction!
          iciwpst(i,k)   = min(state_loc%q(i,k,ixcldice)/max(mincld,ast(i,k)),0.005_r8) * state_loc%pdel(i,k) / gravit
@@ -3932,8 +3932,6 @@ subroutine massless_droplet_destroyer(ztodt, state,  ptend)
 
      use micro_pumas_utils,   only: qsmall
      use ref_pres,         only: top_lev => trop_cloud_top_lev
-
-     implicit none
 
      ! Input Variables
      real(r8), intent(in)                  :: ztodt     ! model time increment
