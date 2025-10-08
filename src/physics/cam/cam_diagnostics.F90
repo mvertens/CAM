@@ -88,7 +88,6 @@ logical          :: history_budget                 ! output tendencies and state
                                                    ! liquid budgets.
 integer          :: history_budget_histfile_num    ! output history file number for budget fields
 logical          :: history_waccm                  ! outputs typically used for WACCM
-logical          :: history_enthalpy_flux          ! outputs enthalpy flux diagnostics
 
 ! Physics buffer indices
 
