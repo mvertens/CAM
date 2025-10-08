@@ -1067,26 +1067,26 @@ contains
 
     if( has_sox ) then
        call setsox( state, &
-            ncol,     &
-            lchnk,    &
-            loffset,  &
-            delt,     &
-            pmid,     &
-            pdel,     &
-            tfld,     &
-            mbar,     &
-            cwat,     &
-            cldfr,    &
-            cldnum,   &
-            airdens,  &
-            invariants, &
-            vmrcw,    &
-            vmr,      &
-            xphlwc,   &
-            aqso4,    &
-            aqh2so4,  &
-            aqso4_h2o2,&
-            aqso4_o3  &
+            pbuf,          &
+            ncol,          &
+            lchnk,         &
+            loffset,       &
+            delt,          &
+            pmid,          &
+            pdel,          &
+            tfld,          &
+            mbar,          &
+            cwat,          &
+            cldfr,         &
+            cldnum,        &
+            invariants,    &
+            vmrcw,         &
+            vmr,           &
+            xphlwc,        &
+            aqso4,         &
+            aqh2so4,       &
+            aqso4_h2o2,    &
+            aqso4_o3       &
             )
         call outfld( 'XPH_LWC',xphlwc(:ncol,:), ncol , lchnk )
     endif
