@@ -15,7 +15,7 @@
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:30:00</option>
+      <option name="wallclock">00:40:00</option>
     </options>
   </test>
   <test compset="NFLTHIST" grid="ne30pg3_ne30pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
@@ -23,7 +23,7 @@
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:30:00</option>
+      <option name="wallclock">00:40:00</option>
     </options>
   </test>
 
@@ -32,7 +32,7 @@
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:30:00</option>
+      <option name="wallclock">00:40:00</option>
     </options>
   </test>
   <test compset="NF2000mam4" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
@@ -40,7 +40,7 @@
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:30:00</option>
+      <option name="wallclock">00:40:00</option>
     </options>
   </test>
 
@@ -100,7 +100,7 @@
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">00:30:00</option>
       <option name="comment">Test ZM modifications from Tomas Tonazzio</option>
     </options>
   </test>
