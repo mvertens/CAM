@@ -1520,35 +1520,30 @@ end subroutine physics_ptend_copy
        call endrun('physics_tend_init: tend must be allocated before it can be initialized')
     end if
 
-    tend%s_dme   = 0._r8!+tht
-    tend%qt_dme  = 0._r8!+tht
+    tend%s_dme   = 0._r8
+    tend%qt_dme  = 0._r8
     tend%dtdt    = 0._r8
     tend%dudt    = 0._r8
     tend%dvdt    = 0._r8
     tend%flx_net = 0._r8
     tend%te_tnd  = 0._r8
     tend%te_sen  = 0._r8
-   !tend%te_lat  = 0._r8
     tend%tw_tnd  = 0._r8
 
 end subroutine physics_tend_init
 
 !===============================================================================
-! this routine only considers wv as not massless (FV and EUL)
+
 subroutine set_state_pdry (state,pdeld_calc)
 
   use ppgrid,  only: pver
-  use air_composition, only: dry_air_species_num,thermodynamic_active_species_num
-  use air_composition, only: thermodynamic_active_species_idx
   implicit none
 
   type(physics_state), intent(inout) :: state
   logical, optional, intent(in) :: pdeld_calc    !  .true. do calculate pdeld [default]
                                                  !  .false. don't calculate pdeld
-
-  real(r8) :: tot_water (pcols) ! total td'ly active water
   integer ncol
-  integer k, m, m_cnst
+  integer k
   logical do_pdeld_calc
 
   if ( present(pdeld_calc) ) then
@@ -1564,16 +1559,10 @@ subroutine set_state_pdry (state,pdeld_calc)
   state%pintdry(:ncol,1) = state%pint(:ncol,1)
 
   if (do_pdeld_calc)  then
-    do k = 1, pver
-      tot_water(:ncol) = 0.0_r8
-      do m_cnst=dry_air_species_num+1,thermodynamic_active_species_num
-        m = thermodynamic_active_species_idx(m_cnst)
-        tot_water(:ncol) = tot_water(:ncol)+state%q(:ncol,k,m)
-      end do
-      state%pdeldry(:ncol,k) = state%pdel(:ncol,k)*(1._r8-tot_water(:ncol))
-    end do
+     do k = 1, pver
+        state%pdeldry(:ncol,k) = state%pdel(:ncol,k)*(1._r8-state%q(:ncol,k,1))
+     end do
   endif
-
   do k = 1, pver
      state%pintdry(:ncol,k+1) = state%pintdry(:ncol,k)+state%pdeldry(:ncol,k)
      state%pmiddry(:ncol,k) = (state%pintdry(:ncol,k+1)+state%pintdry(:ncol,k))/2._r8
@@ -1588,56 +1577,72 @@ end subroutine set_state_pdry
 
 !===============================================================================
 
-subroutine set_wet_to_dry (state, convert_cnst_type)
+subroutine set_wet_to_dry(state, convert_cnst_type)
+
+  ! Convert mixing ratios from a wet to dry basis for constituents of type
+  ! convert_cnst_type.  Constituents are given a type when they are added
+  ! to the constituent array by a call to cnst_add during the register
+  ! phase of initialization.  There are two constituent types: 'wet' for
+  ! water species and 'dry' for non-water species.
 
   use constituents,  only: pcnst, cnst_type
 
   type(physics_state), intent(inout) :: state
-  character(len=3),    intent(in), optional    :: convert_cnst_type
-  character(len=3)                             :: convert_type
+  character(len=3),    intent(in)    :: convert_cnst_type
 
+  ! local variables
   integer m, ncol
+  character(len=*), parameter :: sub = 'set_wet_to_dry'
+  !-----------------------------------------------------------------------------
 
-if (present(convert_cnst_type)) then
- convert_type=convert_cnst_type
-else
- convert_type='dry'
-endif
+  ! check input
+  if (.not.(convert_cnst_type == 'wet' .or. convert_cnst_type == 'dry')) then
+    write(iulog,*) sub//': FATAL: convert_cnst_type not recognized: '//convert_cnst_type
+    call endrun(sub//': FATAL: convert_cnst_type not recognized: '//convert_cnst_type)
+  end if
 
   ncol = state%ncol
 
-  do m = 1,pcnst
-     if (cnst_type(m).eq.convert_type) then
+  do m = 1, pcnst
+     if (cnst_type(m) == convert_cnst_type) then
         state%q(:ncol,:,m) = state%q(:ncol,:,m)*state%pdel(:ncol,:)/state%pdeldry(:ncol,:)
-     endif
+     end if
   end do
 
 end subroutine set_wet_to_dry
 
 !===============================================================================
 
-subroutine set_dry_to_wet (state, convert_cnst_type)
+subroutine set_dry_to_wet(state, convert_cnst_type)
+
+  ! Convert mixing ratios from a dry to wet basis for constituents of type
+  ! convert_cnst_type.  Constituents are given a type when they are added
+  ! to the constituent array by a call to cnst_add during the register
+  ! phase of initialization.  There are two constituent types: 'wet' for
+  ! water species and 'dry' for non-water species.
 
   use constituents,  only: pcnst, cnst_type
 
   type(physics_state), intent(inout) :: state
-  character(len=3),    intent(in), optional    :: convert_cnst_type
-  character(len=3)                             :: convert_type
+  character(len=3),    intent(in)    :: convert_cnst_type
 
+  ! local variables
   integer m, ncol
+  character(len=*), parameter :: sub = 'set_dry_to_wet'
+  !-----------------------------------------------------------------------------
 
-if (present(convert_cnst_type)) then
- convert_type=convert_cnst_type
-else
- convert_type='dry'
-endif
+  ! check input
+  if (.not.(convert_cnst_type == 'wet' .or. convert_cnst_type == 'dry')) then
+    write(iulog,*) sub//': FATAL: convert_cnst_type not recognized: '//convert_cnst_type
+    call endrun(sub//': FATAL: convert_cnst_type not recognized: '//convert_cnst_type)
+  end if
 
   ncol = state%ncol
 
-  do m = 1,pcnst
-     if (cnst_type(m).eq.convert_type) then
+  do m = 1, pcnst
+     if (cnst_type(m) == convert_cnst_type) then
         state%q(:ncol,:,m) = state%q(:ncol,:,m)*state%pdeldry(:ncol,:)/state%pdel(:ncol,:)
-     endif
+     end if
   end do
 
 end subroutine set_dry_to_wet
@@ -1954,12 +1959,12 @@ subroutine physics_tend_alloc(tend,psetcols)
   integer :: ierr = 0
 
   tend%psetcols = psetcols
-!+tht
+
   allocate(tend%s_dme(psetcols,pver), stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_alloc error: allocation error for tend%s_dme')
   allocate(tend%qt_dme(psetcols,pver), stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_alloc error: allocation error for tend%qt_dme')
-!-tht
+
   allocate(tend%dtdt(psetcols,pver), stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_alloc error: allocation error for tend%dtdt')
 
@@ -1984,8 +1989,8 @@ subroutine physics_tend_alloc(tend,psetcols)
   allocate(tend%tw_tnd(psetcols), stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_alloc error: allocation error for tend%tw_tnd')
 
-  tend%s_dme (:,:)= inf !+tht
-  tend%qt_dme(:,:)= inf !+tht
+  tend%s_dme (:,:)= inf
+  tend%qt_dme(:,:)= inf
   tend%dtdt(:,:) = inf
   tend%dudt(:,:) = inf
   tend%dvdt(:,:) = inf
@@ -2005,12 +2010,13 @@ subroutine physics_tend_dealloc(tend)
 
   type(physics_tend), intent(inout)  :: tend
   integer :: ierr = 0
-!+tht
+
   deallocate(tend%s_dme, stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_dealloc error: deallocation error for tend%s_dme')
+
   deallocate(tend%qt_dme, stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_dealloc error: deallocation error for tend%qt_dme')
-!-tht
+
   deallocate(tend%dtdt, stat=ierr)
   if ( ierr /= 0 ) call endrun('physics_tend_dealloc error: deallocation error for tend%dtdt')
 
