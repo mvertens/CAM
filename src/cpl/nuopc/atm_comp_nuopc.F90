@@ -306,10 +306,11 @@ contains
     call NUOPC_CompAttributeGet(gcomp, name='atm_computes_enthalpy_flux', value=cvalue, &
          isPresent=isPresent, isSet=isSet, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    compute_enthalpy_flux = .false.
     if (isPresent .and. isSet) then
-       read (cvalue,*) compute_enthalpy_flux
-    else
-       compute_enthalpy_flux = .false.
+       if (trim(cvalue) == 'atm') then
+          compute_enthalpy_flux = .true.
+       end if
     end if
 
     ! read mediator fields namelists
