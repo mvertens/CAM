@@ -313,6 +313,19 @@ contains
        end if
     end if
 
+    call NUOPC_CompAttributeGet(gcomp, name='component_computes_enthalpy_flux', value=cvalue, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       if (trim(cvalue) == 'atm') then
+          compute_enthalpy_flux = .true.
+       else
+          compute_enthalpy_flux = .false.
+       end if
+    else
+       compute_enthalpy_flux = .false.
+    end if
+
     ! read mediator fields namelists
     call read_surface_fields_namelists()
 
