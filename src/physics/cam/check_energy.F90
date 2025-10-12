@@ -985,7 +985,7 @@ end subroutine check_energy_readnl
     real(r8), dimension(pcols)      :: variable_latent_heat_surface_cpice_term !xxx diagnostics
     real(r8), dimension(pcols)      :: variable_latent_heat_surface_ls_term !xxx diagnostics
     real(r8), dimension(pcols)      :: variable_latent_heat_surface_lf_term !xxx diagnostics
-    real(r8), dimension(pcols)      :: enthalpy_flux_atm, enthalpy_flux_ocn !tht
+    real(r8), dimension(pcols)      :: enthalpy_flux_atm, enthalpy_flux_ocn
     real(r8), dimension(pcols,pver) :: tmp_t, pdel_rf, qinp, totliqinp, toticeinp
     real(r8), dimension(pcols)      :: zero, dsema, dcp_heat, iedme
     real(r8), dimension(pcols)      :: water_flux_bc, water_flux_ac, enthalpy_flux_bc, enthalpy_flux_ac
@@ -1015,7 +1015,7 @@ end subroutine check_energy_readnl
     nstep = get_nstep()
     zero(:)=0._r8
 
-    ! scale temperature for consistency with dycore (tht: partial adj. after cp update done implicitly in dme)
+    ! scale temperature for consistency with dycore (partial adj. after cp update done implicitly in dme)
     do k = 1, pver
        do i = 1, ncol
           scale_cpdry_cpdycore(i,k) = cpairv(i,k,lchnk)/cp_or_cv_dycore(i,k,lchnk)
@@ -1038,7 +1038,7 @@ end subroutine check_energy_readnl
     ! using merged quantities, for atmospheric mat.enthalpy flux (used in check_energy)
     if (minval(cam_in%ts(:ncol)).gt.0._r8) then
        hevap_atm(:ncol) = cam_in%cflx    (:ncol,1)*(cpwv*(cam_in%ts (:ncol)-t00a)+(cpliq*t00a+h00a))   ! into atm
-       !tht: add non-linear terms? using evap_ocn, sst
+       ! add non-linear terms? using evap_ocn, sst
        if (use_nonlinear_evap_fraction) then
           nocnfrc(:ncol)=1._r8-cam_in%ocnfrac(:ncol)
           where(nocnfrc(:ncol).gt.1e-2) ! not sure what's safe here -- last factor may be large
@@ -1057,7 +1057,7 @@ end subroutine check_energy_readnl
        else
           tevp     (:ncol)= cam_in%ts(:ncol)
        endif
-       !tht: for ocean-only  mat.enthalpy flux (passed to ocean)
+       ! for ocean-only  mat.enthalpy flux (passed to ocean)
        hevap_ocn (:ncol)= cam_in%evap_ocn(:ncol)  *(cpwv*(cam_in%sst(:ncol)-t00a)+(cpliq*t00a+h00a))
     else ! not great but better than zeros
        hevap_atm (:ncol)= cam_in%cflx    (:ncol,1)*(cpwv*(state%t(:ncol,pver)-t00a)+(cpliq*t00a+h00a)) ! into atm
@@ -1100,7 +1100,7 @@ end subroutine check_energy_readnl
 
     ! compute precipitation enthalpy fluxes from tphysbc
     tprc   (:ncol) = cam_out%tbot(:ncol)
-    !tht: correct for reference T of latent heats (liquid reference state)
+    ! correct for reference T of latent heats (liquid reference state)
     enthalpy_prec_ac(:ncol,hice_idx) =  -enthalpy_prec_ac(:ncol,fice_idx)*(cpice*(tprc(:ncol)-t00a)+(cpliq*t00a+h00a))
     enthalpy_prec_ac(:ncol,hliq_idx) =  -enthalpy_prec_ac(:ncol,fliq_idx)*(cpliq*(tprc(:ncol)-t00a)+(cpliq*t00a+h00a))
     call pbuf_set_field(pbuf, enthalpy_prec_ac_idx, enthalpy_prec_ac)
