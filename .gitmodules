@@ -47,7 +47,7 @@
 [submodule "chem_proc"]
     path = chem_proc
     url = https://github.com/ESCOMP/CHEM_PREPROCESSOR.git
-    fxtag = chem_proc5_0_06
+    fxtag = chem_proc5_0_07
     fxrequired = AlwaysRequired
     fxDONOTUSEurl = https://github.com/ESCOMP/CHEM_PREPROCESSOR.git
 
@@ -70,7 +70,7 @@
 [submodule "hemco"]
     path = src/hemco
     url = https://github.com/ESCOMP/HEMCO_CESM.git
-    fxtag = hemco-cesm2_1_0_hemco3_9_0
+    fxtag = hemco-cesm2_2_0_hemco3_10_3
     fxrequired = AlwaysRequired
     fxDONOTUSEurl = https://github.com/ESCOMP/HEMCO_CESM.git
 
@@ -102,17 +102,6 @@
     fxrequired = AlwaysRequired
     fxDONOTUSEurl = https://github.com/earth-system-radiation/rrtmgp-data.git
 
-[submodule "rte-rrtmgp"]
-    path = src/physics/rrtmgp/ext
-    url = https://github.com/earth-system-radiation/rte-rrtmgp.git
-    fxtag = v1.9.2
-    fxrequired = AlwaysRequired
-    fxDONOTUSEurl = https://github.com/earth-system-radiation/rte-rrtmgp.git
-
-#-----------------------------
-# Optional CAM externals
-#-----------------------------
-
 [submodule "ali_arms"]
     path = src/physics/ali_arms
     url = https://github.com/ESCOMP/ALI-ARMS
@@ -123,14 +112,14 @@
 [submodule "cloud_j"]
     path = src/chemistry/cloud_j
     url = https://github.com/geoschem/cloud-j.git
-    fxtag = 7.7.3
+    fxtag = 8.0.1
     fxrequired = AlwaysOptional
     fxDONOTUSEurl = https://github.com/geoschem/cloud-j.git
 
 [submodule "geoschem"]
     path = src/chemistry/geoschem/geoschem_src
     url = https://github.com/geoschem/geos-chem.git
-    fxtag = 14.4.3
+    fxtag = 14.5.3
     fxrequired = AlwaysOptional
     fxDONOTUSEurl = https://github.com/geoschem/geos-chem.git
 
@@ -181,7 +170,7 @@
 [submodule "ccs_config"]
     path = ccs_config
     url = https://github.com/NorESMhub/ccs_config_noresm.git
-    fxtag = ccs_config_noresm0.0.51
+    fxtag = ccs_config_noresm0.0.53
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/ccs_config_noresm.git
 
@@ -221,24 +210,17 @@
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/NorESM_CICE
 
-[submodule "cism"]
-    path = components/cism
-    url = https://github.com/NorESMhub/CISM-wrapper
-    fxtag = cismwrap_2_2_007_noresm_v0
-    fxrequired = ToplevelRequired
-    fxDONOTUSEurl = https://github.com/NorESMhub/CISM-wrapper
-
 [submodule "clm"]
     path = components/clm
     url = https://github.com/NorESMhub/CTSM
-    fxtag = ctsm5.3.045_noresm_v11
+    fxtag = ctsm5.3.045_noresm_v13
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CTSM
 
 [submodule "cmeps"]
     path = components/cmeps
     url = https://github.com/NorESMhub/CMEPS.git
-    fxtag = cmeps1.0.39_noresm_v6
+    fxtag = cmeps1.0.39_noresm_v8
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CMEPS.git
 
