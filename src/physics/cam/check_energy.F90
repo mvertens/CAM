@@ -1002,12 +1002,8 @@ end subroutine check_energy_readnl
     integer nstep, ixq, m, m_cnst
     real(r8), dimension(pcols,pver) :: fct_bc, fct_ac
     real(r8), dimension(pcols,pver) :: scale_cpdry_cpdycore, ttend_hfix
-
     real(r8), parameter :: eps=1.E-10_r8
-
-    logical, parameter :: debug_enthalpy=.false.
-    logical, parameter :: use_nonlinear_evap_fraction=.false.
-
+    logical , parameter :: debug_enthalpy=.false.
     integer :: i, k
     real(r8):: tot, wgt_bc, wgt_ac
     !-----------------------------------------------------------------------------
@@ -1035,54 +1031,19 @@ end subroutine check_energy_readnl
     if (enthalpy_evop_idx==0) then
        call endrun("pbufs for enthalpy evap flux not allocated")
     end if
+
     ! using merged quantities, for atmospheric mat.enthalpy flux (used in check_energy)
     if (minval(cam_in%ts(:ncol)).gt.0._r8) then
-       hevap_atm(:ncol) = cam_in%cflx    (:ncol,1)*(cpwv*(cam_in%ts (:ncol)-t00a)+(cpliq*t00a+h00a))   ! into atm
-       ! add non-linear terms? using evap_ocn, sst
-       if (use_nonlinear_evap_fraction) then
-          nocnfrc(:ncol)=1._r8-cam_in%ocnfrac(:ncol)
-          where(nocnfrc(:ncol).gt.1e-2) ! not sure what's safe here -- last factor may be large
-             hevap_atm(:ncol)= hevap_atm(:ncol) &
-                  + cpwv &
-                  *(1._r8-nocnfrc(:ncol))/nocnfrc(:ncol) &
-                  *(cam_in%cflx(:ncol,1)-cam_in%evap_ocn(:ncol)) &
-                  *(cam_in%ts(:ncol)-cam_in%sst(:ncol))
-             tevp     (:ncol)= cam_in%ts(:ncol)  &
-                  + (1._r8-nocnfrc(:ncol))/nocnfrc(:ncol) &
-                  *(1._r8-cam_in%evap_ocn(:ncol)/cam_in%cflx(:ncol,1))&
-                  *(cam_in%ts(:ncol)-cam_in%sst(:ncol))
-          elsewhere
-             tevp     (:ncol)= cam_in%ts(:ncol)
-          endwhere
-       else
-          tevp     (:ncol)= cam_in%ts(:ncol)
-       endif
+       hevap_atm(:ncol) = cam_in%cflx(:ncol,1)*(cpwv*(cam_in%ts (:ncol)-t00a)+(cpliq*t00a+h00a))   ! into atm
+       tevp(:ncol)= cam_in%ts(:ncol)
        ! for ocean-only  mat.enthalpy flux (passed to ocean)
-       hevap_ocn (:ncol)= cam_in%evap_ocn(:ncol)  *(cpwv*(cam_in%sst(:ncol)-t00a)+(cpliq*t00a+h00a))
+       hevap_ocn (:ncol)= cam_in%evap_ocn(:ncol)*(cpwv*(cam_in%sst(:ncol)-t00a)+(cpliq*t00a+h00a))
     else ! not great but better than zeros
-       hevap_atm (:ncol)= cam_in%cflx    (:ncol,1)*(cpwv*(state%t(:ncol,pver)-t00a)+(cpliq*t00a+h00a)) ! into atm
+       hevap_atm (:ncol)= cam_in%cflx(:ncol,1)*(cpwv*(state%t(:ncol,pver)-t00a)+(cpliq*t00a+h00a)) ! into atm
        tevp      (:ncol)= state%t(:ncol,pver)
        hevap_ocn (:ncol)= hevap_atm(:ncol) ! out of ocn
     endif
     call pbuf_set_field(pbuf, enthalpy_evop_idx, hevap_ocn)
-
-    if (use_nonlinear_evap_fraction) then
-       if(maxval(tevp(:ncol)).gt.350._r8 .or. minval(tevp(:ncol)).lt.150._r8)then
-          i=maxloc(tevp(:ncol),1)
-          k=minloc(tevp(:ncol),1)
-          print*,'Bad Tevap'
-          print*,'min ts=',minval(cam_in%ts(:ncol)),maxval(cam_in%ts(:ncol))
-          print*,'state%t',minval(state%t(:ncol,pver)),maxval(state%t(:ncol,pver))
-          print*,'tevp =',tevp(k),tevp(i)
-          print*,'ts   =',cam_in%ts (k),cam_in%ts (i)
-          print*,'sst  =',cam_in%sst(k),cam_in%sst(i)
-          print*,'cflx =',cam_in%cflx(k,1),cam_in%cflx(i,1)
-          print*,'evop =',cam_in%evap_ocn(k),cam_in%evap_ocn(i)
-          print*,'corr =',(1._r8-nocnfrc(k))/nocnfrc(k) *(1._r8-cam_in%evap_ocn(k)/cam_in%cflx(k,1)) *(cam_in%ts(k)-cam_in%sst(k)) &
-               ,(1._r8-nocnfrc(i))/nocnfrc(i) *(1._r8-cam_in%evap_ocn(i)/cam_in%cflx(i,1)) *(cam_in%ts(i)-cam_in%sst(i))
-          call endrun('stopping in enthalpy_adjustment')
-       endif
-    endif
 
     !------------------------------------------------------------------
     ! compute precipitation fluxes and set associated physics buffers
@@ -1094,12 +1055,14 @@ end subroutine check_energy_readnl
     end if
     call pbuf_get_field(pbuf, enthalpy_prec_bc_idx, enthalpy_prec_bc)
     call get_prec_vars(ncol,pbuf,fliq=fliq_tot,fice=fice_tot)
+
     ! fliq_tot holds liquid precipitation from tphysbc and tphysac; idem for ice
     enthalpy_prec_ac(:ncol,fice_idx) = fice_tot(:ncol)-enthalpy_prec_bc(:ncol,fice_idx)
     enthalpy_prec_ac(:ncol,fliq_idx) = fliq_tot(:ncol)-enthalpy_prec_bc(:ncol,fliq_idx)
 
     ! compute precipitation enthalpy fluxes from tphysbc
-    tprc   (:ncol) = cam_out%tbot(:ncol)
+    tprc(:ncol) = cam_out%tbot(:ncol)
+
     ! correct for reference T of latent heats (liquid reference state)
     enthalpy_prec_ac(:ncol,hice_idx) =  -enthalpy_prec_ac(:ncol,fice_idx)*(cpice*(tprc(:ncol)-t00a)+(cpliq*t00a+h00a))
     enthalpy_prec_ac(:ncol,hliq_idx) =  -enthalpy_prec_ac(:ncol,fliq_idx)*(cpliq*(tprc(:ncol)-t00a)+(cpliq*t00a+h00a))
@@ -1108,16 +1071,16 @@ end subroutine check_energy_readnl
     ! compute total enthalpy flux
     enthalpy_flux_bc (:ncol) = enthalpy_prec_bc(:ncol,hliq_idx)+enthalpy_prec_bc(:ncol,hice_idx)
     enthalpy_flux_ac (:ncol) = enthalpy_prec_ac(:ncol,hliq_idx)+enthalpy_prec_ac(:ncol,hice_idx) &
-         +hevap_atm    (:ncol)
-    water_flux_bc    (:ncol) = enthalpy_prec_bc(:ncol,fliq_idx)+enthalpy_prec_bc(:ncol,fice_idx)
-    water_flux_ac    (:ncol) = enthalpy_prec_ac(:ncol,fliq_idx)+enthalpy_prec_ac(:ncol,fice_idx) &
-         -cam_in%cflx(:ncol,1)
+         + hevap_atm(:ncol)
+    water_flux_bc(:ncol) = enthalpy_prec_bc(:ncol,fliq_idx)+enthalpy_prec_bc(:ncol,fice_idx)
+    water_flux_ac(:ncol) = enthalpy_prec_ac(:ncol,fliq_idx)+enthalpy_prec_ac(:ncol,fice_idx) &
+         - cam_in%cflx(:ncol,1)
     enthalpy_flux_atm(:ncol) = enthalpy_prec_bc(:ncol,hliq_idx)+enthalpy_prec_bc(:ncol,hice_idx) &
-         +enthalpy_prec_ac(:ncol,hliq_idx)+enthalpy_prec_ac(:ncol,hice_idx) &
-         +hevap_atm    (:ncol)
+         + enthalpy_prec_ac(:ncol,hliq_idx)+enthalpy_prec_ac(:ncol,hice_idx) &
+         + hevap_atm(:ncol)
     enthalpy_flux_ocn(:ncol) = enthalpy_prec_bc(:ncol,hliq_idx)+enthalpy_prec_bc(:ncol,hice_idx) &
-         +enthalpy_prec_ac(:ncol,hliq_idx)+enthalpy_prec_ac(:ncol,hice_idx) &
-         +hevap_ocn    (:ncol)
+         + enthalpy_prec_ac(:ncol,hliq_idx)+enthalpy_prec_ac(:ncol,hice_idx) &
+         + hevap_ocn(:ncol)
     enthalpy_flux_ocn(:ncol) = cam_in%ocnfrac(:ncol)*enthalpy_flux_ocn(:ncol)
 
     if (debug_enthalpy) then
