@@ -37,6 +37,14 @@
     fxrequired = AlwaysRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/atmospheric_physics
 
+[submodule "cam-sima"]
+  path = src/utils/cam-sima
+  url = https://github.com/ESCOMP/CAM-SIMA.git
+  fxrequired = AlwaysRequired
+  fxsparse = ../.sima_phys_utils_sparse_checkout
+  fxtag = sima0_07_000
+  fxDONOTUSEurl = https://github.com/ESCOMP/CAM-SIMA.git
+
 [submodule "carma"]
     path = src/physics/carma/base
     url = https://github.com/ESCOMP/CARMA_base.git
