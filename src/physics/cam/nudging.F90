@@ -5,7 +5,7 @@ module nudging
 !          toward specified values from analyses.
 !
 ! Authors: Patrick Callaghan (original)
-!          Mariana Vertenstein (2025) refactored for CDEPS capability 
+!          Mariana Vertenstein (2025) refactored for CDEPS capability
 !
 ! Description:
 !
@@ -196,6 +196,7 @@ module nudging
   use spmd_utils,     only: mpi_integer, mpi_real8, mpi_logical, mpi_character
   use cam_logfile,    only: iulog
   use zonal_mean_mod, only: ZonalMean_t
+  use atm_stream_nudging, only : stream_nudging_init, stream_nudging_interp
 
   ! Set all Global values and routines to private by default
   ! and then explicitly set their exposure.
@@ -221,17 +222,25 @@ module nudging
   logical                  :: Nudge_ON          =.false.
   logical                  :: Nudge_Initialized =.false.
   character(len=cl)        :: Nudge_Path
-  type(ESMF_Mesh)          :: Mudge_Mesh
+  type(ESMF_Mesh)          :: Nudge_Mesh
   integer                  :: Nudge_Step
   integer                  :: Model_Step
-  type(ESMF_Time)          :: Model_curr_time
-  type(ESMF_Time)          :: Model_next_time
+  type(ESMF_Time)          :: Nudge_Beg_year
+  type(ESMF_Time)          :: Nudge_Beg_month
+  type(ESMF_Time)          :: Nudge_Beg_day
+  type(ESMF_Time)          :: Nudge_Beg_sec
+  type(ESMF_Time)          :: Nudge_End_year
+  type(ESMF_Time)          :: Nudge_End_month
+  type(ESMF_Time)          :: Nudge_End_day
+  type(ESMF_Time)          :: Nudge_End_sec
   type(ESMF_Time)          :: Nudge_Beg_time
   type(ESMF_Time)          :: Nudge_End_time
+  type(ESMF_Time)          :: Model_curr_time
+  type(ESMF_Time)          :: Model_next_time
   type(ESMF_Time)          :: Nudge_curr_time
   type(ESMF_Time)          :: Nudge_next_time
   integer                  :: Model_Times_Per_Day
-  type(ESMF_Time_Interval) :: Model_delta
+  type(ESMF_TimeInterval)  :: Model_delta
   integer                  :: Nudge_File_Times_Per_Day
   type(ESMF_Time_Interval) :: Nudge_File_delta
   integer                  :: Nudge_Force_Opt
@@ -300,7 +309,7 @@ module nudging
   real(r8),allocatable:: Nudge_Qstep (:,:,:)  !(pcols,pver,begchunk:endchunk)
   real(r8),allocatable:: Nudge_PSstep(:,:)    !(pcols,begchunk:endchunk)
 
-  integer, parameter :: maxfiles = 1000 
+  integer, parameter :: maxfiles = 1000
   character(len=CL)  :: nudge_filenames(maxfiles)
 
 contains
@@ -364,7 +373,7 @@ contains
    Nudge_File_Times_per_Day = 4
    Nudge_Path               = './Data/YOTC_ne30np4_001/'
    Nudge_Filenames(:)       = ' '
-   Nudge_Mesh               = ' ' 
+   Nudge_Mesh               = ' '
    Nudge_Beg_Year           = 2008
    Nudge_Beg_Month          = 5
    Nudge_Beg_Day            = 1
@@ -604,7 +613,7 @@ contains
      call endrun('nudging_readnl:: ERROR in namelist')
    endif
 
- 
+
    ! End Routine
    !------------
 
@@ -713,7 +722,7 @@ contains
    ! Ensure that the Model_Step is not smaller then one timestep
    ! and not larger then the Nudge_Step.
    !--------------------------------------------------------
-   
+
    ! Get the CAM time step size
    dtime = get_step_size()
    Model_Step = 86400/Model_Times_Per_Day
@@ -736,7 +745,7 @@ contains
 
    ! Set module time and time interval variables
    !------------------------------------------------
-   
+
    call get_curr_date(Year, Month, Day, Sec)
    call ESMF_TimeSet(curr_time, year=Year, month=Month, day=Day, sec=Sec, rc=rc)
    call chkrc(rc, sub//': error return from ESMF_TimeSet for Model_currtime')
@@ -747,7 +756,7 @@ contains
    call ESMF_TimeSet(Nudge_end_time, year=Nudge_End_Year, month=Nudge_End_Month, day=Nudge_End_Day, sec=Nudge_End_Sec, rc=rc)
    call chkrc(rc, sub//': error return from ESMF_TimeSet for Nudge_end_time')
 
-   call ESMF_Time_Interval_Set(Model_delta, sec=Model_Step, rc=rc) 
+   call ESMF_Time_Interval_Set(Model_delta, sec=Model_Step, rc=rc)
    call chkrc(rc, sub//': error return from ESMF_TimeInterval_Set for Model_step')
 
    call ESMF_TimeIntervalSet(Nudge_File_delta, s=Nudge_File_Step, rc=rc)
@@ -755,7 +764,7 @@ contains
 
    ! Initialize the time relative to the nudging window
    !------------------------------------------------
-   
+
    After_Beg  = (Model_curr_time >= Nudge_beg_time)
    Before_End = (Nudge_end_time >= Model_curr_time)
 
@@ -825,7 +834,7 @@ contains
    Nudge_Initialized = .true.
 
    if (masterproc) then
-      
+
      ! Informational Output
      !---------------------------
      write(iulog,*) ' '
@@ -898,7 +907,7 @@ contains
 
    ! Initialize nudging stream data type
    !----------------------------------------------------------
-   call stream_nudging_init(Nudge_Path, Nudge_files, Nudge_Mesh, Nudge_Beg_Time, Nudge_End_time, Nudge_Force_Opt, & 
+   call stream_nudging_init(Nudge_Path, Nudge_files, Nudge_Mesh, Nudge_Beg_Time, Nudge_End_time, Nudge_Force_Opt, &
        Nudge_Model_Step)
 
    ! Initialize Nudging Coeffcient profiles in local arrays
@@ -971,19 +980,18 @@ contains
 
    ! Local values
    !----------------
-   integer                  :: Year,Month,Day,Sec
-   logical                  :: Update_Model, Sync_Error
-   logical                  :: After_Beg, Before_End
-   integer                  :: lchnk,ncol,indw
-   type(ESMF_Time)          :: Date1,Date2
-   type(ESMF_TimeInterval)  :: DateDiff
-   type(ESMF_Time)          :: curr_time
-   type(ESMF_Time_Interval) :: date_diff 
-   integer                  :: DeltaT
-   real(r8)                 :: Tscale
-   real(r8)                 :: Tfrac
-   integer                  :: rc
-   real(r8)                 :: Sbar,Qbar,Wsum
+   integer                 :: Year,Month,Day,Sec
+   logical                 :: Update_Model, Sync_Error
+   logical                 :: After_Beg, Before_End
+   integer                 :: lchnk,ncol,indw
+   type(ESMF_TimeInterval) :: DateDiff
+   type(ESMF_Time)         :: curr_time
+   type(ESMF_TimeInterval) :: date_diff
+   integer                 :: DeltaT
+   real(r8)                :: Tscale
+   real(r8)                :: Tfrac
+   real(r8)                :: Sbar,Qbar,Wsum
+   integer                 :: rc
    character(len=*), parameter :: sub = "(nudging_timestep_init) "
    !--------------------------------------------------------------
 
@@ -993,13 +1001,12 @@ contains
      call endrun('nudging_timestep_init:: Nudging NOT Initialized')
    endif
 
-
    !-------------------------------------------------------
-   ! Determine if the current model time is AFTER the begining nudging time
+   ! Determine if the current CAM time is AFTER the begining nudging time
    ! and if it is BEFORE the ending nudging time.
    !-------------------------------------------------------
 
-   ! Get Current model time
+   ! Get Current CAM time
    call get_curr_date(Year,Month,Day,Sec)
 
    call ESMF_TimeSet(curr_time, year=Year, month=Month, day=Day, sec=Sec)
@@ -1017,13 +1024,13 @@ contains
    if ((Before_End) .and. (Update_Model)) then
 
      ! Increment the Model times by the current interval
-     Model_curr_time = Model_next_time 
+     Model_curr_time = Model_next_time
      Model_next_time = Model_next_time + Model_delta
 
      ! Check for Sync Error where NEXT model time after the update
      ! is before the current time. If so, reset the next model
      ! time to a Model_Step after the current time.
-     Sync_Error = (Model_curr_time >= Model_next_time) 
+     Sync_Error = (Model_curr_time >= Model_next_time)
      if(Sync_Error) then
        Model_curr_time = curr_time
        Model_next_time = curr_time + Model_delta
@@ -1136,17 +1143,17 @@ contains
        Update_Nudge = (curr_time >= Nudge_next_time)
        if ((Before_End) .and. (Update_Nudge)) then
           ! Increment the Nudge times by the current interval
-          Nudge_curr_time = Nudge_next_time 
+          Nudge_curr_time = Nudge_next_time
           Nudge_next_time = Nudge_curr_time + Nudge_delta
        endif
-       date_diff = Nudge_next_time - curr_time 
+       date_diff = Nudge_next_time - curr_time
        call ESMF_TimeIntervalGet(date_diff, S=DeltaT, rc=rc)
        call chkrc(rc, sub//': error return from ESMF_TimeIntervalSet')
        Tscale=float(Nudge_Step)/float(DeltaT)
 
      else
 
-       if (masterproc) then 
+       if (masterproc) then
           write(iulog,*) 'NUDGING: Unknown Nudge_TimeScale_Opt=',Nudge_TimeScale_Opt
        end if
        call endrun('nudging_timestep_init:: ERROR unknown Nudging_TimeScale_Opt')
@@ -1183,7 +1190,7 @@ contains
      !      write(iulog,*) 'PFC: Nudge_Xstep arrays updated:'
      !    endif
 
-   endif ! ((Before_End) .and. Update_Model) 
+   endif ! ((Before_End) .and. Update_Model)
 
    ! End Routine
    !------------

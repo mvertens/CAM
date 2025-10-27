@@ -9,7 +9,8 @@ module atm_stream_nudging
   use ESMF              , only : ESMF_Clock, ESMF_Mesh
   use ESMF              , only : ESMF_SUCCESS, ESMF_LOGERR_PASSTHRU, ESMF_END_ABORT
   use ESMF              , only : ESMF_Finalize, ESMF_LogFoundError
-  use ESMF              , only : ESMF_Time, ESMF_Time_Interval, ESMF_Time_Get
+  use ESMF              , only : ESMF_Time, ESMF_TimeInterval
+  use ESMF              , only : ESMF_TimeGet, ESMF_TimeIntervalGet, ESMF_TimeIntervalSet
   use nuopc_shr_methods , only : chkerr
   use dshr_strdata_mod  , only : shr_strdata_type
   use shr_kind_mod      , only : r8 => shr_kind_r8, CL => shr_kind_cl, CS => shr_kind_cs
@@ -26,14 +27,7 @@ module atm_stream_nudging
 
   type(shr_strdata_type) :: sdat_nudging
 
-  character(len=CL)      :: stream_nudging_data_filename
-  character(len=CL)      :: stream_nudging_mesh_filename
-  integer                :: stream_nudging_year_first ! first year in stream to use
-  integer                :: stream_nudging_year_last  ! last year in stream to use
-  integer                :: stream_nudging_year_align ! align stream_year_firstnudging with
-
-  character(len=2)       :: stream_varlist_nudging(5) = (/'U ', 'V ','T ','Q ','PS'/)   
-  type(ESMF_Clock)       :: nudging_clock
+  character(len=2)       :: nudging_varlist(5) = (/'U ', 'V ','T ','Q ','PS'/)
 
   character(*),parameter :: u_FILE_u = __FILE__
 
@@ -46,32 +40,39 @@ contains
 
     use dshr_strdata_mod, only: shr_strdata_init_from_inline
 
+    ! input/output arguments
     character(len=*) , intent(in) :: nudge_path
     character(len=*) , intent(in) :: nudge_files(:)
     character(len=*) , intent(in) :: nudge_mesh
     type(ESMF_Time)  , intent(in) :: nudge_beg_time
     type(ESMF_Time)  , intent(in) :: nudge_end_time
     integer          , intent(in) :: nudge_force_opt
-    integer          , intent(in) :: nudge_model_step 
+    integer          , intent(in) :: nudge_model_step
 
     ! local variables
+    integer                 :: rc
+    integer                 :: nfile
+    integer                 :: nudge_year_first
+    integer                 :: nudge_year_last
+    type(ESMf_TimeInterval) :: nudge_step
+    type(ESMF_Clock)        :: nudging_clock
     character(*), parameter :: sub = "('stream_nudging_init')"
     !----------------------------------------------------------------
 
     ! Create a Model_Clock for nudging - this is different than the CAM clock - it's time step is from the input
     ! nudging information
 
-    call ESMF_TimeIntervalSet(step_size, s=nudge_model_step, rc=rc)
+    call ESMF_TimeIntervalSet(nudge_step, s=nudge_model_step, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
 
-    call ESMF_TimeGet(nudge_beg_time, year=stream_nudging_year_first, rc=rc)
+    call ESMF_TimeGet(nudge_beg_time, year=nudge_year_first, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
 
-    call ESMF_TimeGet(nudge_end_time, year=stream_nudging_year_last, rc=rc)
+    call ESMF_TimeGet(nudge_end_time, year=nudge_year_last, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
@@ -80,7 +81,7 @@ contains
     ! the only use of the model clock in CDEPS is to extract the calendar
 
     nudging_clock = ESMF_ClockCreate(name="Nudging Model Clock", &
-         nudge_model_step, nudge_beg_time, stop_time=nudge_end_time, rc=rc)
+         nudge_step, nudge_beg_time, stop_time=nudge_end_time, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
@@ -90,13 +91,13 @@ contains
     if (masterproc) then
        write(iulog,'(a)'   ) ' '
        write(iulog,'(a,i8)')  'stream nudging settings:'
-       write(iulog,'(a,a)' )  '  stream_nudging_mesh_filename  = ',trim(nudge_mesh)
-       write(iulog,'(a,a,a)') '  stream_varlist_nudging        = ','U,V,T,Q,PS'
-       write(iulog,'(a,i8)')  '  stream_nudging_year_first     = ',nudge_year_first
-       write(iulog,'(a,i8)')  '  stream_nudging_year_last      = ',nudge_year_last
-       write(iulog,'(a,i8)')  '  stream_nudging_year_align     = ',nudge_year_align
-       do nfile = 1,size(stream_nudging_data_filenames)
-          write(iulog,'(a,i8,a)' )  '  stream_nudging_data_filename = ',nfile,trim(stream_nudging_data_filename(nfile))
+       write(iulog,'(a,a)' )  '  nudge_mesh       = ',trim(nudge_mesh)
+       write(iulog,'(a,a,a)') '  nudge_varlist    = ','U,V,T,Q,PS'
+       write(iulog,'(a,i8)')  '  nudge_year_first = ',nudge_year_first
+       write(iulog,'(a,i8)')  '  nudge_year_last  = ',nudge_year_last
+       write(iulog,'(a,i8)')  '  nudge_year_align = ',nudge_year_first
+       do nfile = 1,size(nudge_files)
+          write(iulog,'(a,i8,a)' )  '  nudge_files = ',nfile,trim(nudge_files(nfile))
        end do
        write(iulog,'(a)'   )  ' '
     endif
@@ -109,30 +110,30 @@ contains
        tintalgo = 'linear'
     else
        write(iulog,*) 'NUDGING: Unknown Nudge_Force_Opt=',Nudge_Force_Opt
-       call endrun('nudging_timestep_init:: ERROR unknown Nudging_Force_Opt')
+       call endrun('nudging_timestep_init:: ERROR unknown Nudge_Force_Opt')
     endif
 
     ! Initialize the cdeps data type sdat_nudging
-    call shr_strdata_init_from_inline(sdat_nudging,                &
-         my_task             = iam,                                &
-         logunit             = iulog,                              &
-         compname            = 'ATM',                              &
-         model_clock         = nudging_clock,                      &
-         model_mesh          = nudging_mesh,                       &
-         stream_meshfile     = trim(stream_nudging_mesh_filename), &
-         stream_filenames    = stream_nudging_data_filenames,      &
-         stream_yearFirst    = stream_nudging_year_first,          &
-         stream_yearLast     = stream_nudging_year_last,           &
-         stream_yearAlign    = stream_nudging_year_align,          &
-         stream_fldlistFile  = stream_varlist_nudging,             &
-         stream_fldListModel = stream_varlist_nudging,             &
-         stream_lev_dimname  = 'null',                             &
-         stream_mapalgo      = 'bilinear',                         &
-         stream_offset       = 0,                                  &
-         stream_taxmode      = 'limit',                            &
-         stream_dtlimit      = 1.0e30_r8,                          &
-         stream_tintalgo     = tintalgo,                           &
-         stream_name         = 'NUDGING forcing data ',            &
+    call shr_strdata_init_from_inline(sdat_nudging,       &
+         my_task             = iam,                       &
+         logunit             = iulog,                     &
+         compname            = 'ATM',                     &
+         model_clock         = nudge_clock,               &
+         model_mesh          = nudge_mesh,                &
+         stream_meshfile     = trim(nudge_mesh_filename), &
+         stream_filenames    = nudge_data_filenames,      &
+         stream_yearFirst    = nudge_year_first,          &
+         stream_yearLast     = nudge_year_last,           &
+         stream_yearAlign    = nudge_year_align,          &
+         stream_fldlistFile  = nudge_varlist,             &
+         stream_fldListModel = nudge_varlist,             &
+         stream_lev_dimname  = 'null',                    &
+         stream_mapalgo      = 'bilinear',                &
+         stream_offset       = 0,                         &
+         stream_taxmode      = 'limit',                   &
+         stream_dtlimit      = 1.0e30_r8,                 & ! change dtlimit to be twice the step size
+         stream_tintalgo     = tintalgo,                  &
+         stream_name         = 'NUDGING forcing data ',   &
          rc                  = rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
@@ -143,7 +144,7 @@ contains
   !================================================================
 
   subroutine stream_nudging_interp(Model_nudge_time, Target_U, Target_V, Target_T, Target_Q, Target_PS, &
-       Nudge_zonal_filter)
+       Nudge_ZonalFilter, ZM, Zonal_Bamp2d, Zonal_Bamp3d)
 
     use dshr_methods_mod , only : dshr_fldbun_getfldptr
     use dshr_strdata_mod , only : shr_strdata_advance
@@ -165,7 +166,7 @@ contains
     real(r8)          , intent(in) :: Zonal_Bamp2d(:)
     real(r8)          , intent(in) :: Zonal_Bamp3d(:,:)
 
-    ! local variables
+    ! Local variables
     integer :: rc     ! ESMF error return
     integer :: istat  ! allocate return
     integer :: nvar   ! variable index
@@ -179,7 +180,7 @@ contains
     integer :: sec    ! seconds into current date for nstep+1
     integer :: mcdate ! current model date (yyyymmdd)
     real(r8), pointer    :: dataptr2d(:,:) ! first dimension is level, second is data on that level
-    real(r8), pointer    :: dataptr1d(:)    
+    real(r8), pointer    :: dataptr1d(:)
     real(r8),allocatable :: Tmp3D(:,:,:)
     real(r8),allocatable :: Tmp2D(:,:)
     character(len=*), parameter :: sub = "(stream_nudging_interp) "
@@ -229,29 +230,29 @@ contains
              end do
           end do
 
-          ! Apply zonal mean filtering 
+          ! Apply zonal mean filtering
           if (Nudge_ZonalFilter) then
              call ZM%calc_amps(Tmp3D, Zonal_Bamp3d)
              call ZM%eval_grid(Zonal_Bamp3d, Tmp3D)
           endif
 
           ! Determine output variables
-          if (trim(stream_varlist_nudging(nvar) == 'U')) then 
+          if (trim(stream_varlist_nudging(nvar) == 'U')) then
              do lchnk = begchunk,endchunk
                 ncol = phys_state(lchnk)%ncol
                 Target_U(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
-          else if (trim(stream_varlist_nudging(nvar) == 'V')) then 
+          else if (trim(stream_varlist_nudging(nvar) == 'V')) then
              do lchnk = begchunk,endchunk
                 ncol = phys_state(lchnk)%ncol
                 Target_V(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
-          else if (trim(stream_varlist_nudging(nvar) == 'T')) then 
+          else if (trim(stream_varlist_nudging(nvar) == 'T')) then
              do lchnk = begchunk,endchunk
                 ncol = phys_state(lchnk)%ncol
                 Target_T(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
-          else if (trim(stream_varlist_nudging(nvar) == 'Q')) then 
+          else if (trim(stream_varlist_nudging(nvar) == 'Q')) then
              do lchnk = begchunk,endchunk
                 ncol = phys_state(lchnk)%ncol
                 Target_Q(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
@@ -259,7 +260,7 @@ contains
           end if
 
        else if (trim(stream_varlist_nudging(nvar)) == 'PS') then
-       
+
           call dshr_fldbun_getFldPtr(sdat_nudging%pstrm(1)%fldbun_model, stream_varlist_nudging(nvar), fldptr2=dataptr1d, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
              call ESMF_Finalize(endflag=ESMF_END_ABORT)
@@ -289,4 +290,4 @@ contains
 
   end subroutine stream_nudging_interp
 
-end module atm_stream_nudging 
+end module atm_stream_nudging
