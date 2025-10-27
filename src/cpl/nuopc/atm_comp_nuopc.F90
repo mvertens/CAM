@@ -69,6 +69,7 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
+   use atm_shr             , only : model_mesh
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -129,7 +130,6 @@ module atm_comp_nuopc
 
   real(R8) , parameter         :: grid_tol = 1.e-2_r8 ! tolerance for calculated lat/lon vs read in
 
-  type(ESMF_Mesh)  :: model_mesh     ! model_mesh
   type(ESMF_Clock) :: model_clock    ! model_clock
 
 !===============================================================================
