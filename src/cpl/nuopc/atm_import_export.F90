@@ -1012,7 +1012,7 @@ contains
 
   !===============================================================================
 
-  subroutine export_fields( gcomp, model_mesh, model_clock, cam_out, rc)
+  subroutine export_fields(gcomp, cam_out, rc)
 
     ! -----------------------------------------------------
     ! Set field pointers in export set
@@ -1031,15 +1031,12 @@ contains
 
     ! input/output variables
     type(ESMF_GridComp)              :: gcomp
-    type(ESMF_Mesh) , intent(in)     :: model_mesh
-    type(ESMF_Clock), intent(in)     :: model_clock
     type(cam_out_t) , intent(inout)  :: cam_out(begchunk:endchunk)
     integer         , intent(out)    :: rc
 
     ! local variables
     type(ESMF_State)  :: exportState
     type(ESMF_State)  :: importState
-    type(ESMF_Clock)  :: clock
     integer           :: i,m,c,n,g  ! indices
     integer           :: nstep
     logical           :: exists
@@ -1256,7 +1253,7 @@ contains
        ! The ndep_stream_nl namelist group is read in stream_ndep_init.  This sets whether
        ! or not the stream will be used.
        if (.not. stream_ndep_is_initialized) then
-          call stream_ndep_init(model_mesh, model_clock, rc)
+          call stream_ndep_init(rc)
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
           stream_ndep_is_initialized = .true.
        end if

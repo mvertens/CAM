@@ -1,10 +1,11 @@
 module atm_shr
 
-  use ESMF, only : ESMF_Mesh
+  use ESMF, only : ESMF_Mesh, ESMF_Clock
 
   implicit none
   public
 
-  type(ESMF_Mesh)  :: model_mesh     ! model_mesh
+  type(ESMF_Mesh)  :: model_mesh     ! model mesh
+  type(ESMF_Clock) :: model_clock    ! model clock
 
 end module atm_shr
