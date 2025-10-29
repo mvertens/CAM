@@ -11,6 +11,7 @@ module atm_comp_nuopc
    use ESMF                , only : ESMF_DistGrid, ESMF_DistGridCreate
    use ESMF                , only : ESMF_Mesh, ESMF_MeshCreate, ESMF_MeshGet, ESMF_FILEFORMAT_ESMFMESH
    use ESMF                , only : ESMF_Clock, ESMF_ClockGet, ESMF_ClockSet, ESMF_ClockGetNextTime, ESMF_ClockAdvance
+   use ESMF                , only : ESMF_CLockCreate
    use ESMF                , only : ESMF_Time, ESMF_TimeGet
    use ESMF                , only : ESMF_Alarm, ESMF_ClockGetAlarm, ESMF_AlarmRingerOff, ESMF_AlarmIsRinging
    use ESMF                , only : ESMF_ClockGetAlarmList, ESMF_ALARMLIST_ALL, ESMF_AlarmSet
@@ -69,7 +70,7 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
-   use atm_shr             , only : model_mesh
+   use atm_shr             , only : model_mesh, model_clock
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -129,8 +130,6 @@ module atm_comp_nuopc
   character(len=*) , parameter :: orb_fixed_parameters = 'fixed_parameters'
 
   real(R8) , parameter         :: grid_tol = 1.e-2_r8 ! tolerance for calculated lat/lon vs read in
-
-  type(ESMF_Clock) :: model_clock    ! model_clock
 
 !===============================================================================
 contains
@@ -761,11 +760,12 @@ contains
        call realize_fields(gcomp, model_mesh, flds_scalar_name, flds_scalar_num, single_column, rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-       ! Create model_clock as a module variable - needed for generating streams
-       model_clock = clock
+       ! Create model_clock as a variable in atm_shr.F90 - needed for generating streams
+       model_clock = ESMF_ClockCreate(clock, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        ! Create cam export array and set the state scalars
-       call export_fields( gcomp, model_mesh, model_clock, cam_out, rc=rc )
+       call export_fields( gcomp, cam_out, rc=rc )
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        call get_horiz_grid_dim_d(hdim1_d, hdim2_d)
@@ -920,7 +920,7 @@ contains
           call import_fields( gcomp, cam_in, rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
           call cam_run1 ( cam_in, cam_out )
-          call export_fields( gcomp, model_mesh, model_clock, cam_out, rc=rc )
+          call export_fields( gcomp, cam_out, rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
        else
           call cam_read_srfrest( gcomp, clock, rc=rc )
@@ -928,7 +928,7 @@ contains
           call import_fields( gcomp, cam_in, restart_init=.true., rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
           call cam_run1 ( cam_in, cam_out )
-          call export_fields( gcomp, model_mesh, model_clock, cam_out, rc=rc )
+          call export_fields( gcomp, cam_out, rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
        end if
 
@@ -1175,7 +1175,7 @@ contains
     if (mediator_present) then
        ! Set export fields
        call t_startf ('CAM_export')
-       call export_fields( gcomp, model_mesh, model_clock, cam_out, rc )
+       call export_fields( gcomp, cam_out, rc )
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
        call t_stopf ('CAM_export')
 

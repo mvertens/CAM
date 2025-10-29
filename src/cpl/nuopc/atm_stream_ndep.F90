@@ -17,6 +17,7 @@ module atm_stream_ndep
   use spmd_utils        , only : mpi_character, mpi_integer
   use cam_logfile       , only : iulog
   use cam_abortutils    , only : endrun
+  use atm_shr           , only : model_clock, model_mesh
 
   implicit none
   private
@@ -34,7 +35,6 @@ module atm_stream_ndep
   type(shr_strdata_type) :: sdat_ndep                      ! input data stream
   logical, public        :: stream_ndep_is_initialized = .false.
   character(len=CS)      :: stream_varlist_ndep(2)
-  type(ESMF_Clock)       :: model_clock
 
   character(len=*), parameter :: sourcefile = __FILE__
 
@@ -132,23 +132,22 @@ contains
 
   end subroutine stream_ndep_readnl
 
-  subroutine stream_ndep_init(model_mesh, model_clock, rc)
+  !================================================================
+  subroutine stream_ndep_init(rc)
     use dshr_strdata_mod, only: shr_strdata_init_from_inline
 
     ! input/output variables
-    type(ESMF_CLock), intent(in)  :: model_clock
-    type(ESMF_Mesh) , intent(in)  :: model_mesh
-    integer         , intent(out) :: rc
+    integer, intent(out) :: rc
 
     ! local variables
     character(*), parameter :: subName = "('stream_ndep_init')"
+    !-----------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
     if (.not.ndep_stream_active) then
        return
     end if
-    !
-    ! Initialize data stream information.
+
     ! Read in units
     call stream_ndep_check_units(stream_ndep_data_filename)
 
@@ -250,7 +249,6 @@ contains
     ! NDEP read from forcing is expected to be in units of gN/m2/sec - but the mediator
     ! expects units of kgN/m2/sec
     real(r8), parameter :: scale_ndep = .001_r8
-
     !-----------------------------------------------------------------------
 
     ! Advance sdat stream
