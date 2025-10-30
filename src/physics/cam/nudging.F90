@@ -323,8 +323,9 @@ module nudging
 
   ! Stream functionality
   !-----------------------
-  type(shr_strdata_type) :: sdat_nudging
-  character(len=2)       :: nudge_varlist(5) = (/'U ', 'V ','T ','Q ','PS'/)
+  type(shr_strdata_type) :: sdat_nudging_multi, sdat_nudging_singl
+  character(len=2)       :: nudge_varlist_multi(4) = (/'U ', 'V ','T ','Q '/)
+  character(len=2)       :: nudge_varlist_singl(1) = (/'PS'/)
 
 contains
 
@@ -1573,26 +1574,49 @@ contains
     ! Create module stream data type sdat_nudging
     ! TODO: change dtlimit to be twice the step size
 
-    call shr_strdata_init_from_inline(sdat_nudging,     &
-         my_task             = iam,                     &
-         logunit             = iulog,                   &
-         compname            = 'ATM',                   &
-         model_clock         = model_clock,             &
-         model_mesh          = model_mesh,              &
-         stream_meshfile     = trim(nudge_meshfile),    &
-         stream_filenames    = nudge_filenames,         &
-         stream_yearFirst    = nudge_year_first,        &
-         stream_yearLast     = nudge_year_last,         &
-         stream_yearAlign    = nudge_year_first,        &
-         stream_fldlistFile  = nudge_varlist,           &
-         stream_fldListModel = nudge_varlist,           &
-         stream_lev_dimname  = 'lev',                   &
-         stream_mapalgo      = 'bilinear',              &
-         stream_offset       = 0,                       &
-         stream_taxmode      = 'limit',                 &
-         stream_dtlimit      = 1.0e30_r8,               &
-         stream_tintalgo     = tintalgo,                &
-         stream_name         = 'NUDGING forcing data ', &
+    call shr_strdata_init_from_inline(sdat_nudging_multi, &
+         my_task             = iam,                       &
+         logunit             = iulog,                     &
+         compname            = 'ATM',                     &
+         model_clock         = model_clock,               &
+         model_mesh          = model_mesh,                &
+         stream_meshfile     = trim(nudge_meshfile),      &
+         stream_filenames    = nudge_filenames,           &
+         stream_yearFirst    = nudge_year_first,          &
+         stream_yearLast     = nudge_year_last,           &
+         stream_yearAlign    = nudge_year_first,          &
+         stream_fldlistFile  = nudge_varlist_multi,       &
+         stream_fldListModel = nudge_varlist_multi,       &
+         stream_lev_dimname  = 'lev',                     &
+         stream_mapalgo      = 'bilinear',                &
+         stream_offset       = 0,                         &
+         stream_taxmode      = 'limit',                   &
+         stream_dtlimit      = 1.0e30_r8,                 &
+         stream_tintalgo     = tintalgo,                  &
+         stream_name         = 'NUDGING forcing data ',   &
+         rc                  = rc)
+    call chkrc(rc, sub//': error return from shr_strdata_init_from_inline')
+
+    call shr_strdata_init_from_inline(sdat_nudging_singl, &
+         my_task             = iam,                       &
+         logunit             = iulog,                     &
+         compname            = 'ATM',                     &
+         model_clock         = model_clock,               &
+         model_mesh          = model_mesh,                &
+         stream_meshfile     = trim(nudge_meshfile),      &
+         stream_filenames    = nudge_filenames,           &
+         stream_yearFirst    = nudge_year_first,          &
+         stream_yearLast     = nudge_year_last,           &
+         stream_yearAlign    = nudge_year_first,          &
+         stream_fldlistFile  = nudge_varlist_singl,       &
+         stream_fldListModel = nudge_varlist_singl,       &
+         stream_lev_dimname  = 'null',                    &
+         stream_mapalgo      = 'bilinear',                &
+         stream_offset       = 0,                         &
+         stream_taxmode      = 'limit',                   &
+         stream_dtlimit      = 1.0e30_r8,                 &
+         stream_tintalgo     = tintalgo,                  &
+         stream_name         = 'NUDGING forcing data ',   &
          rc                  = rc)
     call chkrc(rc, sub//': error return from shr_strdata_init_from_inline')
 
@@ -1603,8 +1627,10 @@ contains
   !================================================================
   subroutine nudging_stream_interp()
 
-    use dshr_methods_mod , only : dshr_fldbun_getfldptr
+    ! Caculate Target_T, Target_U, Target_V, Target_Q and Target_PS
+
     use dshr_strdata_mod , only : shr_strdata_advance
+    use dshr_methods_mod , only : dshr_fldbun_getfldptr
     use ppgrid           , only : pcols, pver, begchunk, endchunk
     use phys_grid        , only : get_ncols_p
 
@@ -1634,8 +1660,11 @@ contains
     call chkrc(rc, sub//': error return from ESMF_TimeSet for Model_Update_Time')
     mcdate = year*10000 + mon*100 + day
 
-    ! Advance sdat stream
-    call shr_strdata_advance(sdat_nudging, ymd=mcdate, tod=sec, logunit=iulog, istr='nudging', rc=rc)
+    ! Advance sdat streams
+    call shr_strdata_advance(sdat_nudging_multi, ymd=mcdate, tod=sec, logunit=iulog, istr='nudging', rc=rc)
+    call chkrc(rc, sub//': error return from shr_strdata_advance')
+
+    call shr_strdata_advance(sdat_nudging_singl, ymd=mcdate, tod=sec, logunit=iulog, istr='nudging', rc=rc)
     call chkrc(rc, sub//': error return from shr_strdata_advance')
 
     ! Get pointer for stream data that is time and spatially interpolated to model time and grid
@@ -1645,22 +1674,23 @@ contains
     allocate(Tmp2D(pcols,begchunk:endchunk), stat=istat)
     call handle_allocate_error(istat, sub, 'TM23d')
 
-    ! Determine 3d nudging fields
+    ! Obtain Target_U, Target_V, Target_T and Target_Q
+
     do nvar = 1,4
+       if ( trim(nudge_varlist_multi(nvar)) == 'U' .or. &
+            trim(nudge_varlist_multi(nvar)) == 'V' .or. &
+            trim(nudge_varlist_multi(nvar)) == 'T' .or. &
+            trim(nudge_varlist_multi(nvar)) == 'Q' )  then
 
-       if ( trim(nudge_varlist(nvar)) == 'U' .or. &
-            trim(nudge_varlist(nvar)) == 'V' .or. &
-            trim(nudge_varlist(nvar)) == 'T' .or. &
-            trim(nudge_varlist(nvar)) == 'Q' )  then
-
-          call dshr_fldbun_getFldPtr(sdat_nudging%pstrm(1)%fldbun_model, nudge_varlist(nvar), fldptr2=dataptr2d, rc=rc)
+          call dshr_fldbun_getFldPtr(sdat_nudging_multi%pstrm(1)%fldbun_model, &
+               nudge_varlist_multi(nvar), fldptr2=dataptr2d, rc=rc)
           call chkrc(rc, sub//': error return from shr_strdata_advance')
 
           ! Obtain TMP3d
-          g = 1
-          do lchnk = begchunk,endchunk
-             ncol = get_ncols_p(lchnk)
-             do klev = 1, pver
+          do klev = 1, pver
+             g = 1
+             do lchnk = begchunk,endchunk
+                ncol = get_ncols_p(lchnk)
                 do icol = 1,ncol
                    Tmp3d(icol,klev,lchnk) = dataptr2d(klev,g)
                    g = g + 1
@@ -1675,54 +1705,52 @@ contains
           endif
 
           ! Determine output variables
-          if (trim(nudge_varlist(nvar)) == 'U') then
+          if (trim(nudge_varlist_multi(nvar)) == 'U') then
              do lchnk = begchunk,endchunk
                 ncol = get_ncols_p(lchnk)
                 Target_U(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
-          else if (trim(nudge_varlist(nvar)) == 'V') then
+          else if (trim(nudge_varlist_multi(nvar)) == 'V') then
              do lchnk = begchunk,endchunk
                 ncol = get_ncols_p(lchnk)
                 Target_V(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
-          else if (trim(nudge_varlist(nvar)) == 'T') then
+          else if (trim(nudge_varlist_multi(nvar)) == 'T') then
              do lchnk = begchunk,endchunk
                 ncol = get_ncols_p(lchnk)
                 Target_T(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
-          else if (trim(nudge_varlist(nvar)) == 'Q') then
+          else if (trim(nudge_varlist_multi(nvar)) == 'Q') then
              do lchnk = begchunk,endchunk
                 ncol = get_ncols_p(lchnk)
                 Target_Q(:ncol,:pver,lchnk) = Tmp3d(:ncol,:pver,lchnk)
              end do
           end if
+       end if
+    end do
 
-       else if (trim(nudge_varlist(nvar)) == 'PS') then
+    ! Obtain Target_PS
 
-          call dshr_fldbun_getFldPtr(sdat_nudging%pstrm(1)%fldbun_model, nudge_varlist(nvar), fldptr1=dataptr1d, rc=rc)
-          call chkrc(rc, sub//': error return from dshr_fldbun_getFldPtr')
+    call dshr_fldbun_getFldPtr(sdat_nudging_singl%pstrm(1)%fldbun_model, 'PS', fldptr1=dataptr1d, rc=rc)
+    call chkrc(rc, sub//': error return from dshr_fldbun_getFldPtr')
 
-          g = 1
-          do lchnk = begchunk,endchunk
-             ncol = get_ncols_p(lchnk)
-             do icol = 1,ncol
-                Tmp2d(icol,lchnk) = dataptr1d(g)
-                g = g + 1
-             end do
-          end do
+    g = 1
+    do lchnk = begchunk,endchunk
+       ncol = get_ncols_p(lchnk)
+       do icol = 1,ncol
+          Tmp2d(icol,lchnk) = dataptr1d(g)
+          g = g + 1
+       end do
+    end do
 
-          if (Nudge_ZonalFilter) then
-             call ZM%calc_amps(Tmp2D,Zonal_Bamp2d)
-             call ZM%eval_grid(Zonal_Bamp2d,Tmp2D)
-          endif
+    if (Nudge_ZonalFilter) then
+       call ZM%calc_amps(Tmp2D,Zonal_Bamp2d)
+       call ZM%eval_grid(Zonal_Bamp2d,Tmp2D)
+    endif
 
-          do lchnk=begchunk,endchunk
-             ncol = get_ncols_p(lchnk)
-             Target_PS(:ncol,lchnk)= Tmp2d(:ncol,lchnk)
-          end do
-
-       end if !
-
+    do lchnk=begchunk,endchunk
+       ncol = get_ncols_p(lchnk)
+       Target_PS(:ncol,lchnk)= Tmp2d(:ncol,lchnk)
     end do
 
   end subroutine nudging_stream_interp
