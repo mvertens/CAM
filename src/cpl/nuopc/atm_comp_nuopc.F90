@@ -70,7 +70,7 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
-   use atm_shr             , only : model_mesh, model_clock
+   use cam_esmf_mod        , only : cam_esmf_set_mesh_and_clock
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -334,6 +334,8 @@ contains
     integer, intent(out) :: rc
 
     ! local variables
+    type(ESMF_Mesh)           :: model_mesh
+    type(ESMF_Clock)          :: model_clock
     type(ESMF_VM)             :: vm
     type(ESMF_Time)           :: currTime                          ! Current time
     type(ESMF_Time)           :: startTime                         ! Start time
@@ -783,6 +785,9 @@ contains
        endif
 
     end if ! end of mediator_present if-block
+
+    ! Set module variables in atm_shr_nuopc
+    call cam_esmf_set_mesh_and_clock(model_mesh_in=model_mesh, model_clock_in=model_clock)
 
     call shr_log_setLogUnit (shrlogunit)
 
