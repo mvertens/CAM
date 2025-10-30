@@ -5,12 +5,10 @@ module co2_data_flux
 !-------------------------------------------------------------------------------
 
    use shr_kind_mod,     only: r8 => shr_kind_r8, cl => shr_kind_cl
-   use input_data_utils, only: time_coordinate
    use cam_abortutils,   only: endrun
 
    implicit none
    private
-   save
 
    ! Public interfaces
    public co2_data_flux_type
@@ -18,15 +16,9 @@ module co2_data_flux
    public co2_data_flux_init
    public co2_data_flux_advance
 
-!-------------------------------------------------------------------------------
-
    type :: co2_data_flux_type
-      character(len=cl)     :: filename
-      character(len=cl)     :: varname
-      logical               :: initialized
-      type(time_coordinate) :: time_coord
-      real(r8), pointer     :: co2bdy(:,:,:)   ! bracketing data     (pcols,begchunk:endchunk,2)
-      real(r8), pointer     :: co2flx(:,:)     ! Interpolated output (pcols,begchunk:endchunk)
+      type(shr_strdata_type) :: sdat_co2
+      real(r8), pointer      :: co2flx(:,:)  ! Interpolated output (pcols,begchunk:endchunk)
    end type co2_data_flux_type
 
    ! dimension names for physics grid (physgrid)
@@ -37,22 +29,30 @@ module co2_data_flux
 contains
 !===============================================================================
 
-subroutine co2_data_flux_init (input_file, varname, xin)
+  subroutine co2_data_flux_init (input_file, input_mesh, &
+       varname, year_first, year_last, year_align, tintalgo, taxmode, xin)
 
 !-------------------------------------------------------------------------------
 ! Initialize co2_data_flux_type instance
 !   including initial read of input and interpolation to the current timestep
 !-------------------------------------------------------------------------------
 
-   use ioFileMod,        only: getfil
+   use ESMF,             only: ESMF_Mesh
    use ppgrid,           only: begchunk, endchunk, pcols
    use cam_grid_support, only: cam_grid_id, cam_grid_check
    use cam_grid_support, only: cam_grid_get_dim_names
+   use atm_shr         , only: model_mesh, model_clock
 
    ! Arguments
-   character(len=*),          intent(in)    :: input_file
-   character(len=*),          intent(in)    :: varname
-   type(co2_data_flux_type),  intent(inout) :: xin
+   character(len=*),         intent(in)    :: input_file
+   type(ESMF_Mesh) ,         intent(in)    :: input_mesh
+   character(len=*),         intent(in)    :: varname
+   integer,                  intent(in)    :: year_first      
+   integer,                  intent(in)    :: year_last
+   integer,                  intent(in)    :: year_align
+   character(len=*),         intent(in)    :: tintalgo
+   character(len=*),         intent(in)    :: taxalgo
+   type(co2_data_flux_type), intent(inout) :: xin
 
    ! Local variables
    integer  :: grid_id
@@ -69,95 +69,90 @@ subroutine co2_data_flux_init (input_file, varname, xin)
       dimnames_set = .true.
    end if
 
-   call getfil(input_file, xin%filename)
-   xin%varname = varname
-   xin%initialized = .false.
+   call shr_strdata_init_from_inline(xin%sdat_co2,  &
+         my_task             = iam,                 &
+         logunit             = iulog,               &
+         compname            = 'ATM',               &
+         model_clock         = model_clock,         &
+         model_mesh          = model_mesh,          &
+         stream_meshfile     = trim(input_mesh),    &
+         stream_filenames    = (/input_file/),      &
+         stream_yearFirst    = year_first,          &
+         stream_yearLast     = year_last,           &
+         stream_yearAlign    = year_first,          &
+         stream_fldlistFile  = (/varname/),         &
+         stream_fldListModel = (/varname/),         &
+         stream_lev_dimname  = 'null',              &
+         stream_mapalgo      = 'bilinear',          &
+         stream_offset       = 0,                   &
+         stream_taxmode      = trim(taxmode),       &
+         stream_dtlimit      = 1.0e30_r8,           &
+         stream_tintalgo     = trim(tintalgo),      &
+         stream_name         = 'CO2 forcing data ', &
+         rc                  = rc)
+   call chkrc(rc, sub//': error return from shr_strdata_init_from_inline')
 
-   dtime = 1.0_r8 - 200.0_r8 / 86400.0_r8
-   call xin%time_coord%initialize(input_file, delta_days=dtime)
-
-   allocate( xin%co2bdy(pcols,begchunk:endchunk,2), &
-             xin%co2flx(pcols,begchunk:endchunk)    )
+   allocate( xin%co2flx(pcols,begchunk:endchunk) )
 
    call co2_data_flux_advance(xin)
-
-   xin%initialized = .true.
 
 end subroutine co2_data_flux_init
 
 !===============================================================================
-
 subroutine co2_data_flux_advance (xin)
 
 !-------------------------------------------------------------------------------
-! Advance the contents of a co2_data_flux_type instance
-!   including reading new data, if necessary
+! Advance the contents of a co2_data_flux_type sdat (map and interpolate in time) 
 !-------------------------------------------------------------------------------
 
-   use cam_pio_utils,    only: cam_pio_openfile
-   use ncdio_atm,        only: infld
-   use pio,              only: file_desc_t, pio_nowrite, pio_closefile
-   use ppgrid,           only: begchunk, endchunk, pcols
+    use dshr_methods_mod , only : dshr_fldbun_getfldptr
+    use dshr_strdata_mod , only : shr_strdata_advance
+    use ppgrid           , only : begchunk, endchunk
+    use phys_grid        , only : get_ncols_p
+    use time_manager     , only : get_curr_date
 
    ! Arguments
    type(co2_data_flux_type),  intent(inout) :: xin
 
    ! Local variables
+   integer :: icol,lchnk,g
+   integer :: year    ! year (0, ...) for nstep+1
+   integer :: mon     ! month (1, ..., 12) for nstep+1
+   integer :: day     ! day of month (1, ..., 31) for nstep+1
+   integer :: sec     ! seconds into current date for nstep+1
+   integer :: mcdate  ! Current model date (yyyymmdd)
+   real(r8), pointer :: dataptr1d(:)
    character(len=*), parameter :: subname = 'co2_data_flux_advance'
-   logical           :: read_data
-   integer           :: indx2_pre_adv
-   type(file_desc_t) :: fh_co2_data_flux
-   logical           :: found
-
    !----------------------------------------------------------------------------
 
-   read_data = xin%time_coord%read_more() .or. .not. xin%initialized
 
-   indx2_pre_adv = xin%time_coord%indxs(2)
+    ! Advance sdat stream
+    call get_curr_date(year, mon, day, sec)
+    mcdate = year*10000 + mon*100 + day
+    call shr_strdata_advance(sdat_ndep, ymd=mcdate, tod=sec, logunit=iulog, istr='ndepdyn', rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    end if
 
-   call xin%time_coord%advance()
+    ! Get pointer for stream data that is time and spatially interpolated to model time and grid
+    call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, stream_varlist_ndep(1), fldptr1=dataptr1d_nhx, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    end if
+    call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, stream_varlist_ndep(2), fldptr1=dataptr1d_noy, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    end if
 
-   if ( read_data ) then
+    g = 1
+    do lchnk = begchunk,endchunk
+       do icol = 1,get_ncols_p(lchnk)
+          xin%co2flx(icol,lchnk) = dataptr1d(g)
+          g = g + 1
+       end do
+    end do
 
-      call cam_pio_openfile(fh_co2_data_flux, trim(xin%filename), PIO_NOWRITE)
-
-      ! read time-level 1
-      ! skip the read if the needed vals are present in time-level 2
-      if (xin%initialized .and. xin%time_coord%indxs(1) == indx2_pre_adv) then
-         xin%co2bdy(:,:,1) = xin%co2bdy(:,:,2)
-      else
-         call infld(trim(xin%varname), fh_co2_data_flux, dim1name, dim2name, &
-              1, pcols, begchunk, endchunk, xin%co2bdy(:,:,1), found, &
-              gridname='physgrid', timelevel=xin%time_coord%indxs(1))
-         if (.not. found) then
-            call endrun(subname // ': ERROR: ' // trim(xin%varname) // ' not found')
-         endif
-      endif
-
-      ! read time-level 2
-      call infld(trim(xin%varname), fh_co2_data_flux, dim1name, dim2name, &
-           1, pcols, begchunk, endchunk, xin%co2bdy(:,:,2), found, &
-           gridname='physgrid', timelevel=xin%time_coord%indxs(2))
-      if (.not. found) then
-         call endrun(subname // ': ERROR: ' // trim(xin%varname) // ' not found')
-      endif
-
-      call pio_closefile(fh_co2_data_flux)
-   endif
-
-   ! interpolate between time-levels
-   ! If time:bounds is in the dataset, and the dataset calendar is compatible with CAM's,
-   ! then the time_coordinate class will produce time_coord%wghts(2) == 0.0,
-   ! generating fluxes that are piecewise constant in time.
-
-   if (xin%time_coord%wghts(2) == 0.0_r8) then
-      xin%co2flx(:,:) = xin%co2bdy(:,:,1)
-   else
-      xin%co2flx(:,:) = xin%co2bdy(:,:,1) + &
-           xin%time_coord%wghts(2) * (xin%co2bdy(:,:,2) - xin%co2bdy(:,:,1))
-   endif
-
-end subroutine co2_data_flux_advance
+  end subroutine co2_data_flux_advance
 
 !===============================================================================
 
