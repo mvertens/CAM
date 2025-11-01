@@ -17,7 +17,7 @@ module atm_stream_ndep
   use spmd_utils        , only : mpi_character, mpi_integer
   use cam_logfile       , only : iulog
   use cam_abortutils    , only : endrun
-  use atm_shr           , only : model_clock, model_mesh
+  use cam_esmf_mod      , only : model_clock, model_mesh
 
   implicit none
   private

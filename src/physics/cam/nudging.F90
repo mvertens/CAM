@@ -198,7 +198,7 @@ module nudging
   use zonal_mean_mod    , only : ZonalMean_t
   use nuopc_shr_methods , only : chkerr
   use dshr_strdata_mod  , only : shr_strdata_type
-  use atm_shr           , only : model_clock, model_mesh
+  use cam_esmf_mod      , only : model_clock, model_mesh
 
   ! Set all Global values and routines to private by default
   ! and then explicitly set their exposure.
