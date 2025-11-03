@@ -3641,10 +3641,10 @@ Default: 10
 <!-- Moist Convection and Microphysics -->
 
 <entry id="deep_scheme" type="char*16" category="conv"
-       group="phys_ctl_nl" valid_values="ZM,UNICON,off,CLUBB_SGS" >
+       group="phys_ctl_nl" valid_values="ZM,off,CLUBB_SGS" >
 Type of deep convection scheme employed.  'ZM' for Zhang-McFarlane;
-'off' for none; or 'UNICON' which doesn't distinquish shallow and deep.
-Default: 'ZM' unless using 'UNICON' or 'pbl=none'
+'off' for none
+Default: 'ZM' unless 'pbl=none' (off)
 </entry>
 
 <entry id="microp_scheme" type="char*16" category="conv"
@@ -3671,12 +3671,11 @@ Default: set by build-namelist
 </entry>
 
 <entry id="shallow_scheme" type="char*16" category="conv"
-       group="phys_ctl_nl" valid_values="Hack,UW,CLUBB_SGS,UNICON" >
+       group="phys_ctl_nl" valid_values="Hack,UW,CLUBB_SGS" >
 Type of shallow convection scheme employed.
  'Hack' for Hack shallow convection;
  'UW' for original McCaa UW pbl scheme, modified by Sungsu Park;
  'CLUBB_SGS' for CLUBB_SGS
- 'UNICON' which doesn't distinquish shallow and deep.
 Default: set by build-namelist (depends on {{ hilight }}eddy_scheme{{ closehilight }}).
 </entry>
 
@@ -3774,18 +3773,6 @@ Default: FALSE
 Logical switch to turn on implicit turbulent surface stress calculation in
 diffusion solver routine.
 Default: set by build-namelist
-</entry>
-
-<entry id="unicon_offline_dat_out" type="logical"  category="diagnostics"
-       group="unicon_nl" valid_values="" >
-Produce output for the offline unicon driver.
-Default: .false.
-</entry>
-
-<entry id="unicon_offline_dat_hfile" type="integer"  category="diagnostics"
-       group="unicon_nl" valid_values="" >
-History file number for offline unicon driver output.
-Default: 2 (i.e., h1 history file)
 </entry>
 
 <!-- CLUBB PBL Diff nl -->
@@ -5942,6 +5929,29 @@ Calculate radiative effect of graupel/hail (using snow optics)
 Default: FALSE
 </entry>
 
+<entry id="p_top_for_equil_rad" type="real"  category="radiation"
+       group="radheat_nl" valid_values="" >
+Top valid pressure level LTE radiation scheme
+Default: 1.0 for WACCM/WACCMX
+         2. for all other RRTMGP runs
+         0.0 for all other runs
+</entry>
+
+<entry id="p_top_for_radmrg" type="real"  category="radiation"
+       group="radheat_nl" valid_values="" >
+Top pressure level LTE/non-LTE merger region
+</entry>
+
+<entry id="p_bot_for_radmrg" type="real"  category="radiation"
+       group="radheat_nl" valid_values="" >
+Bottom pressure level LTE/non-LTE merger region
+</entry>
+
+<entry id="qrsmlt_scaling" type="real"  category="radiation"
+       group="radheat_nl" valid_values="" >
+Scaling factor for simplified QRS MLT heating in CAM
+</entry>
+
 <entry id="use_rad_dt_cosz" type="logical"  category="radiation"
        group="radiation_nl" valid_values="" >
 If true, then average the zenith angle over the radiation timestep rather
@@ -6122,6 +6132,25 @@ filepath and name for liquid cloud (gamma distributed) optics data for rrtmg
 Default: none
 </entry>
 
+<rrtmgp_coefs_lw_file>src/physics/rrtmgp/data/rrtmgp-gas-lw-g128.nc</rrtmgp_coefs_lw_file>
+<rrtmgp_coefs_sw_file>src/physics/rrtmgp/data/rrtmgp-gas-sw-g112.nc</rrtmgp_coefs_sw_file>
+
+<!-- Top valid pressure (Pa) top for LTE radiation scheme -->
+<p_top_for_equil_rad>                  0.D0 </p_top_for_equil_rad>
+<p_top_for_equil_rad  waccmx="1" >     1.D0 </p_top_for_equil_rad>
+<p_top_for_equil_rad  waccm_phys="1" > 1.D0 </p_top_for_equil_rad>
+<p_top_for_equil_rad  rad="rrtmgp">    5.D0 </p_top_for_equil_rad>
+
+<!-- Top pressure (Pa) for non-LTE/LTE merger region -->
+<p_top_for_radmrg>                     0.D0 </p_top_for_radmrg>
+<p_top_for_radmrg  rad="rrtmgp">       6.1D0 </p_top_for_radmrg>
+
+<!-- Bottom pressure (Pa) for non-LTE/LTE merger region -->
+<p_bot_for_radmrg>                     1.D0 </p_bot_for_radmrg>
+<p_bot_for_radmrg  rad="rrtmgp">       20.D0 </p_bot_for_radmrg>
+
+<!-- Scaling factor for simplified QRS MLT heating in CAM -->
+<qrsmlt_scaling>                     1.D0 </qrsmlt_scaling>
 
 <!-- Rayleigh Friction Parameterization -->
 
