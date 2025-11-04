@@ -1799,11 +1799,69 @@ Default: set by build-namelist
 Filepath for dataset containing CO2 flux from ocn.
 Default: none
 </entry>
+<entry id="co2flux_ocn_mesh" type="char*256" input_pathname="abs" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Filepath for ESMF Mesh corresponding to co2flux_ocn_file File.
+Default: none
+</entry>
+<entry id="co2flux_ocn_year_first" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Year first to use in co2flux_ocn_file.
+Default: 0
+<entry id="co2flux_ocn_year_last" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Year last to use in co2flux_ocn_file.
+Default: 0
+</entry>
+<entry id="co2flux_ocn_year_align" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Year align to use in co2flux_ocn_file.
+Default: 0
+</entry>
+<entry id="co2flux_ocn_tintalgo" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="linear, lower, upper, nearest" >
+Time interpolation algorithm to use for co2flux_ocn_file.
+Default: linear
+</entry>
+<entry id="co2flux_ocn_tintalgo" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="cycle, extend, limit">
+Time extrapolation algorithm to use for co2flux_ocn_file.
+Default: cycle
+</entry>
 
 <entry id="co2flux_fuel_file" type="char*256" input_pathname="abs" category="co2_cycle"
        group="co2_cycle_nl" valid_values="" >
 Filepath for dataset containing CO2 flux from fossil fuel.
 Default: none
+</entry>
+<entry id="co2flux_fuel_mesh" type="char*256" input_pathname="abs" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Filepath for ESMF Mesh corresponding to co2flux_fuel_file File.
+Default: none
+</entry>
+<entry id="co2flux_fuel_year_first" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Year first to use in co2flux_fuel_file.
+Default: 0
+<entry id="co2flux_fuel_year_last" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Year last to use in co2flux_fuel_file.
+Default: 0
+</entry>
+<entry id="co2flux_fuel_year_align" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="" >
+Year align to use in co2flux_fuel_file.
+Default: 0
+</entry>
+<entry id="co2flux_fuel_tintalgo" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="linear, lower, upper, nearest" >
+Time interpolation algorithm to use for co2flux_fuel_file.
+Default: linear
+</entry>
+<entry id="co2flux_fuel_tintalgo" type="integer" category="co2_cycle"
+       group="co2_cycle_nl" valid_values="cycle, extend, limit">
+Time extrapolation algorithm to use for co2flux_fuel_file.
+Default: cycle
 </entry>
 
 <!-- History and Initial Conditions Output -->
