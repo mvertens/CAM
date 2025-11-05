@@ -229,6 +229,7 @@ module nudging
   logical                 :: Nudge_Initialized =.false.
   character(len=cl)       :: Nudge_Meshfile
   character(len=cl)       :: Nudge_Filenames(maxfiles)
+  character(len=cl)       :: Nudge_Datapath
 
   integer                 :: Nudge_Beg_year
   integer                 :: Nudge_Beg_month
@@ -350,7 +351,7 @@ contains
 
    character(len=*), parameter :: prefix = 'nudging_readnl: '
 
-   namelist /nudging_nl/ Nudge_Model, Nudge_Filenames, Nudge_Meshfile, &
+   namelist /nudging_nl/ Nudge_Model, Nudge_datapath, Nudge_Filenames, Nudge_Meshfile, &
                          Nudge_Force_Opt, Nudge_TimeScale_Opt,                 &
                          Nudge_Beg_Year, Nudge_Beg_Month, Nudge_Beg_Day,       &
                          Nudge_End_Year, Nudge_End_Month, Nudge_End_Day,       &
@@ -386,7 +387,8 @@ contains
    Model_Update_Times_Per_Day = 4
    Nudge_File_Times_per_Day = 4
    Nudge_Filenames(:)       = ' '
-   Nudge_Meshfile               = ' '
+   Nudge_Datapath           = ' '
+   Nudge_Meshfile           = ' '
    Nudge_Beg_Year           = 2008
    Nudge_Beg_Month          = 5
    Nudge_Beg_Day            = 1
@@ -446,6 +448,9 @@ contains
 
    call MPI_bcast(Nudge_Filenames(:), len(Nudge_Filenames(1))*maxfiles, mpi_character, masterprocid, mpicom, ierr)
    if (ierr /= mpi_success) call endrun(prefix//'FATAL: mpi_bcast: Nudge_Filenames')
+
+   call MPI_bcast(Nudge_Datapath, len(Nudge_Datapath), mpi_character, masterprocid, mpicom, ierr)
+   if (ierr /= mpi_success) call endrun(prefix//'FATAL: mpi_bcast: Nudge_Datapath')
 
    call MPI_bcast(Nudge_Meshfile, len(Nudge_Meshfile), mpi_character, masterprocid, mpicom, ierr)
    if (ierr /= mpi_success) call endrun(prefix//'FATAL: mpi_bcast: Nudge_Meshfile')
@@ -1563,6 +1568,7 @@ contains
        write(iulog,'(a,i8)')  '  nudge year align = ',nudge_year_first
        write(iulog,'(a,a)')   '  nudge tintalgo   = ',trim(tintalgo)
        write(iulog,'(a,a)' )  '  nudge meshfile   = ',trim(nudge_meshfile)
+       write(iulog,'(a,a)' )  '  nudge datapath   = ',trim(nudge_datapath)
        do nfile = 1,size(nudge_filenames)
           if (trim(nudge_filenames(nfile)) /= ' ') then
              write(iulog,'(a,i8,2x,a)' )  '  nudge files = ',nfile,trim(nudge_filenames(nfile))
@@ -1570,6 +1576,13 @@ contains
        end do
        write(iulog,'(a)'   )  ' '
     endif
+
+    do nfile = 1,size(nudge_filenames)
+       if (trim(nudge_filenames(nfile)) /= ' ') then
+          nudge_filenames(nfile) = trim(nudge_datapath)//trim(nudge_filenames(nfile))
+       end if
+    end do
+
 
     ! Create module stream data type sdat_nudging
     ! TODO: change dtlimit to be twice the step size

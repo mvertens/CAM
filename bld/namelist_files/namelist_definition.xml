@@ -222,7 +222,13 @@
 
 <entry id="Nudge_Filenames" type="char*256(1000)" category="nudging"
        group="nudging_nl" valid_values="" >
-       Full pathnames of analyses data to use for nudging.
+       Filenames of analyses data to use for nudging.
+       Default: none
+       </entry>
+
+<entry id="Nudge_Datapath" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Full pathname of datapath where Nudge_Filenames are located.
        Default: none
        </entry>
 
