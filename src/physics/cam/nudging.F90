@@ -795,6 +795,9 @@ contains
       call ESMF_TimeSet(Nudge_File_next_time, &
            yy=Year, mm=Month, dd=Day, s=(Sec/Nudge_File_Step)*Nudge_File_Step, rc=rc)
       call chkrc(rc, sub//': error return from ESMF_TimeSet for Nudge_next_time')
+      if (masterproc) then
+         write(iulog,*)'DEBUG: initial model update next time = ',year,month,day,(Sec/Model_Update_Step)*Model_Update_Step
+      end if
 
    elseif (.not.After_Beg) then
 
@@ -1002,6 +1005,7 @@ contains
    logical                 :: Update_Nudge
    logical                 :: After_Beg, Before_End
    integer                 :: lchnk,ncol,indw
+   type(ESMF_Time)         :: model_curr_time
    type(ESMF_Time)         :: curr_time
    type(ESMF_TimeInterval) :: date_diff
    integer                 :: DeltaT
@@ -1024,12 +1028,18 @@ contains
 
    ! Get Current CAM time
    call get_curr_date(Year,Month,Day,Sec)
+   if (masterproc) then
+      write(iulog,*)'DEBUG: model curr date = ',year,month,day,sec
+   end if
 
    call ESMF_TimeSet(curr_time, yy=Year, mm=Month, dd=Day, s=Sec, rc=rc)
    call chkrc(rc, sub//': error return from ESMF_TimeSet for curr_time')
 
    After_Beg  = (curr_time >= Nudge_beg_time)
    Before_End = (curr_time <= Nudge_end_time)
+   if (masterproc) then
+      write(iulog,*)'DEBUG: after_beg, before_end = ',after_beg,before_end
+   end if
 
    !----------------------------------------------------------------
    ! Toggle Nudging flag when the time interval is between
@@ -1046,6 +1056,9 @@ contains
    !--------------------------------------------------------------
 
    Update_Model = (curr_time >= Model_Update_Next_Time)
+   if (masterproc) then
+      write(iulog,*)'DEBUG: update_model = ',update_model
+   end if
 
    if ((Before_End) .and. (Update_Model)) then
 
@@ -1055,21 +1068,12 @@ contains
      ! since that occurs before the creation of the model mesh
      !----------------------------------------------------------
      if (first_call) then
+        if (masterproc) then
+           write(iulog,*)'DEBUG: calling nuding_stream_init'
+        end if
         call nudging_stream_init()
         first_call = .false.
      end if
-
-     ! Increment the Model times by the current interval
-     Model_Update_next_time = Model_Update_next_time + Model_Update_Interval
-
-     ! Check for Sync Error where NEXT model time after the update
-     ! is before the current time. If so, reset the next model
-     ! time to a Model_Update_Step after the current time.
-     Sync_Error = (curr_time >= Model_Update_next_time)
-     if (Sync_Error) then
-       Model_Update_next_time = curr_time + Model_Update_Interval
-       write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
-     endif
 
      ! Load values at Current into the Model arrays
      !-----------------------------------------------
@@ -1190,6 +1194,18 @@ contains
        Nudge_PSstep(:ncol,     lchnk)=(  Target_PS(:ncol,lchnk) - Model_PS(:ncol,lchnk))           &
                                       *Tscale*Nudge_PStau(:ncol,lchnk)
      end do
+
+     ! Increment the Model times by the current interval
+     Model_Update_next_time = model_update_next_time + Model_Update_Interval
+
+     ! Check for Sync Error where NEXT model time after the update
+     ! is before the current time. If so, reset the next model
+     ! time to a Model_Update_Step after the current time.
+     Sync_Error = (curr_time >= Model_Update_next_time)
+     if (Sync_Error) then
+      Model_Update_next_time = curr_time + Model_Update_Interval
+       write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
+     endif
 
    endif ! ((Before_End) .and. Update_Model)
 
@@ -1672,6 +1688,9 @@ contains
     call ESMF_TimeGet(Model_Update_Next_Time, yy=year, mm=mon, dd=day, s=sec, rc=rc)
     call chkrc(rc, sub//': error return from ESMF_TimeSet for Model_Update_Time')
     mcdate = year*10000 + mon*100 + day
+    if (masterproc) then
+       write(iulog,*)'DEBUG: nudging_stream_interp: interpolating nudge to ',year,mon,day,sec
+    end if
 
     ! Advance sdat streams
     call shr_strdata_advance(sdat_nudging_multi, ymd=mcdate, tod=sec, logunit=iulog, istr='nudging', rc=rc)
