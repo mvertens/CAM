@@ -1098,10 +1098,10 @@ contains
      call chkrc(rc,__LINE__,u_FILE_u)
 
      if (masterproc) then
-        write(iulog,*)'DEBUG: sdat%ymdLB, sdat%todLB ',sdat_nudging_multi%pstrm(1)%ymdLB,sdat_nudging_multi%pstrm(1)%todLB
-        write(iulog,*)'DEBUG: sdat%ymdUB, sdat%todUB ',sdat_nudging_multi%pstrm(1)%ymdUB,sdat_nudging_multi%pstrm(1)%todUB
-        write(iulog,'(a,i8)')' Nudge deltaT    = ',DeltaT
-        write(iulog,'(a,i8)')' Nudge_file_step = ',Nudge_File_Step
+        write(iulog,*)'Nudging: sdat%ymdLB, sdat%todLB ',&
+             sdat_nudging_multi%pstrm(1)%ymdLB,sdat_nudging_multi%pstrm(1)%todLB
+        write(iulog,*)'Nudging: sdat%ymdUB, sdat%todUB ',&
+             sdat_nudging_multi%pstrm(1)%ymdUB,sdat_nudging_multi%pstrm(1)%todUB
      end if
 
      ! Set Tscale for the specified Forcing Option
@@ -1148,8 +1148,8 @@ contains
      ! time to a Model_Update_Step after the current time.
      Sync_Error = (curr_time >= Model_Update_next_time)
      if (Sync_Error) then
-      Model_Update_next_time = curr_time + Model_Update_Interval
-       write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
+        Model_Update_next_time = curr_time + Model_Update_Interval
+        write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
      endif
 
    endif ! (Update_Model)
@@ -1165,9 +1165,9 @@ contains
   subroutine nudging_timestep_tend(phys_state,phys_tend)
    !
    ! NUDGING_TIMESTEP_TEND:
-   !                If Nudging is ON, return the Nudging contributions
-   !                to forcing using the current contents of the Nudge
-   !                arrays. Send output to the cam history module as well.
+   !   If Nudging is ON, return the Nudging contributions
+   !   to forcing using the current contents of the Nudge
+   !   arrays. Send output to the cam history module as well.
    !===============================================================
 
    use physconst    ,only: cpair
@@ -1213,12 +1213,12 @@ contains
 
 
   !================================================================
-  subroutine nudging_set_profile(rlat,rlon,Nudge_prof,Wprof,nlev)
+  subroutine nudging_set_profile(rlat, rlon, Nudge_prof, Wprof, nlev)
    !
    ! NUDGING_SET_PROFILE:
-   ! for the given lat,lon, and Nudging_prof, set the verical profile
-   ! of window coeffcients.  Values range from 0. to 1. to affect
-   ! spatial variations on nudging strength.
+   !   for the given lat,lon, and Nudging_prof, set the verical profile
+   !   of window coeffcients.  Values range from 0. to 1. to affect
+   !   spatial variations on nudging strength.
    ! ===============================================================
 
    ! Arguments
@@ -1227,9 +1227,9 @@ contains
    real(r8) :: rlat,rlon
    real(r8) :: Wprof(nlev)
 
-   ! Local values
+   ! Local variables
    !----------------
-   integer :: ilev
+   integer  :: ilev
    real(r8) :: Hcoef,latx,lonx,Vmax,Vmin
    real(r8) :: lon_lo,lon_hi,lat_lo,lat_hi,lev_lo,lev_hi
 
@@ -1320,8 +1320,20 @@ contains
   !================================================================
   subroutine nudging_final
 
-    if (allocated(Zonal_Bamp2d))       deallocate(Zonal_Bamp2d)
-    if (allocated(Zonal_Bamp3d))       deallocate(Zonal_Bamp3d)
+    if (allocated(Zonal_Bamp2d)) deallocate(Zonal_Bamp2d)
+    if (allocated(Zonal_Bamp3d)) deallocate(Zonal_Bamp3d)
+
+    if (allocated(Nudge_Utau0)) deallocate(Nudge_Utau0)
+    if (allocated(Nudge_Vtau0)) deallocate(Nudge_Vtau0)
+    if (allocated(Nudge_Stau0)) deallocate(Nudge_Stau0)
+    if (allocated(Nudge_Qtau0)) deallocate(Nudge_Qtau0)
+    if (allocated(Nudge_PStau0)) deallocate(Nudge_PStau0)
+
+    if (allocated(Nudge_Ustep)) deallocate(Nudge_Ustep)
+    if (allocated(Nudge_Vstep)) deallocate(Nudge_Vstep)
+    if (allocated(Nudge_Sstep)) deallocate(Nudge_Sstep)
+    if (allocated(Nudge_Qstep)) deallocate(Nudge_Qstep)
+    if (allocated(Nudge_PSstep)) deallocate(Nudge_PSstep)
 
     call ZM%final()
 
