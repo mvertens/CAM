@@ -70,7 +70,7 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
-   use atm_shr             , only : model_mesh, model_clock
+   use cam_esmf_mod        , only : cam_esmf_set_mesh_and_clock
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -334,6 +334,8 @@ contains
     integer, intent(out) :: rc
 
     ! local variables
+    type(ESMF_Mesh)           :: model_mesh
+    type(ESMF_Clock)          :: model_clock
     type(ESMF_VM)             :: vm
     type(ESMF_Time)           :: currTime                          ! Current time
     type(ESMF_Time)           :: startTime                         ! Start time
@@ -622,6 +624,10 @@ contains
        call shr_sys_abort( subname//'ERROR:: bad calendar for ESMF' )
     end if
 
+    ! Create model_clock as a variable in cam_esmf_mod.F90 - needed for generating streams
+    model_clock = ESMF_ClockCreate(clock, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
     ! Initialize module orbital values and update orbital
     call cam_orbital_init(gcomp, iulog, masterproc, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -760,9 +766,8 @@ contains
        call realize_fields(gcomp, model_mesh, flds_scalar_name, flds_scalar_num, single_column, rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-       ! Create model_clock as a variable in atm_shr.F90 - needed for generating streams
-       model_clock = ESMF_ClockCreate(clock, rc=rc)
-       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       ! Set module variables in src/control/cam_esmf_mod.F90 (must be done before call to export_fields)
+       call cam_esmf_set_mesh_and_clock(model_mesh_in=model_mesh, model_clock_in=model_clock)
 
        ! Create cam export array and set the state scalars
        call export_fields( gcomp, cam_out, rc=rc )

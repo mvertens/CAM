@@ -1823,7 +1823,7 @@ Default: 0
 Time interpolation algorithm to use for co2flux_ocn_file.
 Default: linear
 </entry>
-<entry id="co2flux_ocn_tintalgo" type="integer" category="co2_cycle"
+<entry id="co2flux_ocn_taxmode" type="integer" category="co2_cycle"
        group="co2_cycle_nl" valid_values="cycle, extend, limit">
 Time extrapolation algorithm to use for co2flux_ocn_file.
 Default: cycle
@@ -1858,7 +1858,7 @@ Default: 0
 Time interpolation algorithm to use for co2flux_fuel_file.
 Default: linear
 </entry>
-<entry id="co2flux_fuel_tintalgo" type="integer" category="co2_cycle"
+<entry id="co2flux_fuel_taxmode" type="integer" category="co2_cycle"
        group="co2_cycle_nl" valid_values="cycle, extend, limit">
 Time extrapolation algorithm to use for co2flux_fuel_file.
 Default: cycle

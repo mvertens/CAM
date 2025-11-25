@@ -13,7 +13,7 @@ module atm_import_export
   use shr_mpi_mod       , only : shr_mpi_min, shr_mpi_max
   use nuopc_shr_methods , only : chkerr
   use cam_logfile       , only : iulog
-  use cam_history       , only: outfld
+  use cam_history       , only : outfld
   use spmd_utils        , only : masterproc, mpicom
   use srf_field_check   , only : set_active_Sl_ram1
   use srf_field_check   , only : set_active_Sl_fv
@@ -27,6 +27,7 @@ module atm_import_export
   use atm_stream_ndep   , only : ndep_stream_active
   use chemistry         , only : chem_has_ndep_flx
   use cam_control_mod   , only : aqua_planet, simple_phys
+  use cam_esmf_mod      , only : cam_esmf_set_areas
 
   implicit none
   private ! except
@@ -496,6 +497,9 @@ contains
           end do
        end do
        deallocate(area)
+
+       call cam_esmf_set_areas(model_areas, mesh_areas, rc=rc)
+       if (chkerr(rc,__LINE__,u_FILE_u)) return
 
        ! Determine flux correction factors (module variables)
        do n = 1,numOwnedElements
