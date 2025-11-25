@@ -26,6 +26,8 @@ module co2_data_flux
       real(r8), pointer      :: co2flx(:,:)  ! Interpolated output (pcols,begchunk:endchunk)
    end type co2_data_flux_type
 
+   logical :: debug = .false.
+
 !===============================================================================
 contains
 !===============================================================================
@@ -39,7 +41,7 @@ contains
       !-------------------------------------------------------------------------------
 
       use ppgrid,           only: begchunk, endchunk, pcols
-      use atm_shr,          only: model_mesh, model_clock
+      use cam_esmf_mod,     only: model_mesh, model_clock
       use dshr_strdata_mod, only: shr_strdata_init_from_inline
 
       ! Arguments
@@ -73,7 +75,7 @@ contains
            stream_fldlistFile  = (/varname/),               &
            stream_fldListModel = (/varname/),               &
            stream_lev_dimname  = 'null',                    &
-           stream_mapalgo      = 'bilinear',                &
+           stream_mapalgo      = 'consf',                   &
            stream_offset       = 0,                         &
            stream_taxmode      = trim(taxmode),             &
            stream_dtlimit      = 1.0e30_r8,                 &
@@ -104,6 +106,7 @@ contains
       use ppgrid           , only : begchunk, endchunk
       use phys_grid        , only : get_ncols_p
       use time_manager     , only : get_curr_date
+      use cam_esmf_mod     , only : cam_esmf_global_sum
 
       ! Arguments
       type(co2_data_flux_type),  intent(inout) :: data_flux
@@ -132,6 +135,13 @@ contains
       call dshr_fldbun_getFldPtr(data_flux%sdat_co2%pstrm(1)%fldbun_model, data_flux%varname, fldptr1=dataptr1d, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+      end if
+
+      if (debug) then
+         call cam_esmf_global_sum(trim(data_flux%varname), dataptr1d, rc)
+         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+            call ESMF_Finalize(endflag=ESMF_END_ABORT)
+         end if
       end if
 
       g = 1
