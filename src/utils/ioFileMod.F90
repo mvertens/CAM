@@ -9,7 +9,7 @@ module ioFileMod
 ! Author: Mariana Vertenstein
 !
 !---------------------------------------------------------------------
- 
+
    use shr_kind_mod,     only: r8 => shr_kind_r8
    use cam_abortutils,   only: endrun
    use spmd_utils,       only: masterproc
@@ -33,9 +33,9 @@ module ioFileMod
 !=======================================================================
    contains
 !=======================================================================
- 
+
 subroutine getfil(fulpath, locfn, iflag, lexist)
- 
+
    ! --------------------------------------------------------------------
    ! Determine whether file is on local disk.
    ! . first check current working directory
@@ -44,7 +44,7 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    !   to 1 overrides this behavior, and in that case the optional lexist
    !   arg is used to return status of whether the file was found or not.
    ! --------------------------------------------------------------------
- 
+
    ! ------------------------ arguments -----------------------------------
    character(len=*), intent(in)   :: fulpath ! full pathname on local disk
    character(len=*), intent(out)  :: locfn   ! local file name if found in working directory,
@@ -54,7 +54,7 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    logical, optional, intent(out) :: lexist  ! When iflag=1 then getfil will return whether the
                                              ! file is found or not.  This flag is set .true.
                                              ! if the file is found, otherwise .false.
- 
+
    ! ------------------------ local variables ---------------------------
    integer :: i               ! loop index
    integer :: klen            ! length of fulpath character string
@@ -63,7 +63,7 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    logical :: lexist_in       ! true if local file exists
    logical :: abort_on_failure
    ! --------------------------------------------------------------------
- 
+
    abort_on_failure = .true.
    if (present(iflag)) then
       if (iflag==1) abort_on_failure = .false.
@@ -73,7 +73,7 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    ! first check if file is in current working directory.
 
    ! get local file name from full name: start at end. look for first "/"
- 
+
    klen = len_trim(fulpath)
    i = index(fulpath, '/', back=.true.)
 
@@ -81,7 +81,7 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
       if (abort_on_failure) then
          call endrun('(GETFIL): local filename variable is too short for path length')
       else
-         if (masterproc) write(iulog,*) '(GETFIL): local filename variable is too short for path length',klen-i,maxlen
+         if (masterproc) write(iulog,'(a,i8,i8)') '(GETFIL): local filename variable is too short for path length',klen-i,maxlen
          if (present(lexist)) lexist = .false.
          return
       end if
@@ -91,23 +91,23 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    if (len_trim(locfn) == 0) then
       call endrun ('(GETFIL): local filename has zero length')
    else if (masterproc) then
-      write(iulog,*)'(GETFIL): attempting to find local file ', trim(locfn)
+      write(iulog,'(a)')'(GETFIL): attempting to find local file '//trim(locfn)
    end if
- 
+
    inquire(file=locfn, exist=lexist_in)
    if (present(lexist)) lexist = lexist_in
    if (lexist_in) then
-      if (masterproc) write(iulog,*) '(GETFIL): using ',trim(locfn), ' in current working directory'
+      if (masterproc) write(iulog,'(a)') '(GETFIL): using '//trim(locfn)//' in current working directory'
       return
    end if
- 
+
    ! second check for full pathname on disk
- 
+
    if (klen > maxlen) then
       if (abort_on_failure) then
          call endrun('(GETFIL): local filename variable is too short for path length')
       else
-         if (masterproc) write(iulog,*) '(GETFIL): local filename variable is too short for path length',klen,maxlen
+         if (masterproc) write(iulog,'(a,i8,i8)') '(GETFIL): local filename variable is too short for path length',klen,maxlen
          if (present(lexist)) lexist = .false.
          return
       end if
@@ -117,10 +117,10 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    inquire(file=locfn, exist=lexist_in)
    if (present(lexist)) lexist = lexist_in
    if (lexist_in) then
-      if (masterproc) write(iulog,*)'(GETFIL): using ',trim(fulpath)
+      if (masterproc) write(iulog,'(a)')'(GETFIL): using '//trim(fulpath)
       return
    else
-      if (masterproc) write(iulog,*)'(GETFIL): all tries to get file have been unsuccessful: ',trim(fulpath)
+      if (masterproc) write(iulog,'(a)')'(GETFIL): all tries to get file have been unsuccessful: '//trim(fulpath)
       if (abort_on_failure) then
          call endrun ('GETFIL: FAILED to get '//trim(fulpath))
       else
@@ -129,29 +129,29 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    endif
 
 end subroutine getfil
- 
+
 !=======================================================================
- 
- 
+
+
    subroutine opnfil (locfn, iun, form, status)
- 
+
 !-----------------------------------------------------------------------
 ! open file locfn in unformatted or formatted form on unit iun
 !-----------------------------------------------------------------------
- 
+
 ! ------------------------ input variables ---------------------------
    character(len=*), intent(in):: locfn  !file name
    integer, intent(in):: iun             !fortran unit number
    character(len=1), intent(in):: form   !file format: u = unformatted. f = formatted
    character(len=*), optional, intent(in):: status !file status
 ! --------------------------------------------------------------------
- 
+
 ! ------------------------ local variables ---------------------------
    integer ioe             !error return from fortran open
    character(len=11) ft    !format type: formatted. unformatted
    character(len=11) st    !file status: old or unknown
 ! --------------------------------------------------------------------
- 
+
    if (len_trim(locfn) == 0) then
       call endrun ('(OPNFIL): local filename has zero length')
    endif
@@ -167,16 +167,16 @@ end subroutine getfil
    end if
    open (unit=iun,file=locfn,status=st, form=ft,iostat=ioe)
    if (ioe /= 0) then
-      if(masterproc) write(iulog,*)'(OPNFIL): failed to open file ',trim(locfn), ' on unit ',iun,' ierr=',ioe
-      call endrun ('opnfil') 
+      if(masterproc) write(iulog,'(a,i8,a,i8)')'(OPNFIL): failed to open file '//trim(locfn)//' on unit ',iun,' ierr=',ioe
+      call endrun ('opnfil')
    else
-      if(masterproc) write(iulog,*)'(OPNFIL): Successfully opened file ',trim(locfn), ' on unit= ',iun
+      if(masterproc) write(iulog,'(a,i8)')'(OPNFIL): Successfully opened file '//trim(locfn)//' on unit= ',iun
    end if
- 
+
    return
    end subroutine opnfil
- 
+
 !=======================================================================
- 
- 
+
+
 end module ioFileMod

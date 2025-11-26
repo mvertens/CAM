@@ -4,19 +4,30 @@ module cam_esmf_mod
   use ESMF              , only : ESMF_Mesh, ESMF_Clock
   use ESMF              , only : ESMF_VM, ESMF_VMAllreduce, ESMF_VMGetCurrent
   use ESMF              , only : ESMF_SUCCESS, ESMF_REDUCE_SUM
-  use nuopc_shr_methods , only : chkerr
+  use shr_sys_mod       , only : shr_sys_abort
   use cam_abortutils    , only : endrun
+  use nuopc_shr_methods , only : chkerr
   use error_messages    , only : alloc_err
   use cam_logfile       , only : iulog
 
   implicit none
-  public
+  private
 
-  type(ESMF_Mesh) , protected :: model_mesh     ! model mesh
-  type(ESMF_Clock), protected :: model_clock    ! model clock
+  public :: cam_esmf_set_clock
+  public :: cam_esmf_set_mesh
+  public :: cam_esmf_set_areas
+  public :: cam_esmf_global_sum
 
-  real(r8), allocatable, protected :: model_areas(:)
-  real(r8), allocatable, protected :: mesh_areas(:)
+  private :: cam_set_mesh_for_single_column
+
+  type(ESMF_Mesh) , public, protected :: model_mesh     ! model mesh
+  type(ESMF_Clock), public, protected :: model_clock    ! model clock
+
+  real(r8), allocatable, public, protected :: model_areas(:)
+  real(r8), allocatable, public, protected :: mesh_areas(:)
+
+  logical :: model_clock_initialized = .false.
+  logical :: model_mesh_initialized = .false.
 
   character(*), parameter :: u_FILE_u = &
        __FILE__
@@ -25,14 +36,36 @@ module cam_esmf_mod
 contains
 !=====================================================================
 
-   subroutine cam_esmf_set_mesh_and_clock(model_mesh_in, model_clock_in)
+   subroutine cam_esmf_set_clock(clock_in, rc)
+      use ESMF, only : ESMF_Clock
+
+      type(ESMF_Clock), intent(in) :: clock_in
+
+      rc = ESMF_SUCCESS
+
+      model_clock = ESMF_ClockCreate(clock_in, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      if (model_clock_initialized) then
+         call shr_sys_abort('initialize_model_clock: model clock already initialized')
+      else
+         model_clock = model_clock_in
+         model_clock_initialized = .true.
+      end if
+
+   end subroutine cam_esmf_set_clock
+
+   !=====================================================================
+   subroutine cam_esmf_set_mesh(model_mesh_in)
       type(ESMF_Mesh) , intent(in) :: model_mesh_in
-      type(ESMF_Clock), intent(in) :: model_clock_in
 
-      model_mesh  = model_mesh_in
-      model_clock = model_clock_in
-
-   end subroutine cam_esmf_set_mesh_and_clock
+      if (model_mesh_initialized) then
+         call shr_sys_abort('initialize_model_mesh: model mesh already initialized')
+      else
+         model_mesh  = model_mesh_in
+         model_mesh_initialized = .true.
+      end if
+   end subroutine cam_esmf_set_mesh
 
    !=====================================================================
    subroutine cam_esmf_set_areas(model_areas_in, mesh_areas_in, rc)

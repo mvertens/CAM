@@ -46,16 +46,16 @@ module co2_cycle
    integer            :: co2flux_ocn_year_first = -999    ! first year in stream to use
    integer            :: co2flux_ocn_year_last  = -999    ! last year in stream to use
    integer            :: co2flux_ocn_year_align = -999    ! align stream_year_first
-   character(len=cs)  :: co2flux_ocn_tintalgo = 'linear'  ! time interpolation [lower, upper, nearest, linear or coszen]
-   character(len=cs)  :: co2flux_ocn_taxmode = 'extend'   ! time extraploation [cycle, extend or limit]
+   character(len=cs)  :: co2flux_ocn_tintalgo = 'unset'   ! time interpolation [lower, upper, nearest, linear or coszen]
+   character(len=cs)  :: co2flux_ocn_taxmode = 'unset'    ! time extraploation [cycle, extend or limit]
 
    character(len=cl)  :: co2flux_fuel_file = 'unset'      ! co2 flux from fossil fuel
    character(len=cl)  :: co2flux_fuel_mesh = 'unset'      ! ESMF mesh corresponding to co2flux_fuel_file
    integer            :: co2flux_fuel_year_first = -999   ! first year in stream to use
    integer            :: co2flux_fuel_year_last = -999    ! last year in stream to use
    integer            :: co2flux_fuel_year_align = -999   ! align stream_year_first
-   character(len=cs)  :: co2flux_fuel_tintalgo = 'linear' ! time interpolation [lower, upper, nearest, linear or coszen]
-   character(len=cs)  :: co2flux_fuel_taxmode = 'extend'  ! time extraploation [cycle, extend or limit]
+   character(len=cs)  :: co2flux_fuel_tintalgo = 'unset'  ! time interpolation [lower, upper, nearest, linear or coszen]
+   character(len=cs)  :: co2flux_fuel_taxmode = 'unset'   ! time extraploation [cycle, extend or limit]
 
    !-------------------------------------------------------------------------------
    ! new constituents
