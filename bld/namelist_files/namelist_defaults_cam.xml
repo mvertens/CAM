@@ -262,12 +262,6 @@
 <bnd_topo hgrid="4x5"       >atm/cam/topo/USGS-gtopo30_4x5_remap_c050520.nc</bnd_topo>
 <bnd_topo hgrid="10x15"     >atm/cam/topo/fv_10x15_nc0540_Nsw042_Nrs008_Co060_Fi001_20171220.nc</bnd_topo>
 
-<bnd_topo hgrid="C24"  >atm/cam/topo/fv3_C24_nc3000_Co180_Fi001_MulG_PF_nullRR_Nsw127_c200625.nc</bnd_topo>
-<bnd_topo hgrid="C48"  >atm/cam/topo/fv3_C48_nc3000_Co120_Fi001_MulG_PF_nullRR_Nsw085_c200625.nc</bnd_topo>
-<bnd_topo hgrid="C96"  >atm/cam/topo/fv3_C96_nc3000_Co060_Fi001_MulG_PF_nullRR_Nsw042_c200625.nc</bnd_topo>
-<bnd_topo hgrid="C192" >atm/cam/topo/fv3_C192_nc3000_Co030_Fi001_MulG_PF_Nsw021_c200625.nc</bnd_topo>
-<bnd_topo hgrid="C384" >atm/cam/topo/fv3_C384_nc3000_Co015_Fi001_MulG_PF_nullRR_Nsw011_c200625.nc</bnd_topo>
-
 <bnd_topo hgrid="ne5np4"          >atm/cam/topo/se/ne5np4_nc3000_Co360_Fi001_MulG_PF_nullRR_Nsw064_20170515.nc</bnd_topo>
 <bnd_topo hgrid="ne16np4"         >atm/cam/topo/se/ne16np4_nc3000_Co120_Fi001_PF_nullRR_Nsw084_20171012.nc</bnd_topo>
 <bnd_topo hgrid="ne30np4"         >atm/cam/topo/se/ne30np4_nc3000_Co060_Fi001_PF_nullRR_Nsw042_20171020.nc</bnd_topo>
@@ -670,27 +664,8 @@
 <co2flux_fuel_year_start sim_year="1850-2015">1850</co2flux_fuel_year_start>
 <co2flux_fuel_year_end   sim_year="1850-2015">2015</co2flux_fuel_year_end>
 <co2flux_fuel_year_align sim_year="1850-2015">1850</co2flux_fuel_year_align>
-<co2flux_fuel_file                  sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="0.9x1.25" sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="1.9x2.5"  sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_1.9x2.5_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="C384"     sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="C192"     sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="C96"      sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="C48"      sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_1.9x2.5_c20181011.nc</co2flux_fuel_file>
-<co2flux_fuel_file hgrid="C24"      sim_year="1850-2015">atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_1.9x2.5_c20181011.nc</co2flux_fuel_file>
-
-<!-- Time-variant CO2 ocean emissions -->
-<co2flux_ocn_tintalgo>linear</co2flux_ocn_tintalgo>
-<co2flux_ocn_taxmode>extend</co2flux_ocn_taxmode>
-<co2flux_ocn_year_start sim_year="2000">2000</co2flux_ocn_year_start>
-<co2flux_ocn_year_end   sim_year="2000">2000</co2flux_ocn_year_end>
-<co2flux_ocn_year_align sim_year="2000">1</co2flux_ocn_year_align>
-<co2flux_ocn_year_start sim_year="1850">1850</co2flux_ocn_year_start>
-<co2flux_ocn_year_end   sim_year="1850">1850</co2flux_ocn_year_end>
-<co2flux_ocn_year_align sim_year="1850">1</co2flux_ocn_year_align>
-<co2flux_ocn_year_start sim_year="1850-2015">1850</co2flux_ocn_year_start>
-<co2flux_ocn_year_end   sim_year="1850-2015">2015</co2flux_ocn_year_end>
-<co2flux_ocn_year_align sim_year="1850-2015">1850</co2flux_ocn_year_align>
+<co2flux_fuel_datafile>atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_datafile>
+<co2flux_fuel_meshfile>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</co2flux_fuel_meshfile>
 
 <!-- Time-variant CO2 aircraft emissions -->
 <aircraft_co2_year_start sim_year="2000">2000</aircraft_co2_year_start>
@@ -702,13 +677,8 @@
 <aircraft_co2_year_start sim_year="1850-2015">1850</aircraft_co2_year_start>
 <aircraft_co2_year_end   sim_year="1850-2015">2015</aircraft_co2_year_end>
 <aircraft_co2_year_align sim_year="1850-2015">1850</aircraft_co2_year_align>
-<aircraft_co2_file  hgrid="0.9x1.25" >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_file>
-<aircraft_co2_file  hgrid="1.9x2.5"  >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_1.9x2.5_c20181011.nc</aircraft_co2_file>
-<aircraft_co2_file  hgrid="C384"     >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_file>
-<aircraft_co2_file  hgrid="C192"     >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_file>
-<aircraft_co2_file  hgrid="C96"      >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_file>
-<aircraft_co2_file  hgrid="C48"      >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_1.9x2.5_c20181011.nc</aircraft_co2_file>
-<aircraft_co2_file  hgrid="C24"      >atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_1.9x2.5_c20181011.nc</aircraft_co2_file>
+<aircraft_co2_datafile>atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_datafile>
+<aircraft_co2_meshfile>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</aircraft_co2_meshfile>
 
 <!-- Greenhouse gas production/loss rates -->
 <bndtvg>atm/cam/ggas/noaamisc.r8.nc</bndtvg>
@@ -2005,12 +1975,6 @@
 <drydep_srf_file hgrid="ne0np4CONUS.ne30x8"      >atm/cam/chem/trop_mam/atmsrf_ne0np4conus30x8_161116.nc</drydep_srf_file>
 <drydep_srf_file hgrid="ne0np4.ARCTIC.ne30x4"    >atm/cam/chem/trop_mam/atmsrf_ne30x4_ARCTIC_191011.nc</drydep_srf_file>
 <drydep_srf_file hgrid="ne0np4.ARCTICGRIS.ne30x8">atm/cam/chem/trop_mam/atmsrf_ne30x8_ARCTICGRIS_191212.nc</drydep_srf_file>
-
-<drydep_srf_file hgrid="C24">atm/cam/chem/trop_mam/atmsrf_C24_c200625.nc</drydep_srf_file>
-<drydep_srf_file hgrid="C48">atm/cam/chem/trop_mam/atmsrf_C48_c200625.nc</drydep_srf_file>
-<drydep_srf_file hgrid="C96">atm/cam/chem/trop_mam/atmsrf_C96_c200625.nc</drydep_srf_file>
-<drydep_srf_file hgrid="C192">atm/cam/chem/trop_mam/atmsrf_C192_c200625.nc</drydep_srf_file>
-<drydep_srf_file hgrid="C384">atm/cam/chem/trop_mam/atmsrf_C384_c200625.nc</drydep_srf_file>
 
 <drydep_srf_file hgrid="mpasa120">atm/cam/chem/trop_mam/atmsrf_mpasa120_c090720.nc</drydep_srf_file>
 <drydep_srf_file hgrid="mpasa480">atm/cam/chem/trop_mam/atmsrf_mpasa480_c090720.nc</drydep_srf_file>

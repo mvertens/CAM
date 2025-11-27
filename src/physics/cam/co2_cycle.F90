@@ -41,21 +41,21 @@ module co2_cycle
    logical, public, protected :: co2_readFlux_fuel     = .false. ! true => read fuel     co2 flux from date file, namelist variable
    logical                    :: co2_readFlux_aircraft = .false. ! true => read aircraft co2 flux from date file, namelist variable
 
-   character(len=cl)  :: co2flux_ocn_file = 'unset'       ! co2 flux from ocn
-   character(len=cl)  :: co2flux_ocn_mesh = 'unset'       ! ESMF mesh corresponding to co2flux_ocn_file
-   integer            :: co2flux_ocn_year_first = -999    ! first year in stream to use
-   integer            :: co2flux_ocn_year_last  = -999    ! last year in stream to use
-   integer            :: co2flux_ocn_year_align = -999    ! align stream_year_first
-   character(len=cs)  :: co2flux_ocn_tintalgo = 'unset'   ! time interpolation [lower, upper, nearest, linear or coszen]
-   character(len=cs)  :: co2flux_ocn_taxmode = 'unset'    ! time extraploation [cycle, extend or limit]
+   character(len=cl)  :: co2flux_ocn_datafile = 'unset'  ! co2 flux from ocn
+   character(len=cl)  :: co2flux_ocn_meshfile = 'unset'  ! ESMF mesh corresponding to co2flux_ocn_datafile
+   integer            :: co2flux_ocn_year_first = -999   ! first year in stream to use
+   integer            :: co2flux_ocn_year_last  = -999   ! last year in stream to use
+   integer            :: co2flux_ocn_year_align = -999   ! align stream_year_first
+   character(len=cs)  :: co2flux_ocn_tintalgo = 'unset'  ! time interpolation [lower, upper, nearest, linear or coszen]
+   character(len=cs)  :: co2flux_ocn_taxmode = 'unset'   ! time extraploation [cycle, extend or limit]
 
-   character(len=cl)  :: co2flux_fuel_file = 'unset'      ! co2 flux from fossil fuel
-   character(len=cl)  :: co2flux_fuel_mesh = 'unset'      ! ESMF mesh corresponding to co2flux_fuel_file
-   integer            :: co2flux_fuel_year_first = -999   ! first year in stream to use
-   integer            :: co2flux_fuel_year_last = -999    ! last year in stream to use
-   integer            :: co2flux_fuel_year_align = -999   ! align stream_year_first
-   character(len=cs)  :: co2flux_fuel_tintalgo = 'unset'  ! time interpolation [lower, upper, nearest, linear or coszen]
-   character(len=cs)  :: co2flux_fuel_taxmode = 'unset'   ! time extraploation [cycle, extend or limit]
+   character(len=cl)  :: co2flux_fuel_datafile = 'unset' ! co2 flux from fossil fuel
+   character(len=cl)  :: co2flux_fuel_meshfile = 'unset' ! ESMF mesh corresponding to co2flux_fuel_datafile
+   integer            :: co2flux_fuel_year_first = -999  ! first year in stream to use
+   integer            :: co2flux_fuel_year_last = -999   ! last year in stream to use
+   integer            :: co2flux_fuel_year_align = -999  ! align stream_year_first
+   character(len=cs)  :: co2flux_fuel_tintalgo = 'unset' ! time interpolation [lower, upper, nearest, linear or coszen]
+   character(len=cs)  :: co2flux_fuel_taxmode = 'unset'  ! time extraploation [cycle, extend or limit]
 
    !-------------------------------------------------------------------------------
    ! new constituents
@@ -96,25 +96,25 @@ subroutine co2_cycle_readnl(nlfile)
    character(len=256) :: msg
    character(len=*), parameter :: subname = 'co2_cycle_readnl'
 
-   namelist /co2_cycle_nl/ &
-        co2_flag,                    &
-        co2_readFlux_aircraft,       & ! if true, read aircraft data
-        co2_readFlux_ocn,            & ! if true, read ocn data
-        co2flux_ocn_file,            & ! input ocn dataset
-        co2flux_ocn_mesh,            & ! ESMF mesh file for input dataset
-        co2flux_ocn_year_first,      & ! first year in stream to use
-        co2flux_ocn_year_last,       & ! last year in stream to use
-        co2flux_ocn_year_align,      & ! align stream_year_first
-        co2flux_ocn_tintalgo,        & ! time interpolation [lower, upper, nearest, linear or coszen]
-        co2flux_ocn_taxmode,         & ! time extraploation [cycle, extend or limit]
-        co2_readFlux_fuel,           & ! if true, read fuel data
-        co2flux_fuel_file,           & ! input fuel dataset
-        co2flux_fuel_mesh,           & ! ESMF mesh file for input dataset
-        co2flux_fuel_year_first,     & ! first year in stream to use
-        co2flux_fuel_year_last,      & ! last year in stream to use
-        co2flux_fuel_year_align,     & ! align stream_year_first
-        co2flux_fuel_tintalgo,       & ! time interpolation [lower, upper, nearest, linear or coszen]
-        co2flux_fuel_taxmode           ! time extraploation [cycle, extend or limit]
+   namelist /co2_cycle_nl/       &
+        co2_flag,                &
+        co2_readFlux_aircraft,   & ! if true, read aircraft data
+        co2_readFlux_ocn,        & ! if true, read ocn data
+        co2flux_ocn_datafile,    & ! input ocn dataset
+        co2flux_ocn_meshfile,    & ! ESMF mesh file for input dataset
+        co2flux_ocn_year_first,  & ! first year in stream to use
+        co2flux_ocn_year_last,   & ! last year in stream to use
+        co2flux_ocn_year_align,  & ! align stream_year_first
+        co2flux_ocn_tintalgo,    & ! time interpolation [lower, upper, nearest, linear or coszen]
+        co2flux_ocn_taxmode,     & ! time extraploation [cycle, extend or limit]
+        co2_readFlux_fuel,       & ! if true, read fuel data
+        co2flux_fuel_datafile,   & ! input fuel dataset
+        co2flux_fuel_meshfile,   & ! ESMF mesh file for input dataset
+        co2flux_fuel_year_first, & ! first year in stream to use
+        co2flux_fuel_year_last,  & ! last year in stream to use
+        co2flux_fuel_year_align, & ! align stream_year_first
+        co2flux_fuel_tintalgo,   & ! time interpolation [lower, upper, nearest, linear or coszen]
+        co2flux_fuel_taxmode       ! time extraploation [cycle, extend or limit]
    !----------------------------------------------------------------------------
 
    if (masterproc) then
@@ -138,12 +138,10 @@ subroutine co2_cycle_readnl(nlfile)
 
    call mpi_bcast(co2_readFlux_ocn, 1, mpi_logical, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_ocn")
-   call mpi_bcast(co2flux_ocn_file, len(co2flux_ocn_file), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_file")
-   call mpi_bcast(co2flux_ocn_file, len(co2flux_ocn_file), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_file")
-   call mpi_bcast(co2flux_ocn_mesh, len(co2flux_ocn_mesh), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_mesh")
+   call mpi_bcast(co2flux_ocn_datafile, len(co2flux_ocn_datafile), mpi_character, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_datafile")
+   call mpi_bcast(co2flux_ocn_meshfile, len(co2flux_ocn_meshfile), mpi_character, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_meshfile")
    call mpi_bcast(co2flux_ocn_year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_year_first")
    call mpi_bcast(co2flux_ocn_year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
@@ -157,10 +155,10 @@ subroutine co2_cycle_readnl(nlfile)
 
    call mpi_bcast(co2_readFlux_fuel, 1, mpi_logical, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_fuel")
-   call mpi_bcast(co2flux_fuel_file, len(co2flux_fuel_file), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_file")
-   call mpi_bcast(co2flux_fuel_mesh, len(co2flux_fuel_mesh), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_mesh")
+   call mpi_bcast(co2flux_fuel_datafile, len(co2flux_fuel_datafile), mpi_character, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_datafile")
+   call mpi_bcast(co2flux_fuel_meshfile, len(co2flux_fuel_meshfile), mpi_character, masterprocid, mpicom, ierr)
+   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_meshfile")
    call mpi_bcast(co2flux_fuel_year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_first")
    call mpi_bcast(co2flux_fuel_year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
@@ -385,7 +383,7 @@ subroutine co2_time_interp_ocn
    if (co2_readFlux_ocn)  then
       if (first_time) then
          ! Initialize and read flux data
-         call co2_data_flux_init (co2flux_ocn_file, co2flux_ocn_mesh, &
+         call co2_data_flux_init (co2flux_ocn_datafile, co2flux_ocn_meshfile, &
               'CO2_flux', co2flux_ocn_year_first, co2flux_ocn_year_last, co2flux_ocn_year_align, &
               co2flux_ocn_tintalgo, co2flux_ocn_taxmode, data_flux_ocn)
          first_time = .false.
@@ -415,7 +413,7 @@ subroutine co2_time_interp_fuel
    if (co2_readFlux_fuel) then
       if (first_time) then
          ! Initialize and read flux data
-         call co2_data_flux_init (co2flux_fuel_file, co2flux_fuel_mesh, &
+         call co2_data_flux_init (co2flux_fuel_datafile, co2flux_fuel_meshfile, &
               'CO2_flux', co2flux_fuel_year_first, co2flux_fuel_year_last, co2flux_fuel_year_align, &
               co2flux_fuel_tintalgo, co2flux_fuel_taxmode, data_flux_fuel)
          first_time = .false.

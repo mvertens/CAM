@@ -824,7 +824,13 @@ if ($co2_cycle) {
         # Check whether user has explicitly turned off reading the fossil fuel dataset.
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_fuel') =~ /$TRUE/io) {
-            add_default($nl, 'co2flux_fuel_file', 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_tintalgo');
+            add_default($nl, 'co2flux_fuel_taxmode');
+            add_default($nl, 'co2flux_fuel_meshfile');
+            add_default($nl, 'co2flux_fuel_datafile');
+            add_default($nl, 'co2flux_fuel_year_start', 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_end',   'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year);
         }
 
         add_default($nl, 'co2_readflux_aircraft', 'val'=>'.true.');
@@ -833,16 +839,13 @@ if ($co2_cycle) {
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_aircraft') =~ /$TRUE/io) {
 
-            my $rel_filepath = get_default_value('ac_CO2_emis');
-            my $emisval = quote_string('ac_CO2 -> ' . $rel_filepath);
-            add_default($nl, 'aircraft_specifier', 'val'=>$emisval);
-
-            add_default($nl, 'aircraft_datapath');
-            add_default($nl, 'aircraft_type');
-            # This should be the same file as the one in the aircraft_specifier file.
-            # This is a workaround to get this filepath into the cam.input_data_list file
-            # to allow the CESM scripts to obtain all required data for a run.
-            add_default($nl, 'aircraft_co2_file');
+            add_default($nl, 'aircraft_co2_tintalgo');
+            add_default($nl, 'aircraft_co2_taxmode');
+            add_default($nl, 'aircraft_co2_meshfile');
+            add_default($nl, 'aircraft_co2_datafile');
+            add_default($nl, 'aircraft_co2_year_start', 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_end',   'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year);
         }
     }
 }
