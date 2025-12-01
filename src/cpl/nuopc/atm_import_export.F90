@@ -544,7 +544,7 @@ contains
     use phys_grid         , only : get_ncols_p
     use ppgrid            , only : begchunk, endchunk
     use shr_const_mod     , only : shr_const_stebol
-    use co2_cycle         , only : c_i, co2_readFlux_ocn, co2_readFlux_fuel
+    use co2_cycle         , only : c_i, co2_readFlux_fuel
     use co2_cycle         , only : co2_transport, co2_time_interp_ocn, co2_time_interp_fuel
     use co2_cycle         , only : data_flux_ocn, data_flux_fuel
     use physconst         , only : mwco2
@@ -886,11 +886,6 @@ contains
              g = g + 1
           end do
        end do
-    else
-       ! Consistency check
-       if (co2_readFlux_ocn) then
-          call shr_sys_abort(subname // ':: co2_readFlux_ocn and x2a_Faoo_fco2_ocn cannot both be active')
-       end if
     end if
 
     call state_getfldptr(importState,  'Faoo_fdms_ocn', fldptr=fldptr1d, exists=exists, rc=rc)
@@ -954,9 +949,6 @@ contains
     if (co2_transport() .and. overwrite_flds) then
 
        ! Interpolate in time for flux data read in
-       if (co2_readFlux_ocn) then
-          call co2_time_interp_ocn
-       end if
        if (co2_readFlux_fuel) then
           call co2_time_interp_fuel
        end if
@@ -972,10 +964,6 @@ contains
              ! co2 flux from ocn
              if (exists_fco2_ocn) then
                 cam_in(c)%cflx(i,c_i(1)) = cam_in(c)%fco2_ocn(i)
-             else if (co2_readFlux_ocn) then
-                ! convert from molesCO2/m2/s to kgCO2/m2/s
-                cam_in(c)%cflx(i,c_i(1)) = &
-                     -data_flux_ocn%co2flx(i,c)*(1._r8- cam_in(c)%landfrac(i))*mwco2*1.0e-3_r8
              else
                 cam_in(c)%cflx(i,c_i(1)) = 0._r8
              end if

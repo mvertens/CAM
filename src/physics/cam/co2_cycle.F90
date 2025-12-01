@@ -37,7 +37,6 @@ module co2_cycle
 
    ! Namelist variables
    logical                    :: co2_flag              = .false. ! true => turn on co2 code, namelist variable
-   logical, public, protected :: co2_readFlux_ocn      = .false. ! true => read ocn      co2 flux from date file, namelist variable
    logical, public, protected :: co2_readFlux_fuel     = .false. ! true => read fuel     co2 flux from date file, namelist variable
    logical                    :: co2_readFlux_aircraft = .false. ! true => read aircraft co2 flux from date file, namelist variable
 
@@ -99,14 +98,6 @@ subroutine co2_cycle_readnl(nlfile)
    namelist /co2_cycle_nl/       &
         co2_flag,                &
         co2_readFlux_aircraft,   & ! if true, read aircraft data
-        co2_readFlux_ocn,        & ! if true, read ocn data
-        co2flux_ocn_datafile,    & ! input ocn dataset
-        co2flux_ocn_meshfile,    & ! ESMF mesh file for input dataset
-        co2flux_ocn_year_first,  & ! first year in stream to use
-        co2flux_ocn_year_last,   & ! last year in stream to use
-        co2flux_ocn_year_align,  & ! align stream_year_first
-        co2flux_ocn_tintalgo,    & ! time interpolation [lower, upper, nearest, linear or coszen]
-        co2flux_ocn_taxmode,     & ! time extraploation [cycle, extend or limit]
         co2_readFlux_fuel,       & ! if true, read fuel data
         co2flux_fuel_datafile,   & ! input fuel dataset
         co2flux_fuel_meshfile,   & ! ESMF mesh file for input dataset
@@ -136,23 +127,6 @@ subroutine co2_cycle_readnl(nlfile)
    call mpi_bcast(co2_readFlux_aircraft, 1, mpi_logical, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_aircraft")
 
-   call mpi_bcast(co2_readFlux_ocn, 1, mpi_logical, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_ocn")
-   call mpi_bcast(co2flux_ocn_datafile, len(co2flux_ocn_datafile), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_datafile")
-   call mpi_bcast(co2flux_ocn_meshfile, len(co2flux_ocn_meshfile), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_meshfile")
-   call mpi_bcast(co2flux_ocn_year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_year_first")
-   call mpi_bcast(co2flux_ocn_year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_year_last")
-   call mpi_bcast(co2flux_ocn_year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_year_align")
-   call mpi_bcast(co2flux_ocn_tintalgo, len(co2flux_ocn_tintalgo), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_tintalgo")
-   call mpi_bcast(co2flux_ocn_taxmode, len(co2flux_ocn_taxmode), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_ocn_taxmode")
-
    call mpi_bcast(co2_readFlux_fuel, 1, mpi_logical, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_fuel")
    call mpi_bcast(co2flux_fuel_datafile, len(co2flux_fuel_datafile), mpi_character, masterprocid, mpicom, ierr)
@@ -169,16 +143,6 @@ subroutine co2_cycle_readnl(nlfile)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_tintalgo")
    call mpi_bcast(co2flux_fuel_taxmode, len(co2flux_fuel_taxmode), mpi_character, masterprocid, mpicom, ierr)
    if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_taxmode")
-
-   ! Consistency check
-   if (co2_readFlux_ocn .and. active_Faoo_fco2_ocn) then
-      msg = subname//': ERROR: reading ocn flux dataset is enabled, but mediator is setting'&
-            //' the ocn co2 flux.  Cannot do both.'
-      if (masterproc) then
-         write(iulog,*) trim(msg)
-      end if
-      call endrun(trim(msg))
-   end if
 
 end subroutine co2_cycle_readnl
 
@@ -363,35 +327,6 @@ subroutine co2_init
    end do
 
 end subroutine co2_init
-
-!===============================================================================
-subroutine co2_time_interp_ocn
-
-!-------------------------------------------------------------------------------
-! Purpose: Time interpolate co2 flux to current time.
-!          Read in new monthly data if necessary
-!-------------------------------------------------------------------------------
-
-   use time_manager,   only: is_first_step
-   use co2_data_flux,  only: co2_data_flux_init, co2_data_flux_advance
-
-   logical :: first_time = .true.
-   !----------------------------------------------------------------------------
-
-   if (.not. co2_flag) return
-
-   if (co2_readFlux_ocn)  then
-      if (first_time) then
-         ! Initialize and read flux data
-         call co2_data_flux_init (co2flux_ocn_datafile, co2flux_ocn_meshfile, &
-              'CO2_flux', co2flux_ocn_year_first, co2flux_ocn_year_last, co2flux_ocn_year_align, &
-              co2flux_ocn_tintalgo, co2flux_ocn_taxmode, data_flux_ocn)
-         first_time = .false.
-      end if
-      call co2_data_flux_advance ( data_flux_ocn )
-   endif
-
-end subroutine co2_time_interp_ocn
 
 !===============================================================================
 
