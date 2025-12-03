@@ -545,8 +545,8 @@ contains
     use ppgrid            , only : begchunk, endchunk
     use shr_const_mod     , only : shr_const_stebol
     use co2_cycle         , only : c_i, co2_readFlux_fuel
-    use co2_cycle         , only : co2_transport, co2_time_interp_fuel
-    use co2_cycle         , only : data_flux_fuel
+    use co2_cycle         , only : co2_transport
+    use co2_data_flux     , only : data_flux_fuel, co2_data_flux_advance
     use physconst         , only : mwco2
     use time_manager      , only : is_first_step, get_nstep
 
@@ -950,7 +950,7 @@ contains
 
        ! Interpolate in time for flux data read in
        if (co2_readFlux_fuel) then
-          call co2_time_interp_fuel
+          call co2_data_flux_advance()
        end if
 
        ! from fuel: data read in or zero

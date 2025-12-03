@@ -1,19 +1,18 @@
 module co2_cycle
 
-!-------------------------------------------------------------------------------
-!
-! Purpose:
-! Provides distributions of CO2_LND, CO2_OCN, CO2_FF, CO2
-! Surface flux from CO2_LND and CO2_OCN provided by the mediator.
-! Surface flux from CO2_FFF can be read from a file.
-!
-! Author: Jeff Lee, Keith Lindsay
-!         Mariana Vertenstein, Refactored for NUOPC Stream functionality
-!
-!-------------------------------------------------------------------------------
+   !-------------------------------------------------------------------------------
+   !
+   ! Purpose:
+   ! Provides distributions of CO2_LND, CO2_OCN, CO2_FF, CO2
+   ! Surface flux from CO2_LND and CO2_OCN provided by the mediator.
+   ! Surface flux from CO2_FFF can be read from a file.
+   !
+   ! Author: Jeff Lee, Keith Lindsay
+   !         Mariana Vertenstein, Refactored for NUOPC Stream functionality
+   !
+   !-------------------------------------------------------------------------------
 
-   use shr_kind_mod,    only: r8=>shr_kind_r8, cl=>shr_kind_cl, cs=>shr_kind_cs
-   use co2_data_flux,   only: co2_data_flux_type
+   use shr_kind_mod,  only: r8=>shr_kind_r8, cl=>shr_kind_cl, cs=>shr_kind_cs
 
    implicit none
    private
@@ -25,24 +24,12 @@ module co2_cycle
    public co2_implements_cnst           ! returns true if consituent is implemented by this package
    public co2_init_cnst                 ! initialize mixing ratios if not read from initial file
    public co2_init                      ! initialize (history) variables
-   public co2_time_interp_fuel          ! time interpolate co2 flux
    public co2_cycle_set_ptend           ! set tendency from aircraft emissions
-
-   ! Module data
-   type(co2_data_flux_type), public, protected :: data_flux_fuel ! data read in for co2 flux from fuel
-
 
    ! Namelist variables
    logical                    :: co2_flag              = .false. ! true => turn on co2 code, namelist variable
    logical, public, protected :: co2_readFlux_fuel     = .false. ! true => read fuel     co2 flux from date file, namelist variable
    logical                    :: co2_readFlux_aircraft = .false. ! true => read aircraft co2 flux from date file, namelist variable
-
-   character(len=cl)  :: co2flux_fuel_datafile = 'unset' ! co2 flux from fossil fuel
-   character(len=cl)  :: co2flux_fuel_meshfile = 'unset' ! ESMF mesh corresponding to co2flux_fuel_datafile
-   integer            :: co2flux_fuel_year_first = -999  ! first year in stream to use
-   integer            :: co2flux_fuel_year_last = -999   ! last year in stream to use
-   integer            :: co2flux_fuel_year_align = -999  ! align stream_year_first
-   character(len=cs)  :: co2flux_fuel_taxmode = 'unset'  ! time extraploation [cycle, extend or limit]
 
    !-------------------------------------------------------------------------------
    ! new constituents
@@ -52,7 +39,7 @@ module co2_cycle
    integer, public, protected :: c_i(ncnst)     ! global index for new constituents
 
    character(len=7), dimension(ncnst), parameter :: & ! constituent names
-      c_names = (/'CO2_OCN', 'CO2_FFF', 'CO2_LND', 'CO2    '/)
+        c_names = (/'CO2_OCN', 'CO2_FFF', 'CO2_LND', 'CO2    '/)
 
    integer :: co2_ocn_glo_ind ! global index of 'CO2_OCN'
    integer :: co2_fff_glo_ind ! global index of 'CO2_FFF'
@@ -63,344 +50,286 @@ module co2_cycle
 contains
 !===============================================================================
 
-subroutine co2_cycle_readnl(nlfile)
+   subroutine co2_cycle_readnl(nlfile)
 
-!-------------------------------------------------------------------------------
-! Purpose: Read co2_cycle_nl namelist group.
-!-------------------------------------------------------------------------------
+      !--------------------------------------------
+      ! Purpose: Read co2_cycle_nl namelist group.
+      !--------------------------------------------
 
-   use namelist_utils,  only: find_group_name
-   use spmd_utils,      only: masterproc, mpicom, masterprocid
-   use spmd_utils,      only: mpi_logical, mpi_character, mpi_integer
-   use cam_logfile,     only: iulog
-   use cam_abortutils,  only: endrun
+      use namelist_utils,  only: find_group_name
+      use spmd_utils,      only: masterproc, mpicom, masterprocid
+      use spmd_utils,      only: mpi_logical, mpi_character, mpi_integer
+      use cam_logfile,     only: iulog
+      use cam_abortutils,  only: endrun
+      use co2_data_flux,   only: co2_data_flux_readnl
 
-   ! Arguments
-   character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
+      ! Arguments
+      character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
 
-   ! Local variables
-   integer            :: unitn, ierr
-   character(len=256) :: msg
-   character(len=*), parameter :: subname = 'co2_cycle_readnl'
+      ! Local variables
+      integer            :: unitn, ierr
+      character(len=256) :: msg
+      character(len=*), parameter :: subname = 'co2_cycle_readnl'
 
-   namelist /co2_cycle_nl/       &
-        co2_flag,                &
-        co2_readFlux_aircraft,   & ! if true, read aircraft data
-        co2_readFlux_fuel          ! if true, read fuel data
+      namelist /co2_cycle_nl/       &
+           co2_flag,                &
+           co2_readFlux_aircraft,   & ! if true, read aircraft data
+           co2_readFlux_fuel          ! if true, read fuel data
+      !----------------------------------------------------------------------------
 
-   namelist /co2_ffuel_nl/       &
-        co2flux_fuel_datafile,   & ! input fuel dataset
-        co2flux_fuel_meshfile,   & ! ESMF mesh file for input dataset
-        co2flux_fuel_year_first, & ! first year in stream to use
-        co2flux_fuel_year_last,  & ! last year in stream to use
-        co2flux_fuel_year_align, & ! align stream_year_first
-        co2flux_fuel_taxmode       ! time extraploation [cycle, extend or limit]
-   !----------------------------------------------------------------------------
-
-   if (masterproc) then
-      open( newunit=unitn, file=trim(nlfile), status='old' )
-      call find_group_name(unitn, 'co2_cycle_nl', status=ierr)
-      if (ierr == 0) then
-         read(unitn, co2_cycle_nl, iostat=ierr)
-         if (ierr /= 0) then
-            call endrun(subname // ':: ERROR reading co2_cycle_nl namelist')
+      if (masterproc) then
+         open( newunit=unitn, file=trim(nlfile), status='old' )
+         call find_group_name(unitn, 'co2_cycle_nl', status=ierr)
+         if (ierr == 0) then
+            read(unitn, co2_cycle_nl, iostat=ierr)
+            if (ierr /= 0) then
+               call endrun(subname // ':: ERROR reading co2_cycle_nl namelist')
+            end if
          end if
+         close(unitn)
       end if
-      close(unitn)
-   end if
 
-   call mpi_bcast(co2_flag, 1, mpi_logical, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_flag")
-   call mpi_bcast(co2_readFlux_aircraft, 1, mpi_logical, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_aircraft")
-   call mpi_bcast(co2_readFlux_fuel, 1, mpi_logical, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_fuel")
+      call mpi_bcast(co2_flag, 1, mpi_logical, masterprocid, mpicom, ierr)
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_flag")
+      call mpi_bcast(co2_readFlux_aircraft, 1, mpi_logical, masterprocid, mpicom, ierr)
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_aircraft")
+      call mpi_bcast(co2_readFlux_fuel, 1, mpi_logical, masterprocid, mpicom, ierr)
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_fuel")
 
-   if (masterproc) then
-      open( newunit=unitn, file=trim(nlfile), status='old' )
-      call find_group_name(unitn, 'co2_ffuel_nl', status=ierr)
-      if (ierr == 0) then
-         read(unitn, co2_ffuel_nl, iostat=ierr)
-         if (ierr /= 0) then
-            call endrun(subname // ':: ERROR reading co2_ffuel_nl namelist')
+      if (co2_readFlux_fuel) then
+         call co2_data_flux_readnl(nlfile)
+      end if
+
+   end subroutine co2_cycle_readnl
+
+   !===============================================================================
+
+   subroutine co2_register
+
+      !-------------------------------------------------------------------------------
+      ! Purpose: register advected constituents
+      !-------------------------------------------------------------------------------
+
+      use physconst,      only: mwco2, cpair
+      use constituents,   only: cnst_add
+
+      ! Local variables
+      real(r8), dimension(ncnst) :: &
+           c_mw,    &! molecular weights
+           c_cp,    &! heat capacities
+           c_qmin    ! minimum mmr
+
+      integer  :: icnst
+      !----------------------------------------------------------------------------
+
+      if (.not. co2_flag) return
+
+      c_mw   = (/     mwco2,     mwco2,     mwco2,     mwco2 /)
+      c_cp   = (/     cpair,     cpair,     cpair,     cpair /)
+      c_qmin = (/ 1.e-20_r8, 1.e-20_r8, 1.e-20_r8, 1.e-20_r8 /)
+
+      ! register CO2 constiuents as dry tracers, set indices
+
+      do icnst = 1, ncnst
+         call cnst_add(c_names(icnst), c_mw(icnst), c_cp(icnst), c_qmin(icnst), c_i(icnst), &
+              longname=c_names(icnst), mixtype='dry')
+
+         select case (trim(c_names(icnst)))
+         case ('CO2_OCN')
+            co2_ocn_glo_ind = c_i(icnst)
+         case ('CO2_FFF')
+            co2_fff_glo_ind = c_i(icnst)
+         case ('CO2_LND')
+            co2_lnd_glo_ind = c_i(icnst)
+         case ('CO2')
+            co2_glo_ind = c_i(icnst)
+         end select
+      end do
+
+   end subroutine co2_register
+
+   !===============================================================================
+
+   function co2_transport()
+
+      !-------------------------------------------------------------------------------
+      ! Purpose: return true if this package is active
+      !-------------------------------------------------------------------------------
+
+      ! Return value
+      logical :: co2_transport
+
+      !----------------------------------------------------------------------------
+
+      co2_transport = co2_flag
+
+   end function co2_transport
+
+   !===============================================================================
+
+   function co2_implements_cnst(name)
+
+      !-------------------------------------------------------------------------------
+      ! Purpose: return true if specified constituent is implemented by this package
+      !-------------------------------------------------------------------------------
+
+      ! Return value
+      logical :: co2_implements_cnst
+
+      ! Arguments
+      character(len=*), intent(in) :: name  ! constituent name
+
+      ! Local variables
+      integer :: m
+      !----------------------------------------------------------------------------
+
+      co2_implements_cnst = .false.
+
+      if (.not. co2_flag) return
+
+      do m = 1, ncnst
+         if (name == c_names(m)) then
+            co2_implements_cnst = .true.
+            return
          end if
-      end if
-      close(unitn)
-   end if
+      end do
 
-   call mpi_bcast(co2flux_fuel_datafile, len(co2flux_fuel_datafile), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_datafile")
-   call mpi_bcast(co2flux_fuel_meshfile, len(co2flux_fuel_meshfile), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_meshfile")
-   call mpi_bcast(co2flux_fuel_year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_first")
-   call mpi_bcast(co2flux_fuel_year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_last")
-   call mpi_bcast(co2flux_fuel_year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_align")
-   call mpi_bcast(co2flux_fuel_taxmode, len(co2flux_fuel_taxmode), mpi_character, masterprocid, mpicom, ierr)
-   if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_taxmode")
+   end function co2_implements_cnst
 
-end subroutine co2_cycle_readnl
+   !===============================================================================
 
-!===============================================================================
+   subroutine co2_init_cnst(name, latvals, lonvals, mask, q)
 
-subroutine co2_register
+      !-------------------------------------------------------------------------------
+      ! Purpose:
+      ! Set initial values of CO2_OCN, CO2_FFF, CO2_LND, CO2
+      ! Need to be called from process_inidat in inidat.F90
+      ! (or, initialize co2 in co2_timestep_init)
+      !-------------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
-! Purpose: register advected constituents
-!-------------------------------------------------------------------------------
+      use chem_surfvals,  only: chem_surfvals_get
 
-   use physconst,      only: mwco2, cpair
-   use constituents,   only: cnst_add
+      ! Arguments
+      character(len=*), intent(in)  :: name       ! constituent name
+      real(r8),         intent(in)  :: latvals(:) ! lat in degrees (ncol)
+      real(r8),         intent(in)  :: lonvals(:) ! lon in degrees (ncol)
+      logical,          intent(in)  :: mask(:)    ! Only initialize where .true.
+      real(r8),         intent(out) :: q(:,:)     ! kg tracer/kg dry air (gcol, plev)
 
-   ! Local variables
-   real(r8), dimension(ncnst) :: &
-      c_mw,    &! molecular weights
-      c_cp,    &! heat capacities
-      c_qmin    ! minimum mmr
+      ! Local variables
+      integer :: k
+      !----------------------------------------------------------------------------
 
-   integer  :: icnst
-   !----------------------------------------------------------------------------
+      if (.not. co2_flag) return
 
-   if (.not. co2_flag) return
+      do k = 1, size(q, 2)
+         select case (name)
+         case ('CO2_OCN')
+            where(mask)
+               q(:, k) = chem_surfvals_get('CO2MMR')
+            end where
+         case ('CO2_FFF')
+            where(mask)
+               q(:, k) = chem_surfvals_get('CO2MMR')
+            end where
+         case ('CO2_LND')
+            where(mask)
+               q(:, k) = chem_surfvals_get('CO2MMR')
+            end where
+         case ('CO2')
+            where(mask)
+               q(:, k) = chem_surfvals_get('CO2MMR')
+            end where
+         end select
+      end do
 
-   c_mw   = (/     mwco2,     mwco2,     mwco2,     mwco2 /)
-   c_cp   = (/     cpair,     cpair,     cpair,     cpair /)
-   c_qmin = (/ 1.e-20_r8, 1.e-20_r8, 1.e-20_r8, 1.e-20_r8 /)
+   end subroutine co2_init_cnst
 
-   ! register CO2 constiuents as dry tracers, set indices
+   !===============================================================================
 
-   do icnst = 1, ncnst
-      call cnst_add(c_names(icnst), c_mw(icnst), c_cp(icnst), c_qmin(icnst), c_i(icnst), &
-           longname=c_names(icnst), mixtype='dry')
+   subroutine co2_init
 
-      select case (trim(c_names(icnst)))
-      case ('CO2_OCN')
-         co2_ocn_glo_ind = c_i(icnst)
-      case ('CO2_FFF')
-         co2_fff_glo_ind = c_i(icnst)
-      case ('CO2_LND')
-         co2_lnd_glo_ind = c_i(icnst)
-      case ('CO2')
-         co2_glo_ind = c_i(icnst)
-      end select
-   end do
+      !-------------------------------------------------------------------------------
+      ! Purpose: initialize co2,
+      !          declare history variables,
+      !          read co2 flux form fuel, as data_flux_fuel
+      !-------------------------------------------------------------------------------
 
-end subroutine co2_register
+      use cam_history,  only: addfld, add_default, horiz_only
+      use constituents, only: cnst_name, cnst_longname, sflxnam
 
-!===============================================================================
+      ! Local variables
+      integer :: m, mm
+      !----------------------------------------------------------------------------
 
-function co2_transport()
+      if (.not. co2_flag) return
 
-!-------------------------------------------------------------------------------
-! Purpose: return true if this package is active
-!-------------------------------------------------------------------------------
+      ! Add constituents and fluxes to history file
+      do m = 1, ncnst
+         mm = c_i(m)
 
-   ! Return value
-   logical :: co2_transport
+         call addfld(trim(cnst_name(mm))//'_BOT', horiz_only,  'A', 'kg/kg',   trim(cnst_longname(mm))//', Bottom Layer')
+         call addfld(cnst_name(mm),               (/ 'lev' /), 'A', 'kg/kg',   cnst_longname(mm))
+         call addfld(sflxnam(mm),                 horiz_only,  'A', 'kg/m2/s', trim(cnst_name(mm))//' surface flux')
 
-   !----------------------------------------------------------------------------
+         call add_default(cnst_name(mm), 1, ' ')
+         call add_default(sflxnam(mm),   1, ' ')
 
-   co2_transport = co2_flag
+         ! The addfld call for the 'TM*' fields are made by default in the
+         ! constituent_burden module.
+         call add_default('TM'//trim(cnst_name(mm)), 1, ' ')
+      end do
 
-end function co2_transport
+   end subroutine co2_init
 
-!===============================================================================
+   !===============================================================================
+   subroutine co2_cycle_set_ptend(state, pbuf, ptend)
 
-function co2_implements_cnst(name)
+      !-------------------------------------------------------------------------------
+      ! Purpose:
+      ! Set ptend, using aircraft CO2 emissions in ac_CO2 from pbuf
+      !-------------------------------------------------------------------------------
 
-!-------------------------------------------------------------------------------
-! Purpose: return true if specified constituent is implemented by this package
-!-------------------------------------------------------------------------------
+      use physics_types,  only: physics_state, physics_ptend, physics_ptend_init
+      use physics_buffer, only: physics_buffer_desc, pbuf_get_index, pbuf_get_field
+      use constituents,   only: pcnst
+      use ppgrid,         only: pver
+      use physconst,      only: gravit
 
-   ! Return value
-   logical :: co2_implements_cnst
+      ! Arguments
+      type(physics_state), intent(in)    :: state
+      type(physics_buffer_desc), pointer :: pbuf(:)
+      type(physics_ptend), intent(out)   :: ptend     ! indivdual parameterization tendencies
 
-   ! Arguments
-   character(len=*), intent(in) :: name  ! constituent name
+      ! Local variables
+      logical :: lq(pcnst)
+      integer :: ifld, ncol, k
+      real(r8), pointer :: ac_CO2(:,:)
+      !----------------------------------------------------------------------------
 
-   ! Local variables
-   integer :: m
-   !----------------------------------------------------------------------------
-
-   co2_implements_cnst = .false.
-
-   if (.not. co2_flag) return
-
-   do m = 1, ncnst
-      if (name == c_names(m)) then
-         co2_implements_cnst = .true.
+      if (.not. co2_flag .or. .not. co2_readFlux_aircraft) then
+         call physics_ptend_init(ptend, state%psetcols, 'none')
          return
       end if
-   end do
 
-end function co2_implements_cnst
+      ! aircraft fluxes are added to 'CO2_FFF' and 'CO2' tendencies
+      lq(:)               = .false.
+      lq(co2_fff_glo_ind) = .true.
+      lq(co2_glo_ind)     = .true.
 
-!===============================================================================
+      call physics_ptend_init(ptend, state%psetcols, 'co2_cycle_ac', lq=lq)
 
-subroutine co2_init_cnst(name, latvals, lonvals, mask, q)
+      ifld = pbuf_get_index('ac_CO2')
+      call pbuf_get_field(pbuf, ifld, ac_CO2)
 
-!-------------------------------------------------------------------------------
-! Purpose:
-! Set initial values of CO2_OCN, CO2_FFF, CO2_LND, CO2
-! Need to be called from process_inidat in inidat.F90
-! (or, initialize co2 in co2_timestep_init)
-!-------------------------------------------------------------------------------
+      ! [ac_CO2] = 'kg m-2 s-1'
+      ! [ptend%q] = 'kg kg-1 s-1'
+      ncol = state%ncol
+      do k = 1, pver
+         ptend%q(:ncol,k,co2_fff_glo_ind) = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
+         ptend%q(:ncol,k,co2_glo_ind)     = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
+      end do
 
-   use chem_surfvals,  only: chem_surfvals_get
-
-   ! Arguments
-   character(len=*), intent(in)  :: name       ! constituent name
-   real(r8),         intent(in)  :: latvals(:) ! lat in degrees (ncol)
-   real(r8),         intent(in)  :: lonvals(:) ! lon in degrees (ncol)
-   logical,          intent(in)  :: mask(:)    ! Only initialize where .true.
-   real(r8),         intent(out) :: q(:,:)     ! kg tracer/kg dry air (gcol, plev)
-
-   ! Local variables
-   integer :: k
-   !----------------------------------------------------------------------------
-
-   if (.not. co2_flag) return
-
-   do k = 1, size(q, 2)
-      select case (name)
-      case ('CO2_OCN')
-         where(mask)
-            q(:, k) = chem_surfvals_get('CO2MMR')
-         end where
-      case ('CO2_FFF')
-         where(mask)
-            q(:, k) = chem_surfvals_get('CO2MMR')
-         end where
-      case ('CO2_LND')
-         where(mask)
-            q(:, k) = chem_surfvals_get('CO2MMR')
-         end where
-      case ('CO2')
-         where(mask)
-            q(:, k) = chem_surfvals_get('CO2MMR')
-         end where
-      end select
-   end do
-
-end subroutine co2_init_cnst
-
-!===============================================================================
-subroutine co2_init
-
-!-------------------------------------------------------------------------------
-! Purpose: initialize co2,
-!          declare history variables,
-!          read co2 flux form fuel, as data_flux_fuel
-!-------------------------------------------------------------------------------
-
-   use cam_history,    only: addfld, add_default, horiz_only
-   use constituents,   only: cnst_name, cnst_longname, sflxnam
-
-   ! Local variables
-   integer :: m, mm
-   !----------------------------------------------------------------------------
-
-   if (.not. co2_flag) return
-
-    ! Add constituents and fluxes to history file
-   do m = 1, ncnst
-      mm = c_i(m)
-
-      call addfld(trim(cnst_name(mm))//'_BOT', horiz_only,  'A', 'kg/kg',   trim(cnst_longname(mm))//', Bottom Layer')
-      call addfld(cnst_name(mm),               (/ 'lev' /), 'A', 'kg/kg',   cnst_longname(mm))
-      call addfld(sflxnam(mm),                 horiz_only,  'A', 'kg/m2/s', trim(cnst_name(mm))//' surface flux')
-
-      call add_default(cnst_name(mm), 1, ' ')
-      call add_default(sflxnam(mm),   1, ' ')
-
-      ! The addfld call for the 'TM*' fields are made by default in the
-      ! constituent_burden module.
-      call add_default('TM'//trim(cnst_name(mm)), 1, ' ')
-   end do
-
-end subroutine co2_init
-
-!===============================================================================
-
-subroutine co2_time_interp_fuel
-
-!-------------------------------------------------------------------------------
-! Purpose: Time interpolate co2 flux to current time.
-!          Read in new monthly data if necessary
-!-------------------------------------------------------------------------------
-
-   use co2_data_flux,  only: co2_data_flux_init, co2_data_flux_advance
-
-   logical :: first_time = .true.
-   !----------------------------------------------------------------------------
-
-   if (.not. co2_flag) return
-
-   if (co2_readFlux_fuel) then
-      if (first_time) then
-         ! Initialize and read flux data
-         call co2_data_flux_init (co2flux_fuel_datafile, co2flux_fuel_meshfile, &
-              'CO2_flux', co2flux_fuel_year_first, co2flux_fuel_year_last, co2flux_fuel_year_align, &
-              co2flux_fuel_taxmode, data_flux_fuel)
-         first_time = .false.
-      end if
-      call co2_data_flux_advance ( data_flux_fuel )
-   endif
-
-end subroutine co2_time_interp_fuel
-
-!===============================================================================
-subroutine co2_cycle_set_ptend(state, pbuf, ptend)
-
-!-------------------------------------------------------------------------------
-! Purpose:
-! Set ptend, using aircraft CO2 emissions in ac_CO2 from pbuf
-!-------------------------------------------------------------------------------
-
-   use physics_types,  only: physics_state, physics_ptend, physics_ptend_init
-   use physics_buffer, only: physics_buffer_desc, pbuf_get_index, pbuf_get_field
-   use constituents,   only: pcnst
-   use ppgrid,         only: pver
-   use physconst,      only: gravit
-
-   ! Arguments
-   type(physics_state), intent(in)    :: state
-   type(physics_buffer_desc), pointer :: pbuf(:)
-   type(physics_ptend), intent(out)   :: ptend     ! indivdual parameterization tendencies
-
-   ! Local variables
-   logical :: lq(pcnst)
-   integer :: ifld, ncol, k
-   real(r8), pointer :: ac_CO2(:,:)
-   !----------------------------------------------------------------------------
-
-   if (.not. co2_flag .or. .not. co2_readFlux_aircraft) then
-      call physics_ptend_init(ptend, state%psetcols, 'none')
-      return
-   end if
-
-   ! aircraft fluxes are added to 'CO2_FFF' and 'CO2' tendencies
-   lq(:)               = .false.
-   lq(co2_fff_glo_ind) = .true.
-   lq(co2_glo_ind)     = .true.
-
-   call physics_ptend_init(ptend, state%psetcols, 'co2_cycle_ac', lq=lq)
-
-   ifld = pbuf_get_index('ac_CO2')
-   call pbuf_get_field(pbuf, ifld, ac_CO2)
-
-   ! [ac_CO2] = 'kg m-2 s-1'
-   ! [ptend%q] = 'kg kg-1 s-1'
-   ncol = state%ncol
-   do k = 1, pver
-      ptend%q(:ncol,k,co2_fff_glo_ind) = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
-      ptend%q(:ncol,k,co2_glo_ind)     = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
-   end do
-
-end subroutine co2_cycle_set_ptend
-
-!===============================================================================
+   end subroutine co2_cycle_set_ptend
 
 end module co2_cycle
