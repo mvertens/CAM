@@ -814,22 +814,24 @@ if ($co2_cycle) {
     # co2_flag turns on the co2_cycle code in CAM
     add_default($nl, 'co2_flag', 'val'=>'.true.');
 
-
-    # Supply a fossil fuel dataset if the co2_cycle is active and it's a
-    # transient run ...
-    if ($sim_year =~ /(\d+)-(\d+)/) {
+    # Supply a fossil fuel dataset and aircraft emissions datasets if
+    # the co2_cycle is active and it's a transient run ...
+    if ($sim_year =~ /(\d+)-(\d+)/ || $sim_year =~ /(\d+)/) {
 
         add_default($nl, 'co2_readflux_fuel', 'val'=>'.true.');
 
         # Check whether user has explicitly turned off reading the fossil fuel dataset.
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_fuel') =~ /$TRUE/io) {
-            add_default($nl, 'co2flux_fuel_tintalgo');
-            add_default($nl, 'co2flux_fuel_taxmode');
+            if ($sim_year =~ /(\d+)-(\d+)/) {
+                add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'limit' );
+            } else {
+                add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'cycle' );
+            }
             add_default($nl, 'co2flux_fuel_meshfile');
             add_default($nl, 'co2flux_fuel_datafile');
-            add_default($nl, 'co2flux_fuel_year_start', 'sim_year'=>$sim_year);
-            add_default($nl, 'co2flux_fuel_year_end',   'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year);
             add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year);
         }
 
@@ -838,13 +840,15 @@ if ($co2_cycle) {
         # Check whether user has explicitly turned off reading the aircraft CO2 dataset.
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_aircraft') =~ /$TRUE/io) {
-
-            add_default($nl, 'aircraft_co2_tintalgo');
-            add_default($nl, 'aircraft_co2_taxmode');
+            if ($sim_year =~ /(\d+)-(\d+)/) {
+                add_default($nl, 'aircraft_co2_taxmode', 'val'=>'limit' );
+            } else {
+                add_default($nl, 'aircraft_co2_taxmode', 'val'=>'cycle' );
+            }
             add_default($nl, 'aircraft_co2_meshfile');
             add_default($nl, 'aircraft_co2_datafile');
-            add_default($nl, 'aircraft_co2_year_start', 'sim_year'=>$sim_year);
-            add_default($nl, 'aircraft_co2_year_end',   'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year);
             add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year);
         }
     }

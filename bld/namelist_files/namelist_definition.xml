@@ -220,30 +220,32 @@
        Default: FALSE
        </entry>
 
-<entry id="Nudge_Filenames" type="char*256(1000)" category="nudging"
+<entry id="Nudge_Path" type="char*256" input_pathname="abs" category="nudging"
        group="nudging_nl" valid_values="" >
-       Full pathnames of analyses data to use for nudging.
+       Full pathname of analyses data to use for nudging.
+        (e.g. '/$DIN_LOC_ROOT/atm/cam/nudging/')
        Default: none
        </entry>
 
-<entry id="Nudge_Meshfile" type="char*256" category="nudging"
+<entry id="Nudge_File_Template" type="char*80" category="nudging"
        group="nudging_nl" valid_values="" >
-       ESMF mesh file that corresponds to the nudging files
+       Template for Nudging analyses file names.
+        (e.g. '%y/ERAI_ne30np4_L30.cam2.i.%y-%m-%d-%s.nc')
        Default: none
        </entry>
 
-<entry id="Nudge_File_Times_Per_Day" type="integer" category="nudging"
+<entry id="Nudge_Times_Per_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Number of analysis times per day in nudging filename(s).
+       Number of analyses files per day.
         (e.g. 4 --> 6 hourly analyses)
-       Default: 6
+       Default: none
        </entry>
 
-<entry id="Model_Update_Times_Per_Day" type="integer" category="nudging"
+<entry id="Model_Times_Per_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
        Number of time to update model data per day.
         (e.g. 48 --> 1800 Second timestep)
-       Default: 6
+       Default: none
        </entry>
 
 <entry id="Nudge_Beg_Year" type="integer" category="nudging"
@@ -1778,48 +1780,90 @@ Default: set by build-namelist
 
 <entry id="co2_readflux_aircraft" type="logical"  category="co2_cycle"
        group="co2_cycle_nl" valid_values="" >
-If TRUE read co2 aircraft flux from file.
+If TRUE read co2 aircraft flux from file and use all the settings for
+aircraft_co2_xxx namelist variables.
 Default: set by build-namelist
 </entry>
 
 <entry id="co2_readflux_fuel" type="logical"  category="co2_cycle"
        group="co2_cycle_nl" valid_values="" >
-If TRUE read co2 fuel flux from file.
+If TRUE read co2 fuel flux from file and use all the settings for
+co2flux_fuel_xxx namelist variables.
 Default: set by build-namelist
 </entry>
 
+<!-- co2 fossil fuel emissions -->
+
 <entry id="co2flux_fuel_datafile" type="char*256" input_pathname="abs" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="" >
-Filepath for dataset containing CO2 flux from fossil fuel.
+       group="co2_ffuel_nl" valid_values="" >
+Full filepath for dataset containing CO2 flux from fossil fuel.
 Default: none
 </entry>
+
 <entry id="co2flux_fuel_meshfile" type="char*256" input_pathname="abs" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="" >
-Filepath for ESMF Mesh corresponding to co2flux_fuel_datafile File.
+       group="co2_ffuel_nl" valid_values="" >
+Full filepath for ESMF Mesh corresponding to co2flux_fuel_datafile File.
 Default: none
 </entry>
+
 <entry id="co2flux_fuel_year_first" type="integer" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="" >
+       group="co2_ffuel_nl" valid_values="" >
 Year first to use in co2flux_fuel_datafile.
 Default: 0
+
 <entry id="co2flux_fuel_year_last" type="integer" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="" >
+       group="co2_ffuel_nl" valid_values="" >
 Year last to use in co2flux_fuel_datafile.
 Default: 0
 </entry>
+
 <entry id="co2flux_fuel_year_align" type="integer" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="" >
+       group="co2_ffuel_nl" valid_values="" >
 Year align to use in co2flux_fuel_datafile.
 Default: 0
 </entry>
-<entry id="co2flux_fuel_tintalgo" type="integer" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="linear, lower, upper, nearest" >
-Time interpolation algorithm to use for co2flux_fuel_datafile.
-Default: linear
-</entry>
-<entry id="co2flux_fuel_taxmode" type="integer" category="co2_cycle"
-       group="co2_cycle_nl" valid_values="cycle, extend, limit">
+
+<entry id="co2flux_fuel_taxmode" type="char*16" category="co2_cycle"
+       group="co2_ffuel_nl" valid_values="cycle,extend,limit">
 Time extrapolation algorithm to use for co2flux_fuel_datafile.
+Default: cycle
+</entry>
+
+<!-- aircraft co2 emissions -->
+
+<entry id="aircraft_co2_datafile" type="char*256" input_pathname="abs" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="" >
+Full pathname of the data file containing aircraft co2 emissions.
+Default: set by build-namelist.
+</entry>
+
+<entry id="aircraft_co2_meshfile" type="char*256" input_pathname="abs" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="" >
+Full pathname of the ESMF mesh file corresponding to aircraft_co2_datafile.
+Default: set by build-namelist.
+</entry>
+
+<entry id="aircraft_co2_year_first" type="integer" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="" >
+First year of the aircraft_co2_datafile to use.
+Default: set by build-namelist.
+</entry>
+
+<entry id="aircraft_co2_year_last" type="integer" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="" >
+Last year of the aircraft_co2_datafile to use.
+Default: set by build-namelist.
+</entry>
+
+<entry id="aircraft_co2_year_align" type="integer" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="" >
+Model year that aligns with aircraft_co2_year_first.
+Default: set by build-namelist.
+</entry>
+
+<entry id="aircraft_co2_taxmode" type="char*16" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="cycle,extend,limit">
+Time extrapolation algorithm to use for aircraft_co2_datafile.
 Default: cycle
 </entry>
 
@@ -6951,98 +6995,76 @@ Full pathname of dataset of O2 and 03 column densities above the model for look-
 Default: set by build-namelist.
 </entry>
 
-<entry id="aircraft_co2_fldname" type="char*256" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Field name on the aircraft_datafile (default is ac_CO2).
-Default: set by build-namelist.
-</entry>
-<entry id="aircraft_co2_datafile" type="char*256" input_pathname="abs" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Full pathname of the data file containing ac_CO2 (by default).
-Default: set by build-namelist.
-</entry>
-<entry id="aircraft_co2_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Full pathname of the ESMF mesh file corresponding to aircraft_datafile.
-Default: set by build-namelist
-</entry>
-<entry id="aircraft_co2_year_first" type="integer" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-First year of the aircraft_datafile to use.
-Default: set by build-namelist
-</entry>
-<entry id="aircraft_co2_year_last" type="integer" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Last year of the aircraft_datafile to use.
-Default: set by build-namelist
-</entry>
-<entry id="aircraft_co2_year_align" type="integer" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Model year that aligns with aircraft_year_first.
-Default: set by build-namelist
-</entry>
+<!-- aircraft h2o emissions -->
 
-<entry id="aircraft_h2o_fldname" type="char*256" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Field name on the aircraft_datafile (default is ac_H2O).
-Default: set by build-namelist.
-</entry>
 <entry id="aircraft_h2o_datafile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Full pathname of the data file containing ac_H2O (by default).
-Default: set by build-namelist.
-</entry>
-<entry id="aircraft_h2o_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Full pathname of the ESMF mesh file corresponding to aircraft_datafile.
-Default: set by build-namelist
-</entry>
-<entry id="aircraft_h2o_year_first" type="integer" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-First year of the aircraft_datafile to use.
-Default: set by build-namelist
-</entry>
-<entry id="aircraft_h2o_year_last" type="integer" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Last year of the aircraft_datafile to use.
-Default: set by build-namelist
-</entry>
-<entry id="aircraft_h2o_year_align" type="integer" category="cam_chem"
-       group="aircraft_emit_nl" valid_values="" >
-Model year that aligns with aircraft_year_first.
-Default: set by build-namelist
+Full pathname of the data file containing aircraft h2o emissions.
 </entry>
 
-<entry id="aircraft_slant_dist_fldname" type="char*256" category="cam_chem"
+<entry id="aircraft_h2o_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Field name on the aircraft_datafile (default is ac_SLANT_DIST).
-Default: set by build-namelist.
+Full pathname of the ESMF mesh file corresponding to aircraft_h2o_datafile.
 </entry>
+
+<entry id="aircraft_h2o_year_first" type="integer" category="cam_chem"
+       group="aircraft_emit_nl" valid_values="" >
+First year of the aircraft_h2o_datafile to use.
+</entry>
+
+<entry id="aircraft_h2o_year_last" type="integer" category="cam_chem"
+       group="aircraft_emit_nl" valid_values="" >
+Last year of the aircraft_h2o_datafile to use.
+</entry>
+
+<entry id="aircraft_h2o_year_align" type="integer" category="cam_chem"
+       group="aircraft_emit_nl" valid_values="" >
+Model year that aligns with aircraft_h2o_year_first.
+</entry>
+
+<entry id="aircraft_h2o_taxmode" type="char*16" category="h2o_cycle"
+       group="aircraft_emit_nl" valid_values="cycle, extend, limit">
+Time extrapolation algorithm to use for aircraft_h2o_datafile.
+</entry>
+
+<!-- aircraft slant_dist -->
+
 <entry id="aircraft_slant_dist_datafile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
 Full pathname of the data file containing ac_SLANT_DIST (by default).
-Default: set by build-namelist.
 </entry>
+
 <entry id="aircraft_slant_dist_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Full pathname of the ESMF mesh file corresponding to aircraft_datafile.
-Default: set by build-namelist
+Full pathname of the ESMF mesh file corresponding to aircraft_slant_dist.
 </entry>
+
+<entry id="aircraft_slant_dist_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
+       group="aircraft_emit_nl" valid_values="" >
+Full pathname of the ESMF mesh file corresponding to aircraft_slant_dist.
+</entry>
+
 <entry id="aircraft_slant_dist_year_first" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-First year of the aircraft_datafile to use.
-Default: set by build-namelist
+First year of the aircraft_slant_dist to use.
 </entry>
+
 <entry id="aircraft_slant_dist_year_last" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Last year of the aircraft_datafile to use.
-Default: set by build-namelist
+Last year of the aircraft_slant_dist to use.
 </entry>
+
 <entry id="aircraft_slant_dist_year_align" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
 Model year that aligns with aircraft_year_first.
-Default: set by build-namelist
 </entry>
+
+<entry id="aircraft_slant_dist_taxmode" type="char*16" category="cam_chem"
+       group="aircraft_emit_nl" valid_values="cycle,extend,limit">
+Time extrapolation algorithm to use for aircraft_slant_dist.
+</entry>
+
+<!-- gcr_ionization -->
 
 <entry id="gcr_ionization_datapath" type="char*256" input_pathname="abs" category="cam_chem"
        group="gcr_ionization_nl" valid_values="" >
@@ -7102,7 +7124,7 @@ if {{ hilight }}gcr_ionization_type{{ closehilight }} is 'FIXED'.
 Default: 0 seconds
 </entry>
 
-
+<!-- prescribed_aero -->
 
 <entry id="prescribed_aero_datapath" type="char*256" input_pathname="abs" category="cam_chem"
        group="prescribed_aero_nl" valid_values="" >

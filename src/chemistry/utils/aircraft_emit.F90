@@ -4,17 +4,16 @@ module aircraft_emit
    ! Purpose:
    ! Manages reading and interpolation of aircraft aerosols
    !
-   ! Authors: Chih-Chieh (Jack) Chen and Cheryl Craig -- February 2010
-   !          Refactored for CDEPS in line functionality -- November 2025
+   ! Authors:
+   !   Chih-Chieh (Jack) Chen and Cheryl Craig -- February 2010
+   !   Mariana Vertenstein (Refactored using CDEPS in-line functionality) -- November 2025
    !
    !-----------------------------------------------------------------------
 
    use perf_mod,         only : t_startf, t_stopf
    use shr_kind_mod,     only : r8 => shr_kind_r8, cl=>shr_kind_cl, cs=>shr_kind_cs
-   use cam_abortutils,   only : endrun, handle_allocate_error
+   use cam_abortutils,   only : endrun
    use cam_logfile,      only : iulog
-   use spmd_utils,       only : mpicom, masterprocid
-   use spmd_utils,       only : mpi_integer, mpi_logical, mpi_character
    use spmd_utils,       only : masterproc, iam
    use dshr_strdata_mod, only : shr_strdata_type
 
@@ -33,21 +32,22 @@ module aircraft_emit
 
    type :: forcing_type
       type(shr_strdata_type) :: sdat
-      character(len=cs)      :: fldname = ' '
-      character(len=cs)      :: fldunits = 'units'
-      integer                :: index_map = -1
-      character(len=cl)      :: datafile = ' '
-      character(len=cl)      :: meshfile = ' '
-      character(len=cs)      :: mapalgo = 'bilinear'
-      character(len=cs)      :: tintalgo = 'lower'
-      integer                :: year_first = -999
-      integer                :: year_last = -999
-      integer                :: year_align = -999
-      integer                :: nilev = -1
+      character(len=cs)      :: fldname     = 'unset '
+      character(len=cs)      :: fldunits    = 'unset'
+      character(len=cl)      :: datafile    = 'unset'
+      character(len=cl)      :: meshfile    = 'unset'
+      character(len=cs)      :: mapalgo     = 'consf'
+      character(len=cs)      :: tintalgo    = 'lower'
+      character(len=cs)      :: taxmode     = 'unset'
+      integer                :: year_first  = -999
+      integer                :: year_last   = -999
+      integer                :: year_align  = -999
+      integer                :: nilev       = -1
+      integer                :: nlev        = -1
+      integer                :: pbuf_index  = -1
+      integer                :: index_map   = -1
       real(r8), pointer      :: altitude_int(:)
-      integer                :: nlev = -1
       real(r8), pointer      :: altitude_lev(:)
-      integer                :: pbuf_index = -1
    end type forcing_type
    type(forcing_type) :: forcing(N_AERO)
 
@@ -65,6 +65,8 @@ contains
       !-------------------------------------------------------------------
 
       use namelist_utils, only: find_group_name
+      use spmd_utils,     only: mpicom, masterprocid
+      use spmd_utils,     only: mpi_integer, mpi_logical, mpi_character
 
       ! Arguments
       character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
@@ -73,37 +75,48 @@ contains
       integer           :: nf, ni
       integer           :: index
       integer           :: unitn, ierr
-      character(len=cs) :: aircraft_co2_fldname  = ''
-      character(len=cl) :: aircraft_co2_datafile = ''
-      character(len=cl) :: aircraft_co2_meshfile = ''
-      integer           :: aircraft_co2_year_first = -999
-      integer           :: aircraft_co2_year_last  = -999
-      integer           :: aircraft_co2_year_align = -999
-      character(len=cs) :: aircraft_h2o_fldname  = ''
-      character(len=cl) :: aircraft_h2o_datafile = ''
-      character(len=cl) :: aircraft_h2o_meshfile = ''
-      integer           :: aircraft_h2o_year_first = -999
-      integer           :: aircraft_h2o_year_last  = -999
-      integer           :: aircraft_h2o_year_align = -999
-      character(len=cs) :: aircraft_slant_dist_fldname  = ''
-      character(len=cl) :: aircraft_slant_dist_datafile = ''
-      character(len=cl) :: aircraft_slant_dist_meshfile = ''
-      integer           :: aircraft_slant_dist_year_first = -999
-      integer           :: aircraft_slant_dist_year_last  = -999
-      integer           :: aircraft_slant_dist_year_align = -999
+
+      character(len=cs) :: aircraft_co2_fldname          = 'ac_CO2'
+      character(len=cl) :: aircraft_co2_datafile         = 'unset'
+      character(len=cl) :: aircraft_co2_meshfile         = 'unset'
+      character(len=cs) :: aircraft_co2_taxmode          = 'unset'
+      integer           :: aircraft_co2_year_first       = -999
+      integer           :: aircraft_co2_year_last        = -999
+      integer           :: aircraft_co2_year_align       = -999
+
+      character(len=cs) :: aircraft_h2o_fldname          = 'ac_H2O'
+      character(len=cl) :: aircraft_h2o_datafile         = 'unset'
+      character(len=cl) :: aircraft_h2o_meshfile         = 'unset'
+      character(len=cs) :: aircraft_h2o_taxmode          = 'unset'
+      integer           :: aircraft_h2o_year_first       = -999
+      integer           :: aircraft_h2o_year_last        = -999
+      integer           :: aircraft_h2o_year_align       = -999
+
+      character(len=cs) :: aircraft_slant_dist_fldname   = 'ac_SLANT_DIST'
+      character(len=cl) :: aircraft_slant_dist_datafile  = 'unset'
+      character(len=cl) :: aircraft_slant_dist_meshfile  = 'unset'
+      character(len=cs) :: aircraft_slant_dist_taxmode   = 'unset'
+      integer           :: aircraft_slant_dist_year_first= -999
+      integer           :: aircraft_slant_dist_year_last = -999
+      integer           :: aircraft_slant_dist_year_align= -999
+
       character(len=*), parameter :: subname = 'aircraft_emit_readnl'
 
       namelist /aircraft_emit_nl/  &
-           aircraft_co2_fldname, aircraft_co2_datafile, aircraft_co2_meshfile, &
+           aircraft_co2_datafile, aircraft_co2_meshfile, &
            aircraft_co2_year_first, aircraft_co2_year_last, aircraft_co2_year_align, &
-           aircraft_h2o_fldname, aircraft_h2o_datafile, aircraft_h2o_meshfile, &
+           aircraft_co2_taxmode, &
+           aircraft_h2o_datafile, aircraft_h2o_meshfile, &
            aircraft_h2o_year_first, aircraft_h2o_year_last, aircraft_h2o_year_align, &
-           aircraft_slant_dist_fldname, aircraft_slant_dist_datafile, aircraft_slant_dist_meshfile, &
-           aircraft_slant_dist_year_first, aircraft_slant_dist_year_last, aircraft_slant_dist_year_align
+           aircraft_h2o_taxmode, &
+           aircraft_slant_dist_datafile, aircraft_slant_dist_meshfile, &
+           aircraft_slant_dist_year_first, aircraft_slant_dist_year_last, aircraft_slant_dist_year_align, &
+           aircraft_slant_dist_taxmode
       !-----------------------------------------------------------------------------
 
       ! Read namelist
       if (masterproc) then
+
          open( newunit=unitn, file=trim(nlfile), status='old' )
          call find_group_name(unitn, 'aircraft_emit_nl', status=ierr)
          if (ierr == 0) then
@@ -114,52 +127,62 @@ contains
          end if
          close(unitn)
 
-         forcing(1)%fldname    = aircraft_co2_fldname
-         forcing(1)%datafile   = aircraft_co2_datafile
-         forcing(1)%meshfile   = aircraft_co2_meshfile
-         forcing(1)%year_first = aircraft_co2_year_first
-         forcing(1)%year_last  = aircraft_co2_year_last
-         forcing(1)%year_align = aircraft_co2_year_align
+         if (trim(aircraft_co2_datafile) /= 'unset') then
+            nf = 1
+            forcing(nf)%fldname    = aircraft_co2_fldname
+            forcing(nf)%datafile   = aircraft_co2_datafile
+            forcing(nf)%meshfile   = aircraft_co2_meshfile
+            forcing(nf)%year_first = aircraft_co2_year_first
+            forcing(nf)%year_last  = aircraft_co2_year_last
+            forcing(nf)%year_align = aircraft_co2_year_align
+            forcing(nf)%taxmode    = aircraft_co2_taxmode
+         end if
+         if (trim(aircraft_h2o_datafile) /= 'unset') then
+            nf = 2
+            forcing(nf)%datafile   = aircraft_h2o_datafile
+            forcing(nf)%fldname    = aircraft_h2o_fldname
+            forcing(nf)%meshfile   = aircraft_h2o_meshfile
+            forcing(nf)%year_first = aircraft_h2o_year_first
+            forcing(nf)%year_last  = aircraft_h2o_year_last
+            forcing(nf)%year_align = aircraft_h2o_year_align
+            forcing(nf)%taxmode    = aircraft_h2o_taxmode
+         end if
+         if (trim(aircraft_slant_dist_datafile) /= 'unset') then
+            nf = 3
+            forcing(nf)%datafile   = aircraft_slant_dist_datafile
+            forcing(nf)%fldname    = aircraft_slant_dist_fldname
+            forcing(nf)%meshfile   = aircraft_slant_dist_meshfile
+            forcing(nf)%year_first = aircraft_slant_dist_year_first
+            forcing(nf)%year_last  = aircraft_slant_dist_year_last
+            forcing(nf)%year_align = aircraft_slant_dist_year_align
+            forcing(nf)%taxmode    = aircraft_slant_dist_taxmode
+         end if
 
-         forcing(2)%fldname    = aircraft_h2o_fldname
-         forcing(2)%datafile   = aircraft_h2o_datafile
-         forcing(2)%meshfile   = aircraft_h2o_meshfile
-         forcing(2)%year_first = aircraft_h2o_year_first
-         forcing(2)%year_last  = aircraft_h2o_year_last
-         forcing(2)%year_align = aircraft_h2o_year_align
-
-         forcing(3)%fldname    = aircraft_slant_dist_fldname
-         forcing(3)%datafile   = aircraft_slant_dist_datafile
-         forcing(3)%meshfile   = aircraft_slant_dist_meshfile
-         forcing(3)%year_first = aircraft_slant_dist_year_first
-         forcing(3)%year_last  = aircraft_slant_dist_year_last
-         forcing(3)%year_align = aircraft_slant_dist_year_align
       end if
 
       n_aero_loop: do nf = 1,N_AERO
+
          ! Broadcast namelist variables
+         call mpi_bcast(forcing(nf)%datafile, len(forcing(nf)%datafile), mpi_character, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%datapath")
          call mpi_bcast(forcing(nf)%fldname,len(forcing(nf)%fldname), mpi_character, masterprocid, mpicom, ierr)
          if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%fldname")
+         call mpi_bcast(forcing(nf)%meshfile, len(forcing(nf)%meshfile), mpi_character, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%meshfile")
+         call mpi_bcast(forcing(nf)%year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_first")
+         call mpi_bcast(forcing(nf)%year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_last")
+         call mpi_bcast(forcing(nf)%year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
+         call mpi_bcast(forcing(nf)%taxmode, len(forcing(nf)%taxmode), mpi_character, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
 
-         if (forcing(nf)%fldname /= ' ') then
-            call mpi_bcast(forcing(nf)%datafile, len(forcing(nf)%datafile), mpi_character, masterprocid, mpicom, ierr)
-            if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%datapath")
-            call mpi_bcast(forcing(nf)%meshfile, len(forcing(nf)%meshfile), mpi_character, masterprocid, mpicom, ierr)
-            if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%meshfile")
-            call mpi_bcast(forcing(nf)%year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
-            if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_first")
-            call mpi_bcast(forcing(nf)%year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
-            if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_last")
-            call mpi_bcast(forcing(nf)%year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
-            if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
-
-            ! fill in forcing data type
+         datafile_isnot_unset: if (trim(forcing(nf)%datafile) /= 'unset') then
+            ! overwrite mapalgo for ac_SLANT_DIST
             if ( trim(forcing(nf)%fldname) == 'ac_SLANT_DIST') then
                forcing(nf)%mapalgo = 'nn'
-            else
-               forcing(nf)%mapalgo = 'bilinear'
             end if
-            forcing(nf)%tintalgo = 'lower'
 
             ! obtain index in aero_names module array
             index = 0
@@ -177,7 +200,6 @@ contains
 
             !  diagnostics
             if (masterproc) then
-               if (masterproc) write(iulog,*) ' '
                write(iulog,*) ' '
                write(iulog,'(a)'  ) ' aircraft init settings for: '//trim(forcing(nf)%fldname)
                write(iulog,'(a,a)') '   aircraft datafile   = ',trim(forcing(nf)%datafile)
@@ -187,10 +209,12 @@ contains
                write(iulog,'(a,i8)')'   aircraft year_first = ',forcing(nf)%year_first
                write(iulog,'(a,i8)')'   aircraft year_last  = ',forcing(nf)%year_last
                write(iulog,'(a,i8)')'   aircraft year_align = ',forcing(nf)%year_align
-               write(iulog,'(a,i8)')'   aircraft index_map for '//trim(forcing(nf)%fldname)//' = ',forcing(nf)%index_map
+               write(iulog,'(a,i8)')'   aircraft index_map for '//trim(forcing(nf)%fldname)//' = ',&
+                    forcing(nf)%index_map
                write(iulog,*) ' '
             end if
-         end if
+         end if datafile_isnot_unset
+
       end do n_aero_loop
 
    end subroutine aircraft_emit_readnl
@@ -211,7 +235,7 @@ contains
       !--------------------------------------------
 
       do nf = 1,N_AERO
-         if (forcing(nf)%fldname /= ' ') then
+         if (trim(forcing(nf)%datafile) /= 'unset') then
             ! Add fldname to pbuf and obtain pbuf_index
             call pbuf_add_field(forcing(nf)%fldname, 'physpkg', dtype_r8, (/pcols,pver/), &
                  forcing(nf)%pbuf_index)
@@ -246,7 +270,7 @@ contains
       !-----------------------------------------------
 
       loop_n_aero: do nf = 1,N_AERO
-         if (forcing(nf)%fldname /= ' ') then
+         if (trim(forcing(nf)%datafile) /= 'unset') then
 
             ! Open file
             if (masterproc) then
@@ -266,8 +290,10 @@ contains
             endif
 
             ! Determine vertical levels - altitude_int and altitude_lev
-            call get_vertical_dimension(fid=pioid, dname='altitude_int', dsize=forcing(nf)%nilev, data=forcing(nf)%altitude_int)
-            call get_vertical_dimension(fid=pioid, dname='altitude'    , dsize=forcing(nf)%nlev , data=forcing(nf)%altitude_lev)
+            call get_vertical_dimension(fid=pioid, dname='altitude_int', dsize=forcing(nf)%nilev, &
+                 data=forcing(nf)%altitude_int)
+            call get_vertical_dimension(fid=pioid, dname='altitude'    , dsize=forcing(nf)%nlev , &
+                 data=forcing(nf)%altitude_lev)
 
             ! Write out info to log file
             if (masterproc) then
@@ -357,9 +383,9 @@ contains
       ! The stream initialization must be called after the cam initailization
       !------------------------------------------------------------------
       n_aero_loop: do nf = 1,N_AERO
-         non_empty_fldname: if (forcing(nf)%fldname /= ' ') then
-            first_call: if (first_time) then
+         unset_file: if (trim(forcing(nf)%datafile) /= 'unset') then
 
+            first_call: if (first_time) then
                ! Initialize forcing%sdat
                call shr_strdata_init_from_inline(forcing(nf)%sdat,    &
                     my_task             = iam,                        &
@@ -377,7 +403,7 @@ contains
                     stream_lev_dimname  = 'altitude',                 &
                     stream_mapalgo      = trim(forcing(nf)%mapalgo),  &
                     stream_offset       = 0,                          &
-                    stream_taxmode      = 'extend',                   &
+                    stream_taxmode      = trim(forcing(nf)%taxmode),  &
                     stream_dtlimit      = 1.0e30_r8,                  &
                     stream_tintalgo     = trim(forcing(nf)%tintalgo), &
                     stream_name         = 'Aircraft forcing data ',   &
@@ -486,7 +512,7 @@ contains
                call outfld( forcing(nf)%fldname, tmpptr(:ncol,:), ncol, state(lchnk)%lchnk )
             enddo
 
-         end if non_empty_fldname
+         end if unset_file
       end do n_aero_loop
 
       call t_stopf('All_aircraft_emit_adv')

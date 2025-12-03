@@ -545,8 +545,8 @@ contains
     use ppgrid            , only : begchunk, endchunk
     use shr_const_mod     , only : shr_const_stebol
     use co2_cycle         , only : c_i, co2_readFlux_fuel
-    use co2_cycle         , only : co2_transport, co2_time_interp_ocn, co2_time_interp_fuel
-    use co2_cycle         , only : data_flux_ocn, data_flux_fuel
+    use co2_cycle         , only : co2_transport, co2_time_interp_fuel
+    use co2_cycle         , only : data_flux_fuel
     use physconst         , only : mwco2
     use time_manager      , only : is_first_step, get_nstep
 
@@ -953,9 +953,9 @@ contains
           call co2_time_interp_fuel
        end if
 
-       ! from ocn : data read in or from coupler or zero
        ! from fuel: data read in or zero
-       ! from lnd : through coupler or zero
+       ! from ocn : from mediator or zero
+       ! from lnd : from mediator or zero
        ! all co2 fluxes in unit kgCO2/m2/s
 
        do c=begchunk,endchunk

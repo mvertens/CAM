@@ -33,7 +33,7 @@ contains
 !===============================================================================
 
    subroutine co2_data_flux_init (input_file, input_meshfile, &
-        varname, year_first, year_last, year_align, tintalgo, taxmode, data_flux)
+        varname, year_first, year_last, year_align, taxmode, data_flux)
 
       !-------------------------------------------------------------------------------
       ! Initialize co2_data_flux_type instance
@@ -51,7 +51,6 @@ contains
       integer,                  intent(in)    :: year_first
       integer,                  intent(in)    :: year_last
       integer,                  intent(in)    :: year_align
-      character(len=*),         intent(in)    :: tintalgo
       character(len=*),         intent(in)    :: taxmode
       type(co2_data_flux_type), intent(inout) :: data_flux
 
@@ -79,7 +78,7 @@ contains
            stream_offset       = 0,                         &
            stream_taxmode      = trim(taxmode),             &
            stream_dtlimit      = 1.0e30_r8,                 &
-           stream_tintalgo     = trim(tintalgo),            &
+           stream_tintalgo     = 'linear',                  &
            stream_name         = 'CO2 forcing data ',       &
            rc                  = rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
