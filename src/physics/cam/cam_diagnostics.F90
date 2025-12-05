@@ -308,6 +308,11 @@ contains
     call addfld ('ZBOT',       horiz_only,  'A', 'm','Lowest model level height')
 
     call addfld ('ATMEINT',    horiz_only,  'A', 'J/m2','Vertically integrated total atmospheric energy ')
+    call addfld ('IntHeatTr', horiz_only,  'A', 'W/m3', 'Meridional transport of internal energy')
+    call addfld ('PotEnerTr', horiz_only,  'A', 'W/m3', 'Meridional transport of potential energy')
+    call addfld ('LatHeatTr', horiz_only,  'A', 'W/m3', 'Meridional transport of latent energy')
+    call addfld ('KinEnerTr', horiz_only,  'A', 'W/m3', 'Meridional transport of kinetic energy')
+    call addfld ('TotEnerTr', horiz_only,  'A', 'W/m3', 'Meridional transport of total energy')
 
     if (history_amwg) then
       call add_default ('PHIS    '  , 1, ' ')
@@ -1253,6 +1258,8 @@ contains
     real(r8) :: ftem(pcols,pver) ! temporary workspace
     real(r8) :: ftem1(pcols,pver) ! another temporary workspace
     real(r8) :: ftem2(pcols,pver) ! another temporary workspace
+    real(r8) :: ftem3(pcols)       ! another temporary workspace
+    real(r8) :: z3(pcols,pver)   ! geo-potential height including surface geopotential
     real(r8) :: p_surf(pcols)    ! data interpolated to a pressure surface
     real(r8) :: p_surf_q1(pcols)    ! data interpolated to a pressure surface
     real(r8) :: p_surf_q2(pcols)    ! data interpolated to a pressure surface
@@ -1414,6 +1421,69 @@ contains
       ftem(:ncol,1) = ftem(:ncol,1) + ftem(:ncol,k)
     end do
     call outfld ('ATMEINT   ', ftem(:ncol,1), ncol, lchnk)
+
+    ! Add energy transport diagnostics
+    !
+    do k = 1, pver
+      z3(:ncol,k) = state%zm(:ncol,k) + state%phis(:ncol)*rga
+    end do
+
+    !! calculate the atmospheric energy transport terms:
+    !! internal energy transport Cp*T*v*dp/g
+    if (hist_fld_active('IntHeatTr')) then
+      ftem(:ncol,:) = (cpair*state%t(:ncol,:)*state%v(:ncol,:))*(state%pdel(:ncol,:)*rga)
+      !! vertically integrate
+      ftem3(:ncol)=ftem(:ncol,1)
+      do k=2,pver
+        ftem3(:ncol) = ftem3(:ncol) + ftem(:ncol,k)
+      end do
+      call outfld ('IntHeatTr', ftem3(:ncol), ncol   ,lchnk)
+    end if
+
+    !! latent energy transport Lv*Q*v*dp/g
+    if (hist_fld_active('LatHeatTr')) then
+      ftem(:ncol,:) = (latvap*state%q(:ncol,:,ixq)*state%v(:ncol,:))*(state%pdel(:ncol,:)*rga)
+      !! vertically integrate
+      ftem3(:ncol)=ftem(:ncol,1)
+      do k=2,pver
+        ftem3(:ncol) = ftem3(:ncol) + ftem(:ncol,k)
+      end do
+      call outfld ('LatHeatTr', ftem3(:ncol)  ,ncol   ,lchnk    )
+    end if
+
+    !! potential energy transport g*z*v*dp/g 
+    if (hist_fld_active('PotEnerTr')) then
+      ftem(:ncol,:) = z3(:ncol,:)*state%v(:ncol,:)*state%pdel(:ncol,:)
+      !! vertically integrate
+      ftem3(:ncol)=ftem(:ncol,1)
+      do k=2,pver
+        ftem3(:ncol) = ftem3(:ncol) + ftem(:ncol,k)
+      end do
+      call outfld ('PotEnerTr',ftem3(:ncol)  ,ncol   ,lchnk   )
+    end if
+
+    !! kinetic energy transport 0.5*(u²+v²)*v*dp/g
+    if (hist_fld_active('KinEnerTr')) then
+      ftem(:ncol,:) = ((0.5_r8*(state%u(:ncol,:)**2+state%v(:ncol,:)**2))*state%v(:ncol,:))*(state%pdel(:ncol,:)*rga)
+      !! vertically integrate
+      ftem3(:ncol)=ftem(:ncol,1)
+      do k=2,pver
+        ftem3(:ncol) = ftem3(:ncol) + ftem(:ncol,k)
+      end do
+      call outfld ('KinEnerTr',ftem3(:ncol) ,ncol   ,lchnk   )
+    end if
+
+    !! Total energy transport Cp*T*v*dp/g + Lv*Q*v*dp/g + g*z*v*dp/g + 0.5*(u²+v²)*v*dp/g
+    if (hist_fld_active('TotEnerTr')) then
+      ftem(:ncol,:) = (cpair*state%t(:ncol,:) + latvap*state%q(:ncol,:,ixq) + gravit*z3(:ncol,:) + &
+                    (0.5_r8*(state%u(:ncol,:)**2+state%v(:ncol,:)**2)))*state%v(:ncol,:)*(state%pdel(:ncol,:)*rga)
+      !! vertically integrate
+      ftem3(:ncol)=ftem(:ncol,1)
+      do k=2,pver
+        ftem3(:ncol) = ftem3(:ncol) + ftem(:ncol,k)
+      end do
+      call outfld ('TotEnerTr',ftem3(:ncol)  ,ncol   ,lchnk   )
+    end if
 
     !! Boundary layer atmospheric stability, temperature, water vapor diagnostics
 
