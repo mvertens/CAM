@@ -29,7 +29,7 @@ module co2_cycle
    ! Namelist variables
    logical                    :: co2_flag              = .false. ! true => turn on co2 code, namelist variable
    logical, public, protected :: co2_readFlux_fuel     = .false. ! true => read fuel     co2 flux from date file, namelist variable
-   logical                    :: co2_readFlux_aircraft = .false. ! true => read aircraft co2 flux from date file, namelist variable
+   logical, public, protected :: co2_readFlux_aircraft = .false. ! true => read aircraft co2 flux from date file, namelist variable
 
    !-------------------------------------------------------------------------------
    ! new constituents

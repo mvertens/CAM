@@ -67,6 +67,7 @@ contains
       use namelist_utils, only: find_group_name
       use spmd_utils,     only: mpicom, masterprocid
       use spmd_utils,     only: mpi_integer, mpi_logical, mpi_character
+      use co2_cycle,      only: co2_readflux_aircraft
 
       ! Arguments
       character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
@@ -127,15 +128,22 @@ contains
          end if
          close(unitn)
 
-         if (trim(aircraft_co2_datafile) /= 'unset') then
-            nf = 1
-            forcing(nf)%fldname    = aircraft_co2_fldname
-            forcing(nf)%datafile   = aircraft_co2_datafile
-            forcing(nf)%meshfile   = aircraft_co2_meshfile
-            forcing(nf)%year_first = aircraft_co2_year_first
-            forcing(nf)%year_last  = aircraft_co2_year_last
-            forcing(nf)%year_align = aircraft_co2_year_align
-            forcing(nf)%taxmode    = aircraft_co2_taxmode
+         ! Note - the following call assumes that co2_readflux_aircraft is
+         ! set in co2_cycle_readnl and this is called before this routine in
+         ! runtime_opts.F90. If co2_readflux_aircraft is .false. then, the
+         ! forcing(nf)%datafile = 'unset' and this logic will be triggered
+         ! in the other routines in this module
+         if (co2_readflux_aircraft) then
+            if (trim(aircraft_co2_datafile) /= 'unset') then
+               nf = 1
+               forcing(nf)%fldname    = aircraft_co2_fldname
+               forcing(nf)%datafile   = aircraft_co2_datafile
+               forcing(nf)%meshfile   = aircraft_co2_meshfile
+               forcing(nf)%year_first = aircraft_co2_year_first
+               forcing(nf)%year_last  = aircraft_co2_year_last
+               forcing(nf)%year_align = aircraft_co2_year_align
+               forcing(nf)%taxmode    = aircraft_co2_taxmode
+            end if
          end if
          if (trim(aircraft_h2o_datafile) /= 'unset') then
             nf = 2
