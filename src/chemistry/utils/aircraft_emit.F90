@@ -26,6 +26,9 @@ module aircraft_emit
    public :: aircraft_emit_readnl
    public :: get_aircraft
 
+   private :: get_vertical_dimension
+   private :: interpz_conserve
+
    integer, parameter  :: N_AERO = 3
    character(len=13)   :: aero_names(N_AERO) = &
         (/'ac_CO2       ','ac_H2O       ','ac_SLANT_DIST'/)
@@ -68,6 +71,10 @@ contains
       use spmd_utils,     only: mpicom, masterprocid
       use spmd_utils,     only: mpi_integer, mpi_logical, mpi_character
       use co2_cycle,      only: co2_readflux_aircraft
+      use cam_pio_utils,  only: cam_pio_openfile
+      use pio,            only: PIO_BCAST_ERROR, PIO_NOERR, PIO_NOWRITE
+      use pio,            only: file_desc_t, pio_seterrorhandling, pio_inq_varid
+      use pio,            only: pio_closefile
 
       ! Arguments
       character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
@@ -76,6 +83,10 @@ contains
       integer           :: nf, ni
       integer           :: index
       integer           :: unitn, ierr
+      type(file_desc_t) :: fileid
+      integer           :: err_handling
+      integer           :: varid
+      logical           :: use_time_bnds
 
       character(len=cs) :: aircraft_co2_fldname          = 'ac_CO2'
       character(len=cl) :: aircraft_co2_datafile         = 'unset'
@@ -200,6 +211,24 @@ contains
                forcing(nf)%mapalgo = 'nn'
             end if
 
+            ! Overwrite forcing(nf)%tintalgo if it is set to 'unset'
+            ! Check if the data file has a time_bnds variable and if so set the time interpolation
+            ! type to 'nearest' otherwise set it to 'linear'
+
+            if (trim(forcing(nf)%tintalgo) == 'unset') then
+               call cam_pio_openfile( fileid, forcing(nf)%datafile, PIO_NOWRITE )
+               call pio_seterrorhandling( fileid, PIO_BCAST_ERROR, oldmethod=err_handling )
+               ierr = pio_inq_varid( fileid, 'time_bnds', varid )
+               call pio_seterrorhandling( fileid, err_handling)
+               use_time_bnds = (ierr == PIO_NOERR)
+               if (use_time_bnds) then
+                  forcing(nf)%tintalgo = 'nearest'
+               else
+                  forcing(nf)%tintalgo = 'linear'
+               end if
+               call pio_closefile( fileid )
+            end if
+
             ! obtain index in aero_names module array
             index = 0
             do ni = 1,size(aero_names)
@@ -217,15 +246,16 @@ contains
             !  diagnostics
             if (masterproc) then
                write(iulog,*) ' '
-               write(iulog,'(a)'  ) ' aircraft init settings for: '//trim(forcing(nf)%fldname)
-               write(iulog,'(a,a)') '   aircraft datafile   = ',trim(forcing(nf)%datafile)
-               write(iulog,'(a,a)') '   aircraft meshfile   = ',trim(forcing(nf)%meshfile)
-               write(iulog,'(a,a)') '   aircraft mapalgo    = ',trim(forcing(nf)%mapalgo)
-               write(iulog,'(a,a)') '   aircraft tintalgo   = ',trim(forcing(nf)%tintalgo)
-               write(iulog,'(a,i8)')'   aircraft year_first = ',forcing(nf)%year_first
-               write(iulog,'(a,i8)')'   aircraft year_last  = ',forcing(nf)%year_last
-               write(iulog,'(a,i8)')'   aircraft year_align = ',forcing(nf)%year_align
-               write(iulog,'(a,i8)')'   aircraft index_map for '//trim(forcing(nf)%fldname)//' = ',&
+               write(iulog,'(2a)' ) ' aircraft init settings for: ',trim(forcing(nf)%fldname)
+               write(iulog,'(2a)' ) '   aircraft datafile   = ',trim(forcing(nf)%datafile)
+               write(iulog,'(2a)' ) '   aircraft meshfile   = ',trim(forcing(nf)%meshfile)
+               write(iulog,'(2a)' ) '   aircraft mapalgo    = ',trim(forcing(nf)%mapalgo)
+               write(iulog,'(2a)' ) '   aircraft tintalgo   = ',trim(forcing(nf)%tintalgo)
+               write(iulog,'(2a)' ) '   aircraft taxmode    = ',trim(forcing(nf)%taxmode)
+               write(iulog,'(a,i0)')'   aircraft year_first = ',forcing(nf)%year_first
+               write(iulog,'(a,i0)')'   aircraft year_last  = ',forcing(nf)%year_last
+               write(iulog,'(a,i0)')'   aircraft year_align = ',forcing(nf)%year_align
+               write(iulog,'(a,i0)')'   aircraft index_map for '//trim(forcing(nf)%fldname)//' = ',&
                     forcing(nf)%index_map
                write(iulog,*) ' '
             end if
@@ -285,12 +315,12 @@ contains
       character(len=*), parameter :: subname = 'aircraft_emit_init'
       !-----------------------------------------------
 
+      call phys_getopts(history_chemistry_out=history_chemistry)
+
       loop_n_aero: do nf = 1,N_AERO
          if (trim(forcing(nf)%datafile) /= 'unset') then
 
             ! Open file
-            if (masterproc) then
-            end if
             call cam_pio_openfile( pioid, forcing(nf)%datafile, PIO_NOWRITE)
 
             ! Determine units
@@ -332,13 +362,9 @@ contains
             ! Add field to cam history output
             call addfld(trim(forcing(nf)%fldname), (/ 'lev' /), 'A', trim(forcing(nf)%fldunits), &
                  'aircraft emission '//trim(forcing(nf)%fldname))
-            call phys_getopts(history_chemistry_out=history_chemistry)
             if (history_chemistry) then
                call add_default( trim(forcing(nf)%fldname), 1, ' ' )
             end if
-
-            ! Get index in pbuf
-            forcing(nf)%pbuf_index = pbuf_get_index(forcing(nf)%fldname)
 
          end if
       end do loop_n_aero
@@ -638,21 +664,30 @@ contains
       ! Local variables
       integer :: vid, ierr, id
       integer :: err_handling
+      character(len=*), parameter :: subname = 'get_vertical_dimension'
       !------------------------------------------------------------------
 
-      call pio_seterrorhandling( fid, PIO_BCAST_ERROR, oldmethod=err_handling)
+      call pio_seterrorhandling(fid, PIO_BCAST_ERROR, oldmethod=err_handling)
       ierr = pio_inq_dimid( fid, dname, id )
-      call pio_seterrorhandling( fid, err_handling)
       if ( ierr == PIO_NOERR ) then
          ierr = pio_inq_dimlen( fid, id, dsize )
+         if (ierr /= PIO_NOERR) then
+            call endrun(trim(subname)//': failed on pio_inq_dimid')
+         end if
          allocate( data(dsize), stat=ierr )
          if ( ierr /= 0 ) then
-            write(iulog,*) 'get_dimension: data allocation error = ',ierr
-            call endrun('get_dimension: failed to allocate data array')
+            call endrun(trim(subname)//': failed to allocate data array')
          end if
          ierr = pio_inq_varid( fid, dname, vid )
+         if (ierr /= PIO_NOERR) then
+            call endrun(trim(subname)//': failed on pio_inq_varid')
+         end if
          ierr = pio_get_var( fid, vid, data )
+         if (ierr /= PIO_NOERR) then
+            call endrun(trim(subname)//': failed on pio_get_var')
+         end if
       endif
+      call pio_seterrorhandling(fid, err_handling)
 
    end subroutine get_vertical_dimension
 

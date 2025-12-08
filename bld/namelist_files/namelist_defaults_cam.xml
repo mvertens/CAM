@@ -655,7 +655,6 @@
 <!-- Time-variant CO2 fossil fuel emissions -->
 <co2flux_fuel_datafile>atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_datafile>
 <co2flux_fuel_meshfile>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</co2flux_fuel_meshfile>
-<co2flux_fuel_tintalgo>linear</co2flux_fuel_tintalgo>
 <co2flux_fuel_year_first sim_year="2000">2000</co2flux_fuel_year_first>
 <co2flux_fuel_year_end   sim_year="2000">2000</co2flux_fuel_year_end>
 <co2flux_fuel_year_align sim_year="2000">1</co2flux_fuel_year_align>
@@ -669,7 +668,6 @@
 <!-- Time-variant CO2 aircraft emissions -->
 <aircraft_co2_datafile>atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_datafile>
 <aircraft_co2_meshfile>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</aircraft_co2_meshfile>
-<aircraft_co2_tintalgo>linear</aircraft_co2_tintalgo>
 <aircraft_co2_year_first sim_year="2000">2000</aircraft_co2_year_first>
 <aircraft_co2_year_end   sim_year="2000">2000</aircraft_co2_year_end>
 <aircraft_co2_year_align sim_year="2000">1</aircraft_co2_year_align>

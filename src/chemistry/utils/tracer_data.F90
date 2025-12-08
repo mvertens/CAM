@@ -26,11 +26,11 @@ module tracer_data
                                pio_get_var, pio_get_att, pio_nowrite, pio_inq_dimlen, &
                                pio_inq_vardimid, pio_inq_dimlen, pio_closefile, &
                                pio_inquire_variable
+  use string_utils,    only: int2str
 
   implicit none
 
   private  ! all unless made public
-  save
 
   public :: trfld, input3d, input2d, trfile
   public :: trcdata_init
@@ -397,14 +397,12 @@ contains
 
        allocate( file%hyam(file%nlev),  file%hybm(file%nlev), stat=astat )
        if( astat /= 0 ) then
-          write(iulog,'(a,i8)') 'trcdata_init: file%hyam,file%hybm allocation error = ',astat
-          call endrun('trcdata_init: failed to allocate file%hyam and file%hybm arrays')
+          call endrun('trcdata_init: failed to allocate file%hyam and file%hybm arrays, error code = '//int2str(astat))
        end if
 
        allocate( file%hyai(file%nlev+1),  file%hybi(file%nlev+1), stat=astat )
        if( astat /= 0 ) then
-          write(iulog,'(a,i8)') 'trcdata_init: file%hyai,file%hybi allocation error = ',astat
-          call endrun('trcdata_init: failed to allocate file%hyai and file%hybi arrays')
+          call endrun('trcdata_init: failed to allocate file%hyai and file%hybi arrays, error code = '//int2str(astat))
        end if
 
        call pio_seterrorhandling(File%curr_fileid, PIO_BCAST_ERROR, oldmethod=err_handling)
@@ -429,24 +427,20 @@ contains
 
        allocate( file%ps_in(1)%data(pcols,begchunk:endchunk), stat=astat   )
        if( astat/= 0 ) then
-          write(iulog,'(a,i8)') 'trcdata_init: failed to allocate file%ps_in(1)%data array; error = ',astat
-          call endrun
+          call endrun('trcdata_init: failed to allocate file%ps_in(1)%data array; error = '//int2str(astat))
        end if
        allocate( file%ps_in(2)%data(pcols,begchunk:endchunk), stat=astat   )
        if( astat/= 0 ) then
-          write(iulog,'(a,i8)') 'trcdata_init: failed to allocate file%ps_in(2)%data array; error = ',astat
-          call endrun
+          call endrun('trcdata_init: failed to allocate file%ps_in(2)%data array; error = '//int2str(astat))
        end if
        if( file%fill_in_months ) then
           allocate( file%ps_in(3)%data(pcols,begchunk:endchunk), stat=astat   )
           if( astat/= 0 ) then
-             write(iulog,'(a,i8)') 'trcdata_init: failed to allocate file%ps_in(3)%data array; error = ',astat
-             call endrun
+             call endrun('trcdata_init: failed to allocate file%ps_in(3)%data array; error = '//int2str(astat))
           end if
           allocate( file%ps_in(4)%data(pcols,begchunk:endchunk), stat=astat   )
           if( astat/= 0 ) then
-             write(iulog,'(a,i8)') 'trcdata_init: failed to allocate file%ps_in(4)%data array; error = ',astat
-             call endrun
+             call endrun('trcdata_init: failed to allocate file%ps_in(4)%data array; error = '//int2str(astat))
           end if
        end if
     endif
@@ -459,8 +453,7 @@ contains
        ! get netcdf variable id for the field
        ierr = pio_inq_varid( file%curr_fileid, flds(f)%srcnam, flds(f)%var_id )
        if (ierr/=pio_noerr) then
-          call endrun('trcdata_init: Cannot find var "'//trim(flds(f)%srcnam)// &
-                      '" in file "'//trim(file%curr_filename)//'"')
+          call endrun('trcdata_init: Cannot find var "'//trim(flds(f)%srcnam)//'" in file "'//trim(file%curr_filename)//'"')
        endif
 
        ! determine if the field has a vertical dimension
@@ -482,21 +475,19 @@ contains
              allocate( flds(f)%data(pcols,pver,begchunk:endchunk), stat=astat   )
           endif
           if( astat/= 0 ) then
-             write(iulog,'(a,i8)') 'trcdata_init: failed to allocate flds(f)%data array; error = ',astat
-             call endrun
+             call endrun('trcdata_init: failed to allocate flds(f)%data array; error = '//int2str(astat))
           end if
        else
           flds(f)%pbuf_ndx = pbuf_get_index(flds(f)%fldnam,errcode)
        endif
 
        if (flds(f)%srf_fld) then
-          allocate( flds(f)%input(1)%data(pcols,1,begchunk:endchunk), stat=astat   )
+          allocate( flds(f)%input(1)%data(pcols,1,begchunk:endchunk), stat=astat)
        else
-          allocate( flds(f)%input(1)%data(pcols,file%nlev,begchunk:endchunk), stat=astat   )
+          allocate( flds(f)%input(1)%data(pcols,file%nlev,begchunk:endchunk), stat=astat)
        endif
        if( astat/= 0 ) then
-          write(iulog,'(a,i8)') 'trcdata_init: failed to allocate flds(f)%input(1)%data array; error = ',astat
-          call endrun
+          call endrun('trcdata_init: failed to allocate flds(f)%input(1)%data array; error = '//int2str(astat))
        end if
        if (flds(f)%srf_fld) then
           allocate( flds(f)%input(2)%data(pcols,1,begchunk:endchunk), stat=astat   )
@@ -504,28 +495,25 @@ contains
           allocate( flds(f)%input(2)%data(pcols,file%nlev,begchunk:endchunk), stat=astat   )
        endif
        if( astat/= 0 ) then
-          write(iulog,'(a,i8)') 'trcdata_init: failed to allocate flds(f)%input(2)%data array; error = ',astat
-          call endrun
+          call endrun('trcdata_init: failed to allocate flds(f)%input(2)%data array; error = '//int2str(astat))
        end if
 
        if( file%fill_in_months ) then
           if (flds(f)%srf_fld) then
-             allocate( flds(f)%input(3)%data(pcols,1,begchunk:endchunk), stat=astat   )
+             allocate( flds(f)%input(3)%data(pcols,1,begchunk:endchunk), stat=astat)
           else
-             allocate( flds(f)%input(3)%data(pcols,file%nlev,begchunk:endchunk), stat=astat   )
+             allocate( flds(f)%input(3)%data(pcols,file%nlev,begchunk:endchunk), stat=astat)
           endif
           if( astat/= 0 ) then
-             write(iulog,'(a,i8)') 'trcdata_init: failed to allocate flds(f)%input(3)%data array; error = ',astat
-             call endrun
+             call endrun('trcdata_init: failed to allocate flds(f)%input(3)%data array; error = '//int2str(astat))
           end if
           if (flds(f)%srf_fld) then
-             allocate( flds(f)%input(4)%data(pcols,1,begchunk:endchunk), stat=astat   )
+             allocate( flds(f)%input(4)%data(pcols,1,begchunk:endchunk), stat=astat)
           else
-             allocate( flds(f)%input(4)%data(pcols,file%nlev,begchunk:endchunk), stat=astat   )
+             allocate( flds(f)%input(4)%data(pcols,file%nlev,begchunk:endchunk), stat=astat)
           endif
           if( astat/= 0 ) then
-             write(iulog,'(a,i8)') 'trcdata_init: failed to allocate flds(f)%input(4)%data array; error = ',astat
-             call endrun
+             call endrun('trcdata_init: failed to allocate flds(f)%input(4)%data array; error = '//int2str(astat))
           end if
        endif
 
@@ -625,36 +613,30 @@ contains
 
         deallocate(phi,lam)
 
-! weight_x & weight_y are weighting function for x & y interpolation
+        ! weight_x & weight_y are weighting function for x & y interpolation
         allocate(file%weight_x(plon,file%nlon), stat=astat)
         if( astat /= 0 ) then
-           write(iulog,'(a,i8)') 'trcdata_init: file%weight_x allocation error = ',astat
-           call endrun('trcdata_init: failed to allocate weight_x array')
+           call endrun('trcdata_init: file%weight_x allocation error = '//int2str(astat))
         end if
         allocate(file%weight_y(plat,file%nlat), stat=astat)
         if( astat /= 0 ) then
-           write(iulog,'(a,i8)') 'trcdata_init: file%weight_y allocation error = ',astat
-           call endrun('trcdata_init: failed to allocate weight_y array')
+           call endrun('trcdata_init: file%weight_y allocation error = '//int2str(astat))
         end if
         allocate(file%count_x(plon), stat=astat)
         if( astat /= 0 ) then
-           write(iulog,'(a,i8)') 'trcdata_init: file%count_x allocation error = ',astat
-           call endrun('trcdata_init: failed to allocate count_x array')
+           call endrun('trcdata_init: file%count_x allocation error = '//int2str(astat))
         end if
         allocate(file%count_y(plat), stat=astat)
         if( astat /= 0 ) then
-           write(iulog,'(a,i8)') 'trcdata_init: file%count_y allocation error = ',astat
-           call endrun('trcdata_init: failed to allocate count_y array')
+           call endrun('trcdata_init: file%count_y allocation error = '//int2str(astat))
         end if
         allocate(file%index_x(plon,file%nlon), stat=astat)
         if( astat /= 0 ) then
-           write(iulog,'(a,i8)') 'trcdata_init: file%index_x allocation error = ',astat
-           call endrun('trcdata_init: failed to allocate index_x array')
+           call endrun('trcdata_init: file%index_x allocation error = '//int2str(astat))
         end if
         allocate(file%index_y(plat,file%nlat), stat=astat)
         if( astat /= 0 ) then
-           write(iulog,'(a,i8)') 'trcdata_init: file%index_y allocation error = ',astat
-           call endrun('trcdata_init: failed to allocate index_y array')
+           call endrun('trcdata_init: file%index_y allocation error = '//int2str(astat))
         end if
         file%weight_x(:,:) = 0.0_r8
         file%weight_y(:,:) = 0.0_r8
@@ -666,33 +648,28 @@ contains
         if( file%dist ) then
            allocate(file%weight0_x(plon,file%nlon), stat=astat)
            if( astat /= 0 ) then
-              write(iulog,'(a,i8)') 'trcdata_init: file%weight0_x allocation error = ',astat
-              call endrun('trcdata_init: failed to allocate weight0_x array')
+              write(iulog,'(a,i0)')
+              call endrun('trcdata_init: file%weight0_x allocation error = '//int2str(astat))
            end if
            allocate(file%weight0_y(plat,file%nlat), stat=astat)
            if( astat /= 0 ) then
-              write(iulog,'(a,i8)') 'trcdata_init: file%weight0_y allocation error = ',astat
-              call endrun('trcdata_init: failed to allocate weight0_y array')
+              call endrun('trcdata_init: file%weight0_y allocation error = '//int2str(astat))
            end if
            allocate(file%count0_x(plon), stat=astat)
            if( astat /= 0 ) then
-              write(iulog,'(a,i8)') 'trcdata_init: file%count0_x allocation error = ',astat
-              call endrun('trcdata_init: failed to allocate count0_x array')
+              call endrun('trcdata_init: file%count0_x allocation error = '//int2str(astat))
            end if
            allocate(file%count0_y(plat), stat=astat)
            if( astat /= 0 ) then
-              write(iulog,'(a,i8)') 'trcdata_init: file%count0_y allocation error = ',astat
-              call endrun('trcdata_init: failed to allocate count0_y array')
+              call endrun('trcdata_init: file%count0_y allocation error = '//int2str(astat))
            end if
            allocate(file%index0_x(plon,file%nlon), stat=astat)
-           if( astat /= '(a,i8)' ) then
-              write(iulog,'(a,i8)') 'trcdata_init: file%index0_x allocation error = ',astat
-              call endrun('trcdata_init: failed to allocate index0_x array')
+           if( astat /= 0 ) then
+              call endrun('trcdata_init: file%index0_x allocation error = '//int2str(astat))
            end if
            allocate(file%index0_y(plat,file%nlat), stat=astat)
            if( astat /= 0 ) then
-              write(iulog,'(a,i8)') 'trcdata_init: file%index0_y allocation error = ',astat
-              call endrun('trcdata_init: failed to allocate index0_y array')
+              call endrun('trcdata_init: file%index0_y allocation error = '//int2str(astat))
            end if
            file%weight0_x(:,:) = 0.0_r8
            file%weight0_y(:,:) = 0.0_r8
@@ -824,7 +801,7 @@ contains
           call t_startf('read_next_trcdata')
           call read_next_trcdata( flds, file )
           call t_stopf('read_next_trcdata')
-          if(masterproc) write(iulog,*) 'READ_NEXT_TRCDATA ', flds%fldnam
+          if(masterproc) write(iulog,'(2a)') 'READ_NEXT_TRCDATA ',flds%fldnam
        end if
 
     endif
@@ -1040,9 +1017,7 @@ contains
        end if
        istat = incstr( fn_new(:pos), 1 )
        if( istat /= 0 ) then
-          write(iulog,*) 'incr_flnm: incstr returned ', istat
-          write(iulog,*) '           while trying to decrement ',trim( fn_new )
-          call endrun
+          call endrun('incr_flnm: incstr returned '//int2str(istat)//' while trying to decrement '//trim(fn_new))
        end if
 
     else
@@ -1186,8 +1161,7 @@ contains
 
     allocate( all_data_times( all_tsize ), stat=astat )
     if( astat/= 0 ) then
-       write(iulog,*) 'find_times: failed to allocate all_data_times array; error = ',astat
-       call endrun
+       call endrun('find_times: failed to allocate all_data_times array; error = '//int2str(astat))
     end if
 
     all_data_times(:curr_tsize) = file%curr_data_times(:)
@@ -1247,8 +1221,7 @@ contains
 
     deallocate( all_data_times, stat=astat )
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'find_times: failed to deallocate all_data_times array; error = ',astat
-       call endrun
+       call endrun('find_times: failed to deallocate all_data_times array; error = '//int2str(astat))
     end if
 
     if ( .not. file%cyclical ) then
@@ -1476,14 +1449,14 @@ contains
      nullify(wrk2d_in)
      allocate( wrk2d(cnt(1),cnt(2)), stat=ierr )
      if( ierr /= 0 ) then
-        write(iulog,'(a,i8)') 'read_2d_trc: wrk2d allocation error = ',ierr
+        write(iulog,'(a,i0)') 'read_2d_trc: wrk2d allocation error = ',ierr
         call endrun
      end if
 
      if(order(1)/=1 .or. order(2)/=2 .or. cnt(1)/=file%nlon .or. cnt(2)/=file%nlat) then
         allocate( wrk2d_in(file%nlon, file%nlat), stat=ierr )
         if( ierr /= 0 ) then
-           write(iulog,'(a,i8)') 'read_2d_trc: wrk2d_in allocation error = ',ierr
+           write(iulog,'(a,i0)') 'read_2d_trc: wrk2d_in allocation error = ',ierr
            call endrun
         end if
      end if
@@ -1591,14 +1564,14 @@ contains
      nullify(wrk2d_in)
      allocate( wrk2d(cnt(1),cnt(2)), stat=ierr )
      if( ierr /= 0 ) then
-        write(iulog,'(a,i8)') 'read_2d_trc: wrk2d allocation error = ',ierr
+        write(iulog,'(a,i0)') 'read_2d_trc: wrk2d allocation error = ',ierr
         call endrun
      end if
 
      if(order(1)/=1 .or. order(2)/=2 .or. cnt(1)/=file%nlat .or. cnt(2)/=file%nlev) then
         allocate( wrk2d_in(file%nlat, file%nlev), stat=ierr )
         if( ierr /= 0 ) then
-           write(iulog,'(a,i8)') 'read_2d_trc: wrk2d_in allocation error = ',ierr
+           write(iulog,'(a,i0)') 'read_2d_trc: wrk2d_in allocation error = ',ierr
            call endrun
         end if
      end if
@@ -1731,7 +1704,7 @@ contains
     nullify(wrk3d_in)
     allocate(wrk3d(cnt(1),cnt(2),cnt(3)), stat=ierr)
     if( ierr /= 0 ) then
-       write(iulog,'(a,i8)') 'read_3d_trc: wrk3d allocation error = ',ierr
+       write(iulog,'(a,i0)') 'read_3d_trc: wrk3d allocation error = ',ierr
        call endrun
     end if
 
@@ -1741,7 +1714,7 @@ contains
          cnt(1)/=file%nlon.or.cnt(2)/=file%nlat.or.cnt(3)/=file%nlev) then
        allocate(wrk3d_in(file%nlon,file%nlat,file%nlev),stat=ierr)
        if( ierr /= 0 ) then
-          write(iulog,'(a,i8)') 'read_3d_trc: wrk3d allocation error = ',ierr
+          write(iulog,'(a,i0)') 'read_3d_trc: wrk3d allocation error = ',ierr
           call endrun
        end if
        wrk3d_in = reshape( wrk3d(:,:,:),(/file%nlon,file%nlat,file%nlev/), order=order )
@@ -1802,8 +1775,7 @@ contains
        deallocate( wrk3d_in, stat=astat )
     end if
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'read_3d_trc: failed to deallocate wrk3d array; error = ',astat
-       call endrun
+       call endrun('read_3d_trc: failed to deallocate wrk3d array; error = '//int2str(astat))
     endif
     if(dycore_is('LR')) call polar_average(file%nlev, loc_arr)
   end subroutine read_3d_trc
@@ -2024,13 +1996,13 @@ contains
           if ( associated(data) ) then
              deallocate(data, stat=ierr)
              if( ierr /= 0 ) then
-                write(iulog,'(a,i8)') 'get_dimension: data deallocation error = ',ierr
+                write(iulog,'(a,i0)') 'get_dimension: data deallocation error = ',ierr
                 call endrun('get_dimension: failed to deallocate data array')
              end if
           endif
           allocate( data(dsize), stat=ierr )
           if( ierr /= 0 ) then
-             write(iulog,'(a,i8)') 'get_dimension: data allocation error = ',ierr
+             write(iulog,'(a,i0)') 'get_dimension: data allocation error = ',ierr
              call endrun('get_dimension: failed to allocate data array')
           end if
 
@@ -2065,8 +2037,7 @@ contains
 
     allocate( dates(timesize), stat=astat  )
     if( astat/= 0 ) then
-       write(*,*) 'set_cycle_indices: failed to allocate dates array; error = ',astat
-       call endrun
+       call endrun('set_cycle_indices: failed to allocate dates array; error = '//int2str(astat))
     end if
 
     ierr = pio_inq_varid(   fileid, 'date',  dateid  )
@@ -2083,12 +2054,10 @@ contains
     enddo
     deallocate( dates, stat=astat  )
     if( astat/= 0 ) then
-       write(*,*) 'set_cycle_indices: failed to deallocate dates array; error = ',astat
-       call endrun
+       call endrun('set_cycle_indices: failed to deallocate dates array; error = '//int2str(astat))
     end if
     if (cyc_ndx_beg < 0) then
-       write(*,*) 'set_cycle_indices: cycle year not found : ' , cyc_yr
-       call endrun('set_cycle_indices: cycle year not found')
+       call endrun('set_cycle_indices: cycle year not found : '//int2str(cyc_yr))
     endif
 
   end subroutine set_cycle_indices
@@ -2136,25 +2105,23 @@ contains
     if ( associated(times) ) then
        deallocate(times, stat=ierr)
        if( ierr /= 0 ) then
-          write(iulog,'(a,i8)') 'open_trc_datafile: data deallocation error = ',ierr
+          write(iulog,'(a,i0)') 'open_trc_datafile: data deallocation error = ',ierr
           call endrun('open_trc_datafile: failed to deallocate data array')
        end if
     endif
     allocate( times(timesize), stat=ierr )
     if( ierr /= 0 ) then
-       write(iulog,'(a,i8)') 'open_trc_datafile: data allocation error = ',ierr
+       write(iulog,'(a,i0)') 'open_trc_datafile: data allocation error = ',ierr
        call endrun('open_trc_datafile: failed to allocate data array')
     end if
 
     allocate( dates(timesize), stat=astat  )
     if( astat/= 0 ) then
-       if(masterproc) write(iulog,'(a,i8)') 'open_trc_datafile: failed to allocate dates array; error = ',astat
-       call endrun
+       call endrun('open_trc_datafile: failed to allocate dates array; error = '//int2str(astat))
     end if
     allocate( datesecs(timesize), stat=astat  )
     if( astat/= 0 ) then
-       if(masterproc) write(iulog,'(a,i8)') 'open_trc_datafile: failed to allocate datesec array; error = ',astat
-       call endrun
+       call endrun('open_trc_datafile: failed to allocate datesec array; error = '//int2str(astat))
     end if
 
     ierr =  pio_inq_varid( piofile, 'date',    dateid  )
@@ -2191,18 +2158,15 @@ contains
 
     deallocate( dates, stat=astat  )
     if( astat/= 0 ) then
-       if(masterproc) write(iulog,'(a,i8)') 'open_trc_datafile: failed to deallocate dates array; error = ',astat
-       call endrun
+       call endrun('open_trc_datafile: failed to deallocate dates array; error = '//int2str(astat))
     end if
     deallocate( datesecs, stat=astat  )
     if( astat/= 0 ) then
-       if(masterproc) write(iulog,'(a,i8)') 'open_trc_datafile: failed to deallocate datesec array; error = ',astat
-       call endrun
+       call endrun('open_trc_datafile: failed to deallocate datesec array; error = '//int2str(astat))
     end if
 
     if ( present(cyc_yr) .and. present(cyc_ndx_beg) ) then
        if (cyc_ndx_beg < 0) then
-          write(iulog,'(a,i8)') 'open_trc_datafile: cycle year not found : ' , cyc_yr
           call endrun('open_trc_datafile: cycle year not found '//trim(filepath))
        endif
     endif
@@ -2228,8 +2192,7 @@ contains
 
     allocate(fld_name(nflds),  src_name(nflds), stat=astat )
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'specify_fields: failed to allocate fld_name, src_name arrays; error = ',astat
-       call endrun
+       call endrun('specify_fields: failed to allocate fld_name, src_name arrays; error = '//int2str(astat))
     end if
 
     fld_cnt = 0
@@ -2266,8 +2229,7 @@ contains
     !-----------------------------------------------------------------------
     allocate( fields(fld_cnt), stat=astat )
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'specify_fields: failed to allocate fields array; error = ',astat
-       call endrun
+       call endrun('specify_fields: failed to allocate fields array; error = '//int2str(astat))
     end if
 
     do i = 1,fld_cnt
@@ -2822,13 +2784,11 @@ contains
     !-----------------------------------------------------------------------
     deallocate( file%curr_data_times, stat=astat )
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'advance_file: failed to deallocate file%curr_data_times array; error = ',astat
-       call endrun
+       call endrun('advance_file: failed to deallocate file%curr_data_times array; error = '//int2str(astat))
     end if
     allocate( file%curr_data_times( size( file%next_data_times ) ), stat=astat )
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'advance_file: failed to allocate file%curr_data_times array; error = ',astat
-       call endrun
+       call endrun('advance_file: failed to allocate file%curr_data_times array; error = '//int2str(astat))
     end if
     file%curr_data_times(:) = file%next_data_times(:)
 
@@ -2839,8 +2799,7 @@ contains
 
     deallocate( file%next_data_times, stat=astat )
     if( astat/= 0 ) then
-       write(iulog,'(a,i8)') 'advance_file: failed to deallocate file%next_data_times array; error = ',astat
-       call endrun
+       call endrun('advance_file: failed to deallocate file%next_data_times array; error = '//int2str(astat))
     end if
     nullify( file%next_data_times )
 

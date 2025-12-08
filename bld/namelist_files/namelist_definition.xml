@@ -1824,9 +1824,10 @@ Default: 0
 </entry>
 
 <entry id="co2flux_fuel_tintalgo" type="char*16" category="co2_cycle"
-       group="co2_ffuel_nl" valid_values="linear,lower,upper">
+       group="co2_ffuel_nl" valid_values="linear,lower,upper,nearest">
 Time interpolation algorithm to use for co2flux_fuel_datafile.
-Default: linear
+If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
+the forcing file otherwise, set to 'linear'
 </entry>
 
 <entry id="co2flux_fuel_taxmode" type="char*16" category="co2_cycle"
@@ -1868,9 +1869,10 @@ Default: set by build-namelist.
 </entry>
 
 <entry id="aircraft_co2_tintalgo" type="char*16" category="co2_cycle"
-       group="aircraft_emit_nl" valid_values="linear,lower,upper">
+       group="aircraft_emit_nl" valid_values="linear,lower,upper,nearest">
 Time interpolation algorithm to use for aircraft_co2_datafile.
-Default: linear
+If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
+the forcing file otherwise, set to 'linear'
 </entry>
 
 <entry id="aircraft_co2_taxmode" type="char*16" category="co2_cycle"
@@ -7034,6 +7036,13 @@ Last year of the aircraft_h2o_datafile to use.
 Model year that aligns with aircraft_h2o_year_first.
 </entry>
 
+<entry id="aircraft_h2o_tintalgo" type="char*16" category="h2o_cycle"
+       group="aircraft_emit_nl" valid_values="linear,lower,upper,nearest">
+Time interpolation algorithm to use for aircraft_h2o_datafile.
+If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
+the forcing file otherwise, set to 'linear'
+</entry>
+
 <entry id="aircraft_h2o_taxmode" type="char*16" category="h2o_cycle"
        group="aircraft_emit_nl" valid_values="cycle, extend, limit">
 Time extrapolation algorithm to use for aircraft_h2o_datafile.
@@ -7069,6 +7078,13 @@ Last year of the aircraft_slant_dist to use.
 <entry id="aircraft_slant_dist_year_align" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
 Model year that aligns with aircraft_year_first.
+</entry>
+
+<entry id="aircraft_slant_dist_tintalgo" type="char*16" category="slant_dist_cycle"
+       group="aircraft_emit_nl" valid_values="linear,lower,upper,nearest">
+Time interpolation algorithm to use for aircraft_slant_dist_datafile.
+If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
+the forcing file otherwise, set to 'linear'
 </entry>
 
 <entry id="aircraft_slant_dist_taxmode" type="char*16" category="cam_chem"

@@ -700,8 +700,10 @@ if (defined $nl->get_value('sim_year')) {
 # If sim_year is input as a range of years, then select the first year
 # to use with some datasets
 my $sim_year_start = $sim_year;
+my $sim_year_end = $sim_year;
 if ($sim_year =~ /(\d+)-(\d+)/) {
     $sim_year_start = $1;
+    $sim_year_end = $2;
 }
 
 # Setup default ndep streams only if not simple_phys or aqua_mode and
@@ -824,16 +826,16 @@ if ($co2_cycle) {
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_fuel') =~ /$TRUE/io) {
             if ($sim_year =~ /(\d+)-(\d+)/) {
-                add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'limit' );
+                add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'extend' );
             } else {
                 add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'cycle' );
             }
             add_default($nl, 'co2flux_fuel_tintalgo');
             add_default($nl, 'co2flux_fuel_meshfile');
             add_default($nl, 'co2flux_fuel_datafile');
-            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year);
-            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year);
-            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year_start);
+            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year_end);
+            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year_start);
         }
 
         add_default($nl, 'co2_readflux_aircraft', 'val'=>'.true.');
@@ -842,16 +844,16 @@ if ($co2_cycle) {
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_aircraft') =~ /$TRUE/io) {
             if ($sim_year =~ /(\d+)-(\d+)/) {
-                add_default($nl, 'aircraft_co2_taxmode', 'val'=>'limit' );
+                add_default($nl, 'aircraft_co2_taxmode', 'val'=>'extend' );
             } else {
                 add_default($nl, 'aircraft_co2_taxmode', 'val'=>'cycle' );
             }
             add_default($nl, 'aircraft_co2_tintalgo');
             add_default($nl, 'aircraft_co2_meshfile');
             add_default($nl, 'aircraft_co2_datafile');
-            add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year);
-            add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year);
-            add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year_start);
+            add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year_end);
+            add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year_start);
         }
     }
 }
