@@ -9,7 +9,7 @@ module co2_data_flux
    use ESMF,             only: ESMF_END_ABORT, ESMF_LOGERR_PASSTHRU, ESMF_END_ABORT
    use cam_logfile,      only: iulog
    use cam_abortutils,   only: endrun
-   use spmd_utils,       only: iam
+   use spmd_utils,       only: iam, masterproc
    use dshr_strdata_mod, only: shr_strdata_type
 
    implicit none
@@ -35,6 +35,7 @@ module co2_data_flux
    integer            :: co2flux_fuel_year_first = -999  ! first year in stream to use
    integer            :: co2flux_fuel_year_last = -999   ! last year in stream to use
    integer            :: co2flux_fuel_year_align = -999  ! align stream_year_first
+   character(len=cs)  :: co2flux_fuel_tintalgo = 'unset' ! time interpolation [linear, lower, upper]
    character(len=cs)  :: co2flux_fuel_taxmode = 'unset'  ! time extraploation [cycle, extend or limit]
 
    logical :: debug = .false.
@@ -70,6 +71,7 @@ contains
            co2flux_fuel_year_first, & ! first year in stream to use
            co2flux_fuel_year_last,  & ! last year in stream to use
            co2flux_fuel_year_align, & ! align stream_year_first
+           co2flux_fuel_tintalgo,   & ! time extraploation [linear, lower, upper]
            co2flux_fuel_taxmode       ! time extraploation [cycle, extend or limit]
       !--------------------------------------------
 
@@ -95,6 +97,8 @@ contains
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_last")
       call mpi_bcast(co2flux_fuel_year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_align")
+      call mpi_bcast(co2flux_fuel_tintalgo, len(co2flux_fuel_tintalgo), mpi_character, masterprocid, mpicom, ierr)
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_tintalgo")
       call mpi_bcast(co2flux_fuel_taxmode, len(co2flux_fuel_taxmode), mpi_character, masterprocid, mpicom, ierr)
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_taxmode")
 
@@ -142,7 +146,7 @@ contains
            stream_offset       = 0,                           &
            stream_taxmode      = trim(co2flux_fuel_taxmode),  &
            stream_dtlimit      = 1.0e30_r8,                   &
-           stream_tintalgo     = 'linear',                    &
+           stream_tintalgo     = trim(co2flux_fuel_tintalgo), &
            stream_name         = 'CO2 forcing data ',         &
            rc                  = rc)
       call chkrc(rc,__LINE__,u_FILE_u)
@@ -172,6 +176,7 @@ contains
       integer :: mcdate  ! Current model date (yyyymmdd)
       integer :: rc
       logical :: first_time = .true.
+      real(r8) :: global_sum_model, global_sum_mesh
       real(r8), pointer :: dataptr1d(:)
       character(len=*), parameter :: subname = 'co2_data_flux_advance'
       !----------------------------------------------------------------------------
@@ -193,8 +198,16 @@ contains
       call chkrc(rc,__LINE__,u_FILE_u)
 
       if (debug) then
-         call cam_esmf_global_sum(trim(data_flux_fuel%varname), dataptr1d, rc)
+         if (masterproc) then
+            write(iulog,*)
+            write(iulog,'(a)')'Calling cam_esmf_global_sum from co2_data_flux'
+         end if
+         call cam_esmf_global_sum(trim(data_flux_fuel%varname), dataptr1d, &
+              global_sum_model, global_sum_mesh, rc)
          call chkrc(rc,__LINE__,u_FILE_u)
+         write(iulog,'(a)') 'Global sum for forcing field '//trim(data_flux_fuel%varname)
+         write(iulog,'(a,d20.10)') ' global sum with model areas = ',global_sum_model
+         write(iulog,'(a,d20.10)') ' global sum with mesh areas  = ',global_sum_mesh
       end if
 
       g = 1

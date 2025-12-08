@@ -81,6 +81,7 @@ contains
       character(len=cl) :: aircraft_co2_datafile         = 'unset'
       character(len=cl) :: aircraft_co2_meshfile         = 'unset'
       character(len=cs) :: aircraft_co2_taxmode          = 'unset'
+      character(len=cs) :: aircraft_co2_tintalgo         = 'unset'
       integer           :: aircraft_co2_year_first       = -999
       integer           :: aircraft_co2_year_last        = -999
       integer           :: aircraft_co2_year_align       = -999
@@ -89,6 +90,7 @@ contains
       character(len=cl) :: aircraft_h2o_datafile         = 'unset'
       character(len=cl) :: aircraft_h2o_meshfile         = 'unset'
       character(len=cs) :: aircraft_h2o_taxmode          = 'unset'
+      character(len=cs) :: aircraft_h2o_tintalgo         = 'unset'
       integer           :: aircraft_h2o_year_first       = -999
       integer           :: aircraft_h2o_year_last        = -999
       integer           :: aircraft_h2o_year_align       = -999
@@ -96,6 +98,7 @@ contains
       character(len=cs) :: aircraft_slant_dist_fldname   = 'ac_SLANT_DIST'
       character(len=cl) :: aircraft_slant_dist_datafile  = 'unset'
       character(len=cl) :: aircraft_slant_dist_meshfile  = 'unset'
+      character(len=cs) :: aircraft_slant_dist_tintalgo  = 'unset'
       character(len=cs) :: aircraft_slant_dist_taxmode   = 'unset'
       integer           :: aircraft_slant_dist_year_first= -999
       integer           :: aircraft_slant_dist_year_last = -999
@@ -106,13 +109,13 @@ contains
       namelist /aircraft_emit_nl/  &
            aircraft_co2_datafile, aircraft_co2_meshfile, &
            aircraft_co2_year_first, aircraft_co2_year_last, aircraft_co2_year_align, &
-           aircraft_co2_taxmode, &
+           aircraft_co2_taxmode, aircraft_co2_tintalgo, &
            aircraft_h2o_datafile, aircraft_h2o_meshfile, &
            aircraft_h2o_year_first, aircraft_h2o_year_last, aircraft_h2o_year_align, &
-           aircraft_h2o_taxmode, &
+           aircraft_h2o_taxmode, aircraft_h2o_tintalgo, &
            aircraft_slant_dist_datafile, aircraft_slant_dist_meshfile, &
            aircraft_slant_dist_year_first, aircraft_slant_dist_year_last, aircraft_slant_dist_year_align, &
-           aircraft_slant_dist_taxmode
+           aircraft_slant_dist_taxmode, aircraft_slant_dist_tintalgo
       !-----------------------------------------------------------------------------
 
       ! Read namelist
@@ -143,6 +146,7 @@ contains
                forcing(nf)%year_last  = aircraft_co2_year_last
                forcing(nf)%year_align = aircraft_co2_year_align
                forcing(nf)%taxmode    = aircraft_co2_taxmode
+               forcing(nf)%tintalgo   = aircraft_co2_tintalgo
             end if
          end if
          if (trim(aircraft_h2o_datafile) /= 'unset') then
@@ -154,6 +158,7 @@ contains
             forcing(nf)%year_last  = aircraft_h2o_year_last
             forcing(nf)%year_align = aircraft_h2o_year_align
             forcing(nf)%taxmode    = aircraft_h2o_taxmode
+            forcing(nf)%tintalgo   = aircraft_h2o_tintalgo
          end if
          if (trim(aircraft_slant_dist_datafile) /= 'unset') then
             nf = 3
@@ -164,6 +169,7 @@ contains
             forcing(nf)%year_last  = aircraft_slant_dist_year_last
             forcing(nf)%year_align = aircraft_slant_dist_year_align
             forcing(nf)%taxmode    = aircraft_slant_dist_taxmode
+            forcing(nf)%tintalgo   = aircraft_slant_dist_tintalgo
          end if
 
       end if
@@ -182,6 +188,8 @@ contains
          call mpi_bcast(forcing(nf)%year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
          if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_last")
          call mpi_bcast(forcing(nf)%year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
+         call mpi_bcast(forcing(nf)%tintalgo, len(forcing(nf)%tintalgo), mpi_character, masterprocid, mpicom, ierr)
          if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
          call mpi_bcast(forcing(nf)%taxmode, len(forcing(nf)%taxmode), mpi_character, masterprocid, mpicom, ierr)
          if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")

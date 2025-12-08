@@ -1823,6 +1823,12 @@ Year align to use in co2flux_fuel_datafile.
 Default: 0
 </entry>
 
+<entry id="co2flux_fuel_tintalgo" type="char*16" category="co2_cycle"
+       group="co2_ffuel_nl" valid_values="linear,lower,upper">
+Time interpolation algorithm to use for co2flux_fuel_datafile.
+Default: linear
+</entry>
+
 <entry id="co2flux_fuel_taxmode" type="char*16" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="cycle,extend,limit">
 Time extrapolation algorithm to use for co2flux_fuel_datafile.
@@ -1859,6 +1865,12 @@ Default: set by build-namelist.
        group="aircraft_emit_nl" valid_values="" >
 Model year that aligns with aircraft_co2_year_first.
 Default: set by build-namelist.
+</entry>
+
+<entry id="aircraft_co2_tintalgo" type="char*16" category="co2_cycle"
+       group="aircraft_emit_nl" valid_values="linear,lower,upper">
+Time interpolation algorithm to use for aircraft_co2_datafile.
+Default: linear
 </entry>
 
 <entry id="aircraft_co2_taxmode" type="char*16" category="co2_cycle"

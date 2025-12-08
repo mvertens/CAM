@@ -124,20 +124,22 @@ contains
    end subroutine cam_esmf_set_areas
 
    !=====================================================================
-   subroutine cam_esmf_global_sum(fldname, flddata, rc)
+   subroutine cam_esmf_global_sum(fldname, flddata, global_sum_model, global_sum_mesh, rc)
 
       ! Arguments
       character(len=*), intent(in)  :: fldname
       real(r8),         intent(in)  :: flddata(:)
+      real(r8),         intent(out) :: global_sum_model
+      real(r8),         intent(out) :: global_sum_mesh
       integer ,         intent(out) :: rc
 
       ! local variables
       type(ESMF_VM) :: vm
       integer       :: ng
       real(r8)      :: local_sum_model(1)
-      real(r8)      :: global_sum_model(1)
       real(r8)      :: local_sum_mesh(1)
-      real(r8)      :: global_sum_mesh(1)
+      real(r8)      :: global_model(1)
+      real(r8)      :: global_mesh(1)
       !---------------------------------------
 
       rc = ESMF_SUCCESS
@@ -151,16 +153,15 @@ contains
 
       call ESMF_VMGetCurrent(vm, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
-      call ESMF_VMAllreduce(vm, senddata=local_sum_model, recvdata=global_sum_model, &
+      call ESMF_VMAllreduce(vm, senddata=local_sum_model, recvdata=global_model, &
            count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
-      call ESMF_VMAllreduce(vm, senddata=local_sum_mesh, recvdata=global_sum_mesh, &
+      call ESMF_VMAllreduce(vm, senddata=local_sum_mesh, recvdata=global_mesh, &
            count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      write(iulog,'(a)') 'Global sum for forcing field '//trim(fldname)
-      write(iulog,'(a,d13.5)') ' global sum with model areas = ',global_sum_model(1)
-      write(iulog,'(a,d13.5)') ' global sum with mesh areas  = ',global_sum_mesh(1)
+      global_sum_model = global_model(1)
+      global_sum_mesh = global_mesh(1)
 
    end subroutine cam_esmf_global_sum
 

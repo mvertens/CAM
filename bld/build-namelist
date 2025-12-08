@@ -828,6 +828,7 @@ if ($co2_cycle) {
             } else {
                 add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'cycle' );
             }
+            add_default($nl, 'co2flux_fuel_tintalgo');
             add_default($nl, 'co2flux_fuel_meshfile');
             add_default($nl, 'co2flux_fuel_datafile');
             add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year);
@@ -845,6 +846,7 @@ if ($co2_cycle) {
             } else {
                 add_default($nl, 'aircraft_co2_taxmode', 'val'=>'cycle' );
             }
+            add_default($nl, 'aircraft_co2_tintalgo');
             add_default($nl, 'aircraft_co2_meshfile');
             add_default($nl, 'aircraft_co2_datafile');
             add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year);
