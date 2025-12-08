@@ -55,7 +55,7 @@ module aircraft_emit
    type(forcing_type) :: forcing(N_AERO)
 
    real(r8), parameter :: molmass(N_AERO) = 1._r8
-   character(*),parameter :: u_FILE_u = __FILE__
+   character(len=*),parameter :: u_FILE_u = __FILE__
 
 !============================================================================
 contains
@@ -206,6 +206,20 @@ contains
          if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
 
          datafile_isnot_unset: if (trim(forcing(nf)%datafile) /= 'unset') then
+            ! obtain index in aero_names module array
+            index = 0
+            do ni = 1,size(aero_names)
+               if (trim(forcing(nf)%fldname) == trim(aero_names(ni))) then
+                  index = ni
+                  exit
+               endif
+            end do
+            if ( index < 1 ) then
+               call endrun('aircraft_emit_register: '//trim(forcing(nf)%fldname)//&
+                    ' is not a supported aircraft emission field name')
+            endif
+            forcing(nf)%index_map = index
+
             ! overwrite mapalgo for ac_SLANT_DIST
             if ( trim(forcing(nf)%fldname) == 'ac_SLANT_DIST') then
                forcing(nf)%mapalgo = 'nn'
@@ -228,20 +242,6 @@ contains
                end if
                call pio_closefile( fileid )
             end if
-
-            ! obtain index in aero_names module array
-            index = 0
-            do ni = 1,size(aero_names)
-               if (trim(forcing(nf)%fldname) == trim(aero_names(ni))) then
-                  index = ni
-                  exit
-               endif
-            end do
-            if ( index < 1 ) then
-               call endrun('aircraft_emit_register: '//trim(forcing(nf)%fldname)//&
-                    ' is not a supported aircraft emission field name')
-            endif
-            forcing(nf)%index_map = index
 
             !  diagnostics
             if (masterproc) then

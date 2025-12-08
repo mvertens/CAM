@@ -1808,12 +1808,12 @@ Default: none
 
 <entry id="co2flux_fuel_year_first" type="integer" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
-Year first to use in co2flux_fuel_datafile.
+First year to use in co2flux_fuel_datafile.
 Default: 0
 
 <entry id="co2flux_fuel_year_last" type="integer" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
-Year last to use in co2flux_fuel_datafile.
+Last year to use in co2flux_fuel_datafile.
 Default: 0
 </entry>
 
@@ -8133,12 +8133,12 @@ Default: FALSE
 
 <entry id="stream_ndep_year_first" type="integer" category="Nitrogen Deposition"
        group="ndep_stream_nl" valid_values="" >
-Year first to use in nitrogen deposition stream data.
+First year to use in nitrogen deposition stream data.
 </entry>
 
 <entry id="stream_ndep_year_last" type="integer" category="Nitrogen Deposition"
        group="ndep_stream_nl" valid_values="" >
-Year last to use in nitrogen deposition stream data.
+Last year last to use in nitrogen deposition stream data.
 </entry>
 
 <entry id="stream_ndep_year_align" type="integer" category="Nitrogen Deposition"
