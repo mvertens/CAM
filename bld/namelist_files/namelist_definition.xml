@@ -1819,8 +1819,18 @@ Default: 0
 
 <entry id="co2flux_fuel_year_align" type="integer" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
-Year align to use in co2flux_fuel_datafile.
-Default: 0
+The simulation year corresponding to co2flux_fuel_year_first.
+A common usage is to set this to the first year of the model run
+(corresponding to the xml variable RUN_STARTDATE). With this setting,
+the forcing in the first year of the run will be the forcing of year
+yearFirst.
+Another usage is to align the calendar of transient forcing with the
+model calendar. For example, setting yearAlign = yearFirst will lead
+to the forcing calendar being the same as the model calendar. The
+forcing for a given model year would be the forcing of the same
+year. This would be appropriate in transient runs where the model
+calendar is setup to span the same year range as the forcing data.
+Set by build-namelist.
 </entry>
 
 <entry id="co2flux_fuel_tintalgo" type="char*16" category="co2_cycle"
@@ -1864,7 +1874,18 @@ Default: set by build-namelist.
 
 <entry id="aircraft_co2_year_align" type="integer" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="" >
-Model year that aligns with aircraft_co2_year_first.
+The simulation year corresponding to aircraft_co2_year_first.
+A common usage is to set this to the first year of the model run
+(corresponding to the xml variable RUN_STARTDATE). With this setting,
+the forcing in the first year of the run will be the forcing of year
+yearFirst.
+Another usage is to align the calendar of transient forcing with the
+model calendar. For example, setting yearAlign = yearFirst will lead
+to the forcing calendar being the same as the model calendar. The
+forcing for a given model year would be the forcing of the same
+year. This would be appropriate in transient runs where the model
+calendar is setup to span the same year range as the forcing data.
+Set by build-namelist.
 Default: set by build-namelist.
 </entry>
 
@@ -7033,7 +7054,19 @@ Last year of the aircraft_h2o_datafile to use.
 
 <entry id="aircraft_h2o_year_align" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Model year that aligns with aircraft_h2o_year_first.
+The simulation year corresponding to aircraft_h2o_year_first.
+A common usage is to set this to the first year of the model run
+(corresponding to the xml variable RUN_STARTDATE). With this setting,
+the forcing in the first year of the run will be the forcing of year
+yearFirst.
+Another usage is to align the calendar of transient forcing with the
+model calendar. For example, setting yearAlign = yearFirst will lead
+to the forcing calendar being the same as the model calendar. The
+forcing for a given model year would be the forcing of the same
+year. This would be appropriate in transient runs where the model
+calendar is setup to span the same year range as the forcing data.
+Set by build-namelist.
+Default: set by build-namelist.
 </entry>
 
 <entry id="aircraft_h2o_tintalgo" type="char*16" category="h2o_cycle"
@@ -7077,7 +7110,19 @@ Last year of the aircraft_slant_dist to use.
 
 <entry id="aircraft_slant_dist_year_align" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Model year that aligns with aircraft_year_first.
+The simulation year corresponding to aircraft_slant_dist_year_first.
+A common usage is to set this to the first year of the model run
+(corresponding to the xml variable RUN_STARTDATE). With this setting,
+the forcing in the first year of the run will be the forcing of year
+yearFirst.
+Another usage is to align the calendar of transient forcing with the
+model calendar. For example, setting yearAlign = yearFirst will lead
+to the forcing calendar being the same as the model calendar. The
+forcing for a given model year would be the forcing of the same
+year. This would be appropriate in transient runs where the model
+calendar is setup to span the same year range as the forcing data.
+Set by build-namelist.
+Default: set by build-namelist.
 </entry>
 
 <entry id="aircraft_slant_dist_tintalgo" type="char*16" category="slant_dist_cycle"
