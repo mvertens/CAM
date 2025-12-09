@@ -29,10 +29,6 @@ module aircraft_emit
    private :: get_vertical_dimension
    private :: interpz_conserve
 
-   integer, parameter  :: N_AERO = 3
-   character(len=13)   :: aero_names(N_AERO) = &
-        (/'ac_CO2       ','ac_H2O       ','ac_SLANT_DIST'/)
-
    type :: forcing_type
       type(shr_strdata_type) :: sdat
       character(len=cs)      :: fldname     = 'unset '
@@ -48,13 +44,15 @@ module aircraft_emit
       integer                :: nilev       = -1
       integer                :: nlev        = -1
       integer                :: pbuf_index  = -1
-      integer                :: index_map   = -1
       real(r8), pointer      :: altitude_int(:)
       real(r8), pointer      :: altitude_lev(:)
    end type forcing_type
-   type(forcing_type) :: forcing(N_AERO)
 
+   integer, parameter  :: N_AERO = 3
+   type(forcing_type)  :: forcing(N_AERO)
+   character(len=3)    :: mixtype(N_AERO) = 'wet'
    real(r8), parameter :: molmass(N_AERO) = 1._r8
+
    character(len=*),parameter :: u_FILE_u = __FILE__
 
 !============================================================================
@@ -72,6 +70,7 @@ contains
       use spmd_utils,     only: mpi_integer, mpi_logical, mpi_character
       use co2_cycle,      only: co2_readflux_aircraft
       use cam_pio_utils,  only: cam_pio_openfile
+      use string_utils,   only: int2str
       use pio,            only: PIO_BCAST_ERROR, PIO_NOERR, PIO_NOWRITE
       use pio,            only: file_desc_t, pio_seterrorhandling, pio_inq_varid
       use pio,            only: pio_closefile
@@ -81,7 +80,6 @@ contains
 
       ! Local variables
       integer           :: nf, ni
-      integer           :: index
       integer           :: unitn, ierr
       type(file_desc_t) :: fileid
       integer           :: err_handling
@@ -189,37 +187,23 @@ contains
 
          ! Broadcast namelist variables
          call mpi_bcast(forcing(nf)%datafile, len(forcing(nf)%datafile), mpi_character, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%datapath")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%datapath")
          call mpi_bcast(forcing(nf)%fldname,len(forcing(nf)%fldname), mpi_character, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%fldname")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%fldname")
          call mpi_bcast(forcing(nf)%meshfile, len(forcing(nf)%meshfile), mpi_character, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%meshfile")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%meshfile")
          call mpi_bcast(forcing(nf)%year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_first")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%year_first")
          call mpi_bcast(forcing(nf)%year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_last")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%year_last")
          call mpi_bcast(forcing(nf)%year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%year_align")
          call mpi_bcast(forcing(nf)%tintalgo, len(forcing(nf)%tintalgo), mpi_character, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%year_tintalgo")
          call mpi_bcast(forcing(nf)%taxmode, len(forcing(nf)%taxmode), mpi_character, masterprocid, mpicom, ierr)
-         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing(nf)%year_align")
+         if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: forcing("//int2str(nf)//"%year_taxmode")
 
          datafile_isnot_unset: if (trim(forcing(nf)%datafile) /= 'unset') then
-            ! obtain index in aero_names module array
-            index = 0
-            do ni = 1,size(aero_names)
-               if (trim(forcing(nf)%fldname) == trim(aero_names(ni))) then
-                  index = ni
-                  exit
-               endif
-            end do
-            if ( index < 1 ) then
-               call endrun('aircraft_emit_register: '//trim(forcing(nf)%fldname)//&
-                    ' is not a supported aircraft emission field name')
-            endif
-            forcing(nf)%index_map = index
-
             ! overwrite mapalgo for ac_SLANT_DIST
             if ( trim(forcing(nf)%fldname) == 'ac_SLANT_DIST') then
                forcing(nf)%mapalgo = 'nn'
@@ -255,8 +239,6 @@ contains
                write(iulog,'(a,i0)')'   aircraft year_first = ',forcing(nf)%year_first
                write(iulog,'(a,i0)')'   aircraft year_last  = ',forcing(nf)%year_last
                write(iulog,'(a,i0)')'   aircraft year_align = ',forcing(nf)%year_align
-               write(iulog,'(a,i0)')'   aircraft index_map for '//trim(forcing(nf)%fldname)//' = ',&
-                    forcing(nf)%index_map
                write(iulog,*) ' '
             end if
          end if datafile_isnot_unset
@@ -273,11 +255,9 @@ contains
       !------------------------------------------------------------------
       use ppgrid,         only: pver, pcols
       use physics_buffer, only: pbuf_add_field, dtype_r8
-      use constituents,   only: cnst_add
 
       ! Local variables
-      integer           :: i,idx, mm, ind, nf
-      integer           :: ierr
+      integer           :: nf
       !--------------------------------------------
 
       do nf = 1,N_AERO
@@ -311,7 +291,6 @@ contains
       integer           :: klev
       integer           :: nf
       logical           :: history_chemistry
-      character(len=3)  :: mixtype(N_AERO) = 'wet'
       character(len=*), parameter :: subname = 'aircraft_emit_init'
       !-----------------------------------------------
 
@@ -411,7 +390,6 @@ contains
       real(r8)              :: data_col(pver)
       real(r8)              :: model_z(pverp)
       character(len=cs)     :: units
-      integer               :: index
       integer               :: rc
       logical               :: first_time = .true.
       type(physics_buffer_desc), pointer :: pbuf_chnk(:)
@@ -524,9 +502,7 @@ contains
                call endrun('aircraft_emit_adv: units are not recognized')
             end select
 
-            index = forcing(nf)%index_map
-
-            !$OMP PARALLEL DO PRIVATE (lchnk, ncol, index, to_mmr, tmpptr, pbuf_chnk, wght)
+            !$OMP PARALLEL DO PRIVATE (lchnk, ncol, to_mmr, tmpptr, pbuf_chnk, wght)
             do lchnk = begchunk,endchunk
                ncol = state(lchnk)%ncol
 
@@ -534,7 +510,7 @@ contains
                call get_wght_all_p(lchnk, ncol, wght(:ncol))
 
                if (caseid == 1) then
-                  to_mmr(:ncol,:) = (molmass(index)*1.e6_r8*boltz*state(lchnk)%t(:ncol,:)) &
+                  to_mmr(:ncol,:) = (molmass(nf)*1.e6_r8*boltz*state(lchnk)%t(:ncol,:)) &
                                    /(mwdry*state(lchnk)%pmiddry(:ncol,:))
                elseif (caseid == 2) then
                   to_mmr(:ncol,:) = 1._r8
@@ -545,7 +521,7 @@ contains
                elseif (caseid == 6) then
                   to_mmr(:ncol,:) = 1.0_r8
                else
-                  to_mmr(:ncol,:) = molmass(index)/mwdry
+                  to_mmr(:ncol,:) = molmass(nf)/mwdry
                endif
 
                pbuf_chnk => pbuf_get_chunk(pbuf2d, lchnk)
@@ -640,7 +616,7 @@ contains
       spc_name_list_out(:) = ''
 
       do nf = 1,N_AERO
-         if (forcing(nf)%fldname /= ' ') then
+         if (trim(forcing(nf)%datafile) /= 'unset') then
             cnt = cnt + 1
             spc_name_list_out(nf) = trim(forcing(nf)%fldname)
          end if
