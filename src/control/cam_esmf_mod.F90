@@ -1,6 +1,6 @@
 module cam_esmf_mod
 
-  use shr_kind_mod      , only : r8=>shr_kind_r8, i8=>shr_kind_i8, cl=>shr_kind_cl, cs=>shr_kind_cs
+  use shr_kind_mod      , only : r8=>shr_kind_r8
   use ESMF              , only : ESMF_Mesh, ESMF_Clock
   use ESMF              , only : ESMF_VM, ESMF_VMAllreduce, ESMF_VMGetCurrent
   use ESMF              , only : ESMF_SUCCESS, ESMF_REDUCE_SUM
