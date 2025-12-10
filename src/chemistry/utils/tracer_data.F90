@@ -1449,18 +1449,15 @@ contains
      nullify(wrk2d_in)
      allocate( wrk2d(cnt(1),cnt(2)), stat=ierr )
      if( ierr /= 0 ) then
-        write(iulog,'(a,i0)') 'read_2d_trc: wrk2d allocation error = ',ierr
-        call endrun
+        call endrun('read_2d_trc: wrk2d allocation error = '//int2str(ierr))
      end if
 
      if(order(1)/=1 .or. order(2)/=2 .or. cnt(1)/=file%nlon .or. cnt(2)/=file%nlat) then
         allocate( wrk2d_in(file%nlon, file%nlat), stat=ierr )
         if( ierr /= 0 ) then
-           write(iulog,'(a,i0)') 'read_2d_trc: wrk2d_in allocation error = ',ierr
-           call endrun
+           call endrun('read_2d_trc: wrk2d_in allocation error = '//int2str(ierr))
         end if
      end if
-
 
     ierr = pio_get_var( fid, vid, strt, cnt, wrk2d )
     if(associated(wrk2d_in)) then
@@ -1564,18 +1561,15 @@ contains
      nullify(wrk2d_in)
      allocate( wrk2d(cnt(1),cnt(2)), stat=ierr )
      if( ierr /= 0 ) then
-        write(iulog,'(a,i0)') 'read_2d_trc: wrk2d allocation error = ',ierr
-        call endrun
+        call endrun('read_2d_trc: wrk2d allocation error = '//int2str(ierr))
      end if
 
      if(order(1)/=1 .or. order(2)/=2 .or. cnt(1)/=file%nlat .or. cnt(2)/=file%nlev) then
         allocate( wrk2d_in(file%nlat, file%nlev), stat=ierr )
         if( ierr /= 0 ) then
-           write(iulog,'(a,i0)') 'read_2d_trc: wrk2d_in allocation error = ',ierr
-           call endrun
+           call endrun('read_2d_trc: wrk2d_in allocation error = '//int2str(ierr))
         end if
      end if
-
 
     ierr = pio_get_var( fid, vid, strt, cnt, wrk2d )
     if(associated(wrk2d_in)) then
@@ -1704,8 +1698,7 @@ contains
     nullify(wrk3d_in)
     allocate(wrk3d(cnt(1),cnt(2),cnt(3)), stat=ierr)
     if( ierr /= 0 ) then
-       write(iulog,'(a,i0)') 'read_3d_trc: wrk3d allocation error = ',ierr
-       call endrun
+       call endrun('read_3d_trc: wrk3d allocation error = '//int2str(ierr))
     end if
 
     ierr = pio_get_var( fid, vid, strt, cnt, wrk3d )
@@ -1714,8 +1707,7 @@ contains
          cnt(1)/=file%nlon.or.cnt(2)/=file%nlat.or.cnt(3)/=file%nlev) then
        allocate(wrk3d_in(file%nlon,file%nlat,file%nlev),stat=ierr)
        if( ierr /= 0 ) then
-          write(iulog,'(a,i0)') 'read_3d_trc: wrk3d allocation error = ',ierr
-          call endrun
+          call endrun('read_3d_trc: wrk3d allocation error = '//int2str(ierr))
        end if
        wrk3d_in = reshape( wrk3d(:,:,:),(/file%nlon,file%nlat,file%nlev/), order=order )
        deallocate(wrk3d)

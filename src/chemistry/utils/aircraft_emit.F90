@@ -28,6 +28,7 @@ module aircraft_emit
 
    private :: get_vertical_dimension
    private :: interpz_conserve
+   private :: chkrc
 
    type :: forcing_type
       type(shr_strdata_type) :: sdat
@@ -499,7 +500,7 @@ contains
                if (masterproc) then
                   write(iulog,*)'aircraft_emit_adv: units = '//trim(units)//' are not recognized'
                end if
-               call endrun('aircraft_emit_adv: units are not recognized')
+               call endrun(trim(subname)//' aircraft_emit_adv: units are not recognized')
             end select
 
             !$OMP PARALLEL DO PRIVATE (lchnk, ncol, to_mmr, tmpptr, pbuf_chnk, wght)

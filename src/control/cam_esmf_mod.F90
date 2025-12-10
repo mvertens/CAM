@@ -4,7 +4,6 @@ module cam_esmf_mod
   use ESMF              , only : ESMF_Mesh, ESMF_Clock
   use ESMF              , only : ESMF_VM, ESMF_VMAllreduce, ESMF_VMGetCurrent
   use ESMF              , only : ESMF_SUCCESS, ESMF_REDUCE_SUM
-  use shr_sys_mod       , only : shr_sys_abort
   use cam_abortutils    , only : endrun
   use nuopc_shr_methods , only : chkerr
   use error_messages    , only : alloc_err
@@ -24,10 +23,7 @@ module cam_esmf_mod
   real(r8), allocatable, public, protected :: model_areas(:)
   real(r8), allocatable, public, protected :: mesh_areas(:)
 
-  logical :: model_clock_initialized = .false.
-  logical :: model_mesh_initialized = .false.
-
-  character(*), parameter :: u_FILE_u = &
+  character(len=*), parameter :: u_FILE_u = &
        __FILE__
 
 !=====================================================================
@@ -47,12 +43,7 @@ contains
       model_clock = ESMF_ClockCreate(clock_in, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      if (model_clock_initialized) then
-         call shr_sys_abort('initialize_model_clock: model clock already initialized')
-      else
-         model_clock = clock_in
-         model_clock_initialized = .true.
-      end if
+      model_clock = clock_in
 
    end subroutine cam_esmf_set_clock
 
@@ -60,12 +51,8 @@ contains
    subroutine cam_esmf_set_mesh(mesh_in)
       type(ESMF_Mesh) , intent(in) :: mesh_in
 
-      if (model_mesh_initialized) then
-         call shr_sys_abort('initialize_model_mesh: model mesh already initialized')
-      else
-         model_mesh  = mesh_in
-         model_mesh_initialized = .true.
-      end if
+      model_mesh  = mesh_in
+
    end subroutine cam_esmf_set_mesh
 
    !=====================================================================

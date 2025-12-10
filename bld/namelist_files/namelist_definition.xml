@@ -1782,14 +1782,14 @@ Default: set by build-namelist
        group="co2_cycle_nl" valid_values="" >
 If TRUE read co2 aircraft flux from file and use all the settings for
 aircraft_co2_xxx namelist variables.
-Default: set by build-namelist
+Default: TRUE for transient model runs, FALSE otherwise.
 </entry>
 
 <entry id="co2_readflux_fuel" type="logical"  category="co2_cycle"
        group="co2_cycle_nl" valid_values="" >
 If TRUE read co2 fuel flux from file and use all the settings for
 co2flux_fuel_xxx namelist variables.
-Default: set by build-namelist
+Default: TRUE for transient model runs, FALSE otherwise.
 </entry>
 
 <!-- co2 fossil fuel emissions -->
@@ -1843,7 +1843,10 @@ the forcing file otherwise, set to 'linear'
 <entry id="co2flux_fuel_taxmode" type="char*16" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="cycle,extend,limit">
 Time extrapolation algorithm to use for co2flux_fuel_datafile.
-Default: cycle
+- cycle: Simply cycle through the available model data (i.e., start over when the end is reached)
+- extend: Use the final value when end of data is reached.
+- limit: Halt the model run if the model time exceeds the available data.
+Default: extend for transient, otherwise cycle
 </entry>
 
 <!-- aircraft co2 emissions -->
@@ -1899,7 +1902,10 @@ the forcing file otherwise, set to 'linear'
 <entry id="aircraft_co2_taxmode" type="char*16" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="cycle,extend,limit">
 Time extrapolation algorithm to use for aircraft_co2_datafile.
-Default: cycle
+- cycle: Simply cycle through the available model data (i.e., start over when the end is reached)
+- extend: Use the final value when end of data is reached.
+- limit: Halt the model run if the model time exceeds the available data.
+Default: extend for transient, otherwise cycle
 </entry>
 
 <!-- History and Initial Conditions Output -->
@@ -7079,6 +7085,10 @@ the forcing file otherwise, set to 'linear'
 <entry id="aircraft_h2o_taxmode" type="char*16" category="h2o_cycle"
        group="aircraft_emit_nl" valid_values="cycle, extend, limit">
 Time extrapolation algorithm to use for aircraft_h2o_datafile.
+- cycle: Simply cycle through the available model data (i.e., start over when the end is reached)
+- extend: Use the final value when end of data is reached.
+- limit: Halt the model run if the model time exceeds the available data.
+Default: extend for transient, otherwise cycle
 </entry>
 
 <!-- aircraft slant_dist -->
@@ -7135,6 +7145,10 @@ the forcing file otherwise, set to 'linear'
 <entry id="aircraft_slant_dist_taxmode" type="char*16" category="cam_chem"
        group="aircraft_emit_nl" valid_values="cycle,extend,limit">
 Time extrapolation algorithm to use for aircraft_slant_dist.
+- cycle: Simply cycle through the available model data (i.e., start over when the end is reached)
+- extend: Use the final value when end of data is reached.
+- limit: Halt the model run if the model time exceeds the available data.
+Default: extend for transient, otherwise cycle
 </entry>
 
 <!-- gcr_ionization -->

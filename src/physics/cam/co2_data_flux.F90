@@ -36,7 +36,7 @@ module co2_data_flux
    integer            :: co2flux_fuel_year_last = -999   ! last year in stream to use
    integer            :: co2flux_fuel_year_align = -999  ! align stream_year_first
    character(len=cs)  :: co2flux_fuel_tintalgo = 'unset' ! time interpolation [linear, lower, upper]
-   character(len=cs)  :: co2flux_fuel_taxmode = 'unset'  ! time extraploation [cycle, extend or limit]
+   character(len=cs)  :: co2flux_fuel_taxmode = 'unset'  ! time extrapolation [cycle, extend or limit]
 
    logical :: debug = .false.
 
@@ -59,6 +59,7 @@ contains
       use cam_logfile,     only: iulog
       use cam_abortutils,  only: endrun
       use cam_pio_utils,   only: cam_pio_openfile
+      use string_utils,    only: int2str
       use pio,             only: PIO_BCAST_ERROR, PIO_NOERR, PIO_NOWRITE
       use pio,             only: file_desc_t, pio_seterrorhandling, pio_inq_varid
       use pio,             only: pio_closefile
@@ -81,7 +82,7 @@ contains
            co2flux_fuel_year_first, & ! first year in stream to use
            co2flux_fuel_year_last,  & ! last year in stream to use
            co2flux_fuel_year_align, & ! align stream_year_first
-           co2flux_fuel_tintalgo,   & ! time extraploation [linear, lower, upper]
+           co2flux_fuel_tintalgo,   & ! time interpolation [linear, lower, upper]
            co2flux_fuel_taxmode       ! time extraploation [cycle, extend or limit]
       !--------------------------------------------
 
@@ -98,19 +99,19 @@ contains
       end if
 
       call mpi_bcast(co2flux_fuel_datafile, len(co2flux_fuel_datafile), mpi_character, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_datafile")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_datafile "//trim(co2flux_fuel_datafile))
       call mpi_bcast(co2flux_fuel_meshfile, len(co2flux_fuel_meshfile), mpi_character, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_meshfile")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_meshfile "//trim(co2flux_fuel_meshfile))
       call mpi_bcast(co2flux_fuel_year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_first")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_first "//int2str(co2flux_fuel_year_first))
       call mpi_bcast(co2flux_fuel_year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_last")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_last "//int2str(co2flux_fuel_year_last))
       call mpi_bcast(co2flux_fuel_year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_align")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_year_align "//int2str(co2flux_fuel_year_align))
       call mpi_bcast(co2flux_fuel_tintalgo, len(co2flux_fuel_tintalgo), mpi_character, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_tintalgo")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_tintalgo "//trim(co2flux_fuel_tintalgo))
       call mpi_bcast(co2flux_fuel_taxmode, len(co2flux_fuel_taxmode), mpi_character, masterprocid, mpicom, ierr)
-      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_taxmode")
+      if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_taxmode "//trim(co2flux_fuel_taxmode))
 
       ! Overwrite co2flux_fuel_tintalgo if it is set to 'unset'
       ! Check if the data file has a time_bnds variable and if so set the time interpolation

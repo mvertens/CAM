@@ -3,8 +3,7 @@ module ioFileMod
 !
 ! Purpose:
 !
-!	Input/Output file manipulations. Mind file on archival system, or local
-!	disk etc.
+!	Input/Output file manipulations.
 !
 ! Author: Mariana Vertenstein
 !
@@ -81,7 +80,9 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
       if (abort_on_failure) then
          call endrun('(GETFIL): local filename variable is too short for path length')
       else
-         if (masterproc) write(iulog,'(a,i8,i8)') '(GETFIL): local filename variable is too short for path length',klen-i,maxlen
+         if (masterproc) then
+            write(iulog,'(a,i0,a,i0)') '(GETFIL): local filename variable is too short for path length: ',klen-i,' > ',maxlen
+         end if
          if (present(lexist)) lexist = .false.
          return
       end if
@@ -91,13 +92,13 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    if (len_trim(locfn) == 0) then
       call endrun ('(GETFIL): local filename has zero length')
    else if (masterproc) then
-      write(iulog,'(a)')'(GETFIL): attempting to find local file '//trim(locfn)
+      write(iulog,'(2a)')'(GETFIL): attempting to find local file ',trim(locfn)
    end if
 
    inquire(file=locfn, exist=lexist_in)
    if (present(lexist)) lexist = lexist_in
    if (lexist_in) then
-      if (masterproc) write(iulog,'(a)') '(GETFIL): using '//trim(locfn)//' in current working directory'
+      if (masterproc) write(iulog,'(3a)') '(GETFIL): using ',trim(locfn),' in current working directory'
       return
    end if
 
@@ -107,7 +108,9 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
       if (abort_on_failure) then
          call endrun('(GETFIL): local filename variable is too short for path length')
       else
-         if (masterproc) write(iulog,'(a,i8,i8)') '(GETFIL): local filename variable is too short for path length',klen,maxlen
+         if (masterproc) then
+            write(iulog,'(a,i0,a,i0)') '(GETFIL): local filename variable is too short for path length: ',klen,' > ',maxlen
+         end if
          if (present(lexist)) lexist = .false.
          return
       end if
@@ -117,10 +120,10 @@ subroutine getfil(fulpath, locfn, iflag, lexist)
    inquire(file=locfn, exist=lexist_in)
    if (present(lexist)) lexist = lexist_in
    if (lexist_in) then
-      if (masterproc) write(iulog,'(a)')'(GETFIL): using '//trim(fulpath)
+      if (masterproc) write(iulog,'(2a)')'(GETFIL): using ',trim(fulpath)
       return
    else
-      if (masterproc) write(iulog,'(a)')'(GETFIL): all tries to get file have been unsuccessful: '//trim(fulpath)
+      if (masterproc) write(iulog,'(2a)')'(GETFIL): all tries to get file have been unsuccessful: ',trim(fulpath)
       if (abort_on_failure) then
          call endrun ('GETFIL: FAILED to get '//trim(fulpath))
       else
@@ -167,10 +170,14 @@ end subroutine getfil
    end if
    open (unit=iun,file=locfn,status=st, form=ft,iostat=ioe)
    if (ioe /= 0) then
-      if(masterproc) write(iulog,'(a,i8,a,i8)')'(OPNFIL): failed to open file '//trim(locfn)//' on unit ',iun,' ierr=',ioe
+      if(masterproc) then
+         write(iulog,'(3a,i0,a,i0)')'(OPNFIL): failed to open file ', trim(locfn), ' on unit ',iun,',  ierr=',ioe
+      end if
       call endrun ('opnfil')
    else
-      if(masterproc) write(iulog,'(a,i8)')'(OPNFIL): Successfully opened file '//trim(locfn)//' on unit= ',iun
+      if(masterproc) then
+         write(iulog,'(3a,i0)')'(OPNFIL): Successfully opened file ', trim(locfn), ' on unit = ', iun
+      end if
    end if
 
    return
