@@ -51,8 +51,9 @@ module aircraft_emit
 
    integer, parameter  :: N_AERO = 3
    type(forcing_type)  :: forcing(N_AERO)
-   character(len=3)    :: mixtype(N_AERO) = 'wet'
    real(r8), parameter :: molmass(N_AERO) = 1._r8
+
+   logical             :: first_update = .true.
 
    character(len=*),parameter :: u_FILE_u = __FILE__
 
@@ -279,7 +280,6 @@ contains
       !-------------------------------------------------------------------
       use cam_history,    only: addfld, add_default
       use phys_control,   only: phys_getopts
-      use physics_buffer, only: pbuf_get_chunk, pbuf_get_index
       use cam_pio_utils,  only: cam_pio_openfile, cam_pio_closefile
       use pio,            only: file_desc_t, var_desc_t
       use pio,            only: pio_inq_varid, pio_get_att
@@ -288,7 +288,7 @@ contains
       ! Local variables
       type(file_desc_t) :: pioid
       type(var_desc_t)  :: varid
-      integer           :: ierr, rc
+      integer           :: ierr
       integer           :: klev
       integer           :: nf
       logical           :: history_chemistry
@@ -369,7 +369,7 @@ contains
       use physconst,         only : boltz ! J/K/molecule
       use phys_grid,         only : get_wght_all_p, get_ncols_p
       use physics_buffer,    only : physics_buffer_desc, pbuf_get_field
-      use physics_buffer,    only : pbuf_get_chunk, pbuf_get_index
+      use physics_buffer,    only : pbuf_get_chunk
       use time_manager,      only : get_curr_date
 
       ! Arguments
@@ -377,25 +377,24 @@ contains
       type(physics_buffer_desc), pointer :: pbuf2d(:,:)
 
       ! Local variables
-      integer               :: gcell, ind, nf
-      integer               :: lchnk, icol, klev, ncol
-      integer               :: caseid
-      integer               :: year, mon, day, sec
-      integer               :: mcdate
-      real(r8)              :: to_mmr(pcols,pver)
-      real(r8)              :: wght(pcols)
-      real(r8), pointer     :: tmpptr(:,:)
-      real(r8), pointer     :: data_out(:,:)
-      real(r8), pointer     :: dataptr2d(:,:)
-      real(r8)              :: datain3d(pcols,pver,begchunk:endchunk)
-      real(r8)              :: data_col(pver)
-      real(r8)              :: model_z(pverp)
-      character(len=cs)     :: units
-      integer               :: rc
-      logical               :: first_time = .true.
-      type(physics_buffer_desc), pointer :: pbuf_chnk(:)
-      real(r8), parameter :: m2km  = 1.e-3_r8
-      character(len=*), parameter :: subname = 'aircraft_emit_adv'
+      integer                                :: gcell, nf
+      integer                                :: lchnk, icol, klev, ncol
+      integer                                :: caseid
+      integer                                :: year, mon, day, sec
+      integer                                :: mcdate
+      real(r8)                               :: to_mmr(pcols,pver)
+      real(r8)                               :: wght(pcols)
+      real(r8),                  pointer     :: tmpptr(:,:)
+      real(r8),                  pointer     :: data_out(:,:)
+      real(r8),                  pointer     :: dataptr2d(:,:)
+      real(r8),                  allocatable :: datain3d(:,:,:)
+      real(r8)                               :: data_col(pver)
+      real(r8)                               :: model_z(pverp)
+      character(len=cs)                      :: units
+      integer                                :: rc
+      type(physics_buffer_desc), pointer     :: pbuf_chnk(:)
+      real(r8),                  parameter   :: m2km  = 1.e-3_r8
+      character(len=*),          parameter   :: subname = 'aircraft_emit_adv'
       !------------------------------------------------------------------
 
       call t_startf('All_aircraft_emit_adv')
@@ -406,7 +405,7 @@ contains
       n_aero_loop: do nf = 1,N_AERO
          unset_file: if (trim(forcing(nf)%datafile) /= 'unset') then
 
-            first_call: if (first_time) then
+            first_call: if (first_update) then
                ! Initialize forcing%sdat
                call shr_strdata_init_from_inline(forcing(nf)%sdat,    &
                     my_task             = iam,                        &
@@ -431,7 +430,7 @@ contains
                     rc                  = rc)
                call chkrc(rc,__LINE__,u_FILE_u)
 
-               first_time = .false.
+               first_update = .false.
             end if first_call
 
             !-------------------------------------------------------------------
@@ -453,6 +452,10 @@ contains
             call chkrc(rc,__LINE__,u_FILE_u)
 
             ! Obtain datain on model horizontal grid but the same vertical levels as the forcing dataset
+            allocate(datain3d(pcols,pver,begchunk:endchunk), stat=ierr)
+            if ( ierr /= 0 ) then
+               call endrun(trim(subname)//': failed to allocate datain3d, error = '//int2str(ierr))
+            end if
             do klev = 1, forcing(nf)%nlev  !nlev is the number of levels in the forcing data
                gcell = 1
                do lchnk = begchunk,endchunk
@@ -476,12 +479,13 @@ contains
                   data_out(icol,:) = data_col(pver:1:-1)
                end do
             end do
+            deallocate(datain3d)
 
             !-------------------------------------------------------------------
             ! set the tracer fields with the correct units
             !-------------------------------------------------------------------
 
-            ! GLC IS position of last significant character in string.
+            ! GLC is position of last significant character in string.
             units = to_lower(trim(forcing(nf)%fldunits(:GLC(forcing(nf)%fldunits))))
             select case (trim(units))
             case ("molec/cm3","/cm3","molecules/cm3","cm^-3","cm**-3")
@@ -540,6 +544,7 @@ contains
 
    !=========================================================================
    subroutine interpz_conserve( nsrc, ndst, src_x, dst_x, src, dst)
+      ! Note, this routine is an edited version of the tracer_data version
 
       ! Arguments
       integer, intent(in)   :: nsrc                  ! dimension source array
@@ -628,9 +633,10 @@ contains
    !=========================================================================
    subroutine get_vertical_dimension( fid, dname, dsize, data )
 
-      use pio, only : file_desc_t, pio_seterrorhandling
-      use pio, only : pio_inq_dimid, pio_inq_dimlen, pio_inq_varid, pio_get_var
-      use pio, only : PIO_BCAST_ERROR, PIO_NOERR
+      use pio,          only: file_desc_t, pio_seterrorhandling
+      use pio,          only: pio_inq_dimid, pio_inq_dimlen, pio_inq_varid, pio_get_var
+      use pio,          only: PIO_BCAST_ERROR, PIO_NOERR
+      use string_utils, only: int2str
 
       ! Arguments
       type(file_desc_t), intent(inout) :: fid
@@ -653,7 +659,7 @@ contains
          end if
          allocate( data(dsize), stat=ierr )
          if ( ierr /= 0 ) then
-            call endrun(trim(subname)//': failed to allocate data array')
+            call endrun(trim(subname)//': failed to allocate data array, error = '//int2str(ierr))
          end if
          ierr = pio_inq_varid( fid, dname, vid )
          if (ierr /= PIO_NOERR) then

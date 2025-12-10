@@ -712,9 +712,9 @@ if (!($simple_phys or $aqua_mode)) {
   my $chem_nitrodep = chem_has_species($cfg, 'NO') and chem_has_species($cfg, 'NH3');
   if ((!$chem_nitrodep) or ($chem =~ /geoschem/)) {
     add_default($nl, 'stream_ndep_mesh_filename');
-    add_default($nl, 'stream_ndep_data_filename', 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_first', 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_last', 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_data_filename', 'sim_year'=>$sim_year_start);
+    add_default($nl, 'stream_ndep_year_first', 'sim_year'=>$sim_year_start);
+    add_default($nl, 'stream_ndep_year_last', 'sim_year'=>$sim_year_end);
     add_default($nl, 'stream_ndep_year_align', 'sim_year'=>$sim_year);
   }
 }
@@ -812,6 +812,7 @@ if ($cfg->get('cosp')) {
 my $co2_cycle = $cfg->get('co2_cycle');
 
 # co2_flag turns on the co2_cycle code in CAM
+# defaults set in namelist_defaults_cam.xml
 add_default($nl, 'co2_flag');
 
 if ($co2_cycle) {
@@ -855,13 +856,14 @@ if ($co2_cycle) {
             add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year_end);
             add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year_start);
         }
-    }
-
+      } else {
+          # This case probably should not happen (co2_cycle on with no sim year)
+          add_default($nl, 'co2_readflux_fuel', 'val'=>'.false.');
+          add_default($nl, 'co2_readflux_aircraft', 'val'=>'.false.');
+      }
 } else {
-
     add_default($nl, 'co2_readflux_fuel', 'val'=>'.false.');
     add_default($nl, 'co2_readflux_aircraft', 'val'=>'.false.');
-
 }
 
 # By default the prognostic co2_cycle CO2 will be radiative active, unless the

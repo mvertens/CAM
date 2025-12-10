@@ -4,7 +4,6 @@ module cam_esmf_mod
   use ESMF              , only : ESMF_Mesh, ESMF_Clock
   use ESMF              , only : ESMF_VM, ESMF_VMAllreduce, ESMF_VMGetCurrent
   use ESMF              , only : ESMF_SUCCESS, ESMF_REDUCE_SUM
-  use cam_abortutils    , only : endrun
   use nuopc_shr_methods , only : chkerr
   use error_messages    , only : alloc_err
   use cam_logfile       , only : iulog
@@ -23,15 +22,17 @@ module cam_esmf_mod
   real(r8), allocatable, public, protected :: model_areas(:)
   real(r8), allocatable, public, protected :: mesh_areas(:)
 
-  character(len=*), parameter :: u_FILE_u = &
-       __FILE__
+  logical :: check_global_areas = .false.
+
+  character(len=*), parameter :: u_FILE_u = __FILE__
 
 !=====================================================================
 contains
 !=====================================================================
 
    subroutine cam_esmf_set_clock(clock_in, rc)
-      use ESMF, only : ESMF_Clock, ESMF_ClockCreate
+      use ESMF,           only: ESMF_Clock, ESMF_ClockCreate, ESMF_ClockIsCreated
+      use cam_abortutils, only: endrun
 
       ! Arguments
       type(ESMF_Clock), intent(in)  :: clock_in
@@ -40,10 +41,14 @@ contains
 
       rc = ESMF_SUCCESS
 
-      model_clock = ESMF_ClockCreate(clock_in, rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+      if (ESMF_ClockIsCreated(model_clock, rc=rc)) then
+         call endrun('cam_esmf_set_clock: model_clock already set')
+      else
+         model_clock = ESMF_ClockCreate(clock_in, rc=rc)
+         if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      model_clock = clock_in
+         model_clock = clock_in
+      end if
 
    end subroutine cam_esmf_set_clock
 
@@ -94,19 +99,23 @@ contains
          local_mesh_area(1) = local_mesh_area(1) + mesh_areas(ng)
       end do
 
-      call ESMF_VMGetCurrent(vm, rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+      if (check_global_areas) then
+         call ESMF_VMGetCurrent(vm, rc=rc)
+         if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      call ESMF_VMAllreduce(vm, senddata=local_model_area, recvdata=global_model_area, &
-           count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+         call ESMF_VMAllreduce(vm, senddata=local_model_area, recvdata=global_model_area, &
+              count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
+         if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      call ESMF_VMAllreduce(vm, senddata=local_mesh_area, recvdata=global_mesh_area, &
-           count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
-      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+         call ESMF_VMAllreduce(vm, senddata=local_mesh_area, recvdata=global_mesh_area, &
+              count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
+         if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      write(iulog,'(a,d13.5)') ' global mesh area  = ',global_mesh_area(1)
-      write(iulog,'(a,d13.5)') ' global model area = ',global_model_area(1)
+         if (masterproc) then
+            write(iulog,'(a,d13.5)') ' global mesh area  = ',global_mesh_area(1)
+            write(iulog,'(a,d13.5)') ' global model area = ',global_model_area(1)
+         end if
+      end if
 
    end subroutine cam_esmf_set_areas
 

@@ -12,7 +12,7 @@ module co2_cycle
    !
    !-------------------------------------------------------------------------------
 
-   use shr_kind_mod,  only: r8=>shr_kind_r8, cl=>shr_kind_cl, cs=>shr_kind_cs
+   use shr_kind_mod,  only: r8=>shr_kind_r8
 
    implicit none
    private
@@ -35,16 +35,15 @@ module co2_cycle
    ! new constituents
    !-------------------------------------------------------------------------------
 
-   integer, parameter :: ncnst=4                ! number of constituents implemented
-   integer, public, protected :: c_i(ncnst)     ! global index for new constituents
+   integer, parameter         :: ncnst=4    ! number of constituents implemented
+   integer, public, protected :: c_i(ncnst) ! global index for new constituents
 
    character(len=7), dimension(ncnst), parameter :: & ! constituent names
         c_names = (/'CO2_OCN', 'CO2_FFF', 'CO2_LND', 'CO2    '/)
 
-   integer :: co2_ocn_glo_ind ! global index of 'CO2_OCN'
-   integer :: co2_fff_glo_ind ! global index of 'CO2_FFF'
-   integer :: co2_lnd_glo_ind ! global index of 'CO2_LND'
-   integer :: co2_glo_ind     ! global index of 'CO2'
+   integer :: co2_fff_glo_ind = -1 ! global index of 'CO2_FFF'
+   integer :: co2_glo_ind = -1     ! global index of 'CO2'
+   integer :: idx_ac_CO2 = -1      ! pbuf index of aircraft CO2 field
 
 !===============================================================================
 contains
@@ -96,6 +95,12 @@ contains
       call mpi_bcast(co2_readFlux_fuel, 1, mpi_logical, masterprocid, mpicom, ierr)
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2_readFlux_fuel")
 
+      if (masterproc) then
+         write(iulog, '(a, l4)') "co2_flag = ", co2_flag
+         write(iulog, '(a, l4)')"co2_readFlux_aircraft = ", co2_readFlux_aircraft
+         write(iulog, '(a, l4)')"co2_readFlux_fuel = ", co2_readFlux_fuel
+      end if
+
       if (co2_readFlux_fuel) then
          call co2_data_flux_readnl(nlfile)
       end if
@@ -135,12 +140,8 @@ contains
               longname=c_names(icnst), mixtype='dry')
 
          select case (trim(c_names(icnst)))
-         case ('CO2_OCN')
-            co2_ocn_glo_ind = c_i(icnst)
          case ('CO2_FFF')
             co2_fff_glo_ind = c_i(icnst)
-         case ('CO2_LND')
-            co2_lnd_glo_ind = c_i(icnst)
          case ('CO2')
             co2_glo_ind = c_i(icnst)
          end select
@@ -150,14 +151,11 @@ contains
 
    !===============================================================================
 
-   function co2_transport()
+   logical function co2_transport()
 
       !-------------------------------------------------------------------------------
       ! Purpose: return true if this package is active
       !-------------------------------------------------------------------------------
-
-      ! Return value
-      logical :: co2_transport
 
       !----------------------------------------------------------------------------
 
@@ -167,28 +165,25 @@ contains
 
    !===============================================================================
 
-   function co2_implements_cnst(name)
+   logical function co2_implements_cnst(name)
 
       !-------------------------------------------------------------------------------
       ! Purpose: return true if specified constituent is implemented by this package
       !-------------------------------------------------------------------------------
 
-      ! Return value
-      logical :: co2_implements_cnst
-
       ! Arguments
       character(len=*), intent(in) :: name  ! constituent name
 
       ! Local variables
-      integer :: m
+      integer :: mind
       !----------------------------------------------------------------------------
 
       co2_implements_cnst = .false.
 
       if (.not. co2_flag) return
 
-      do m = 1, ncnst
-         if (name == c_names(m)) then
+      do mind = 1, ncnst
+         if (name == c_names(mind)) then
             co2_implements_cnst = .true.
             return
          end if
@@ -217,28 +212,28 @@ contains
       real(r8),         intent(out) :: q(:,:)     ! kg tracer/kg dry air (gcol, plev)
 
       ! Local variables
-      integer :: k
+      integer :: kindx
       !----------------------------------------------------------------------------
 
       if (.not. co2_flag) return
 
-      do k = 1, size(q, 2)
+      do kindx = 1, size(q, 2)
          select case (name)
          case ('CO2_OCN')
             where(mask)
-               q(:, k) = chem_surfvals_get('CO2MMR')
+               q(:, kindx) = chem_surfvals_get('CO2MMR')
             end where
          case ('CO2_FFF')
             where(mask)
-               q(:, k) = chem_surfvals_get('CO2MMR')
+               q(:, kindx) = chem_surfvals_get('CO2MMR')
             end where
          case ('CO2_LND')
             where(mask)
-               q(:, k) = chem_surfvals_get('CO2MMR')
+               q(:, kindx) = chem_surfvals_get('CO2MMR')
             end where
          case ('CO2')
             where(mask)
-               q(:, k) = chem_surfvals_get('CO2MMR')
+               q(:, kindx) = chem_surfvals_get('CO2MMR')
             end where
          end select
       end do
@@ -280,6 +275,9 @@ contains
          call add_default('TM'//trim(cnst_name(mm)), 1, ' ')
       end do
 
+      ! Find and store the aircraft CO2 index
+      idx_ac_CO2 = pbuf_get_index('ac_CO2')
+
    end subroutine co2_init
 
    !===============================================================================
@@ -319,16 +317,17 @@ contains
 
       call physics_ptend_init(ptend, state%psetcols, 'co2_cycle_ac', lq=lq)
 
-      ifld = pbuf_get_index('ac_CO2')
-      call pbuf_get_field(pbuf, ifld, ac_CO2)
+      if (idx_ac_CO2 > 0) then
+         call pbuf_get_field(pbuf, idx_ac_CO2, ac_CO2)
 
-      ! [ac_CO2] = 'kg m-2 s-1'
-      ! [ptend%q] = 'kg kg-1 s-1'
-      ncol = state%ncol
-      do k = 1, pver
-         ptend%q(:ncol,k,co2_fff_glo_ind) = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
-         ptend%q(:ncol,k,co2_glo_ind)     = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
-      end do
+         ! [ac_CO2] = 'kg m-2 s-1'
+         ! [ptend%q] = 'kg kg-1 s-1'
+         ncol = state%ncol
+         do k = 1, pver
+            ptend%q(:ncol,k,co2_fff_glo_ind) = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
+            ptend%q(:ncol,k,co2_glo_ind)     = gravit * state%rpdeldry(:ncol,k) * ac_CO2(:ncol,k)
+         end do
+      end if
 
    end subroutine co2_cycle_set_ptend
 

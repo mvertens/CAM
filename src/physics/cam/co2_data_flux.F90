@@ -42,7 +42,7 @@ module co2_data_flux
 
    logical :: first_advance_call = .true.
 
-   character(*),parameter :: u_FILE_u = __FILE__
+   character(len=*),parameter :: u_FILE_u = __FILE__
 
 !===============================================================================
 contains
@@ -69,7 +69,6 @@ contains
 
       ! Local variables
       integer            :: unitn, ierr
-      character(len=256) :: msg
       type(file_desc_t)  :: fileid
       integer            :: err_handling
       integer            :: varid
@@ -112,6 +111,16 @@ contains
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_tintalgo "//trim(co2flux_fuel_tintalgo))
       call mpi_bcast(co2flux_fuel_taxmode, len(co2flux_fuel_taxmode), mpi_character, masterprocid, mpicom, ierr)
       if (ierr /= 0) call endrun(subname//": FATAL: mpi_bcast: co2flux_fuel_taxmode "//trim(co2flux_fuel_taxmode))
+
+      if (masterproc) then
+         write(iulog, '(2a)') "co2flux_fuel_datafile = ", trim(co2flux_fuel_datafile)
+         write(iulog, '(2a)') "co2flux_fuel_meshfile = ", trim(co2flux_fuel_meshfile)
+         write(iulog, '(a,i0)') "co2flux_fuel_year_first = ", co2flux_fuel_year_first
+         write(iulog, '(a,i0)') "co2flux_fuel_year_last = ", co2flux_fuel_year_last
+         write(iulog, '(a,i0)') "co2flux_fuel_year_align = ", co2flux_fuel_year_align
+         write(iulog, '(2a)') "co2flux_fuel_tintalgo = ", trim(co2flux_fuel_tintalgo)
+         write(iulog, '(2a)') "co2flux_fuel_taxmode = ", trim(co2flux_fuel_taxmode)
+        end if
 
       ! Overwrite co2flux_fuel_tintalgo if it is set to 'unset'
       ! Check if the data file has a time_bnds variable and if so set the time interpolation

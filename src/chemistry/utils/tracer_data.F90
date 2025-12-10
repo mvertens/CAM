@@ -170,8 +170,6 @@ contains
     use horizontal_interpolate, only : xy_interp_init
     use spmd_utils,       only: mpicom, mstrid=>masterprocid, mpi_real8, mpi_integer
 
-    implicit none
-
     character(len=*),    intent(in)    :: specifier(:)
     character(len=*),    intent(in)    :: filename
     character(len=*),    intent(in)    :: filelist
@@ -237,7 +235,7 @@ contains
        file%cyc_yr = data_cycle_yr
     case( 'SERIAL' )
     case default
-       write(iulog,'(a)') 'trcdata_init: invalid data type: '//trim(data_type)//' file: '//trim(filename)
+       write(iulog,'(4a)') 'trcdata_init: invalid data type: ', trim(data_type), ' file: ', trim(filename)
        write(iulog,'(a)') 'trcdata_init: valid data types: SERIAL | CYCLICAL | CYCLICAL_LIST | FIXED | INTERP_MISSING_MONTHS '
        call endrun('trcdata_init: invalid data type: '//trim(data_type)//' file: '//trim(filename))
     endselect
@@ -254,7 +252,7 @@ contains
     end if
 
     if (masterproc) then
-       write(iulog,'(a)') 'trcdata_init: data type: '//trim(data_type)//' file: '//trim(filename)
+       write(iulog,'(4a)') 'trcdata_init: data type: ', trim(data_type), ' file: ', trim(filename)
     endif
 
     ! if there is no list of files (len_trim(file%filenames_list)<1) then
@@ -648,7 +646,6 @@ contains
         if( file%dist ) then
            allocate(file%weight0_x(plon,file%nlon), stat=astat)
            if( astat /= 0 ) then
-              write(iulog,'(a,i0)')
               call endrun('trcdata_init: file%weight0_x allocation error = '//int2str(astat))
            end if
            allocate(file%weight0_y(plat,file%nlat), stat=astat)
@@ -771,8 +768,6 @@ contains
   subroutine advance_trcdata( flds, file, state, pbuf2d )
     use physics_types,only : physics_state
 
-    implicit none
-
     type(trfile),        intent(inout) :: file
     type(trfld),         intent(inout) :: flds(:)
     type(physics_state), intent(in)    :: state(begchunk:endchunk)
@@ -822,9 +817,6 @@ contains
 !-------------------------------------------------------------------
   subroutine get_fld_data( flds, field_name, data, ncol, lchnk, pbuf )
 
-
-    implicit none
-
     type(trfld), intent(inout) :: flds(:)
     character(len=*), intent(in) :: field_name
     real(r8), intent(out) :: data(:,:)
@@ -856,8 +848,6 @@ contains
 !-------------------------------------------------------------------
   subroutine get_fld_ndx( flds, field_name, idx  )
 
-    implicit none
-
     type(trfld), intent(in) :: flds(:)
     character(len=*), intent(in) :: field_name
     integer, intent(out) :: idx
@@ -878,7 +868,7 @@ contains
 !------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
   subroutine get_model_time(file)
-    implicit none
+
     type(trfile), intent(inout) :: file
 
     integer yr, mon, day, ncsec  ! components of a date
@@ -894,8 +884,6 @@ contains
 !------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
   subroutine check_files( file, fids, itms, times_found)
-
-    implicit none
 
     type(trfile),      intent(inout) :: file
     type(file_desc_t), intent(out)   :: fids(2) ! ids of files that contains these recs
@@ -974,9 +962,6 @@ contains
     !-----------------------------------------------------------------------
 
     use string_utils, only : incstr
-    use shr_file_mod, only : shr_file_getunit, shr_file_freeunit
-
-    implicit none
 
     character(len=*),           intent(in)    :: filename ! present dynamical dataset filename
     character(len=*), optional, intent(in)    :: filenames_list
@@ -1011,7 +996,7 @@ contains
        !-----------------------------------------------------------------------
        pos = len_trim( filename )
        fn_new = filename(:pos)
-       if ( masterproc ) write(iulog,'(a)') 'incr_flnm: old filename = '//trim(fn_new)
+       if ( masterproc ) write(iulog,'(2a)') 'incr_flnm: old filename = ', trim(fn_new)
        if( fn_new(pos-2:) == '.nc' ) then
           pos = pos - 3
        end if
@@ -1025,16 +1010,17 @@ contains
        !-------------------------------------------------------------------
        !  ... open filenames_list
        !-------------------------------------------------------------------
-       if ( masterproc ) write(iulog,'(a)') 'incr_flnm: old filename = '//trim(filename)
-       if ( masterproc ) write(iulog,'(a)') 'incr_flnm: open filenames_list : '//trim(filenames_list)
-       unitnumber = shr_file_getUnit()
+       if ( masterproc ) then
+          write(iulog,'(2a)') 'incr_flnm: old filename = ', trim(filename)
+          write(iulog,'(2a)') 'incr_flnm: open filenames_list : ', trim(filenames_list)
+       end if
        if ( present(datapath) ) then
          filepath = trim(datapath) //'/'// trim(filenames_list)
        else
          filepath = trim(filenames_list)
        endif
 
-       open( unit=unitnumber, file=filepath, iostat=ios, status="OLD")
+       open( newunit=unitnumber, file=filepath, iostat=ios, status="OLD")
        if (ios /= 0) then
           call endrun('not able to open file: '//trim(filepath))
        endif
@@ -1050,8 +1036,8 @@ contains
              fn_new = 'NOT_FOUND'
              incr_filename = trim(fn_new)
              return
-          endif
-       endif
+          end if
+       end if
 
        !-------------------------------------------------------------------
        !      If current filename is '', then initialize with the first filename read in
@@ -1071,9 +1057,9 @@ contains
                    fn_new = 'NOT_FOUND'
                    incr_filename = trim(fn_new)
                    return
-                endif
-             endif
-          enddo
+                end if
+             end if
+          end do
 
           !-------------------------------------------------------------------
           !      Read next filename
@@ -1117,14 +1103,13 @@ contains
        fn_new = trim(line)
 
        close(unit=unitnumber)
-       call shr_file_freeUnit(unitnumber)
-    endif
+    end if
 
     !---------------------------------------------------------------------------------
     !      return the current filename
     !---------------------------------------------------------------------------------
     incr_filename = trim(fn_new)
-    if ( masterproc ) write(iulog,'(a)') 'incr_flnm: new filename = '//trim(incr_filename)
+    if ( masterproc ) write(iulog,'(2a)') 'incr_flnm: new filename = ', trim(incr_filename)
 
   end function incr_filename
 
@@ -1133,8 +1118,6 @@ contains
   subroutine find_times( itms, fids, time, file, datatimem, datatimep, times_found )
 
     use intp_util, only: findplb
-
-    implicit none
 
     type(trfile), intent(in) :: file
     real(r8), intent(out) :: datatimem, datatimep
@@ -1212,7 +1195,7 @@ contains
     if ( .not. times_found ) then
        if (masterproc) then
           write(iulog,*)'FIND_TIMES: Failed to find dates bracketing desired time =', time
-          write(iulog,'(a)') 'filename = '//trim(file%curr_filename)
+          write(iulog,'(2a)') 'filename = ', trim(file%curr_filename)
           write(iulog,*)' datatimem = ',file%datatimem
           write(iulog,*)' datatimep = ',file%datatimep
        endif
@@ -1246,7 +1229,6 @@ contains
 !------------------------------------------------------------------------
 !------------------------------------------------------------------------
   subroutine read_next_trcdata( flds, file )
-    implicit none
 
     type (trfile), intent(inout) :: file
     type (trfld),intent(inout) :: flds(:)
@@ -1429,7 +1411,6 @@ contains
     use polar_avg,    only: polar_average
     use horizontal_interpolate, only : xy_interp
 
-    implicit none
     type(file_desc_t), intent(in) :: fid
     type(var_desc_t), intent(in) :: vid
     integer, intent(in) :: strt(:), cnt(:), order(2)
@@ -1544,7 +1525,6 @@ contains
     use ppgrid,           only : pcols, begchunk, endchunk
     use phys_grid,        only : get_ncols_p, get_rlat_all_p
 
-    implicit none
     type(file_desc_t), intent(in) :: fid
     type(var_desc_t),  intent(in) :: vid
     integer,           intent(in) :: strt(:), cnt(:)
@@ -1674,8 +1654,6 @@ contains
     use polar_avg,        only : polar_average
     use horizontal_interpolate, only : xy_interp
 
-    implicit none
-
     type(file_desc_t), intent(in) :: fid
     type(var_desc_t), intent(in) :: vid
     integer, intent(in) :: strt(:), cnt(:), order(3)
@@ -1778,8 +1756,6 @@ contains
     use mo_util,      only : rebin
     use physics_types,only : physics_state
     use physconst,    only : cday, rga
-
-    implicit none
 
     type(physics_state), intent(in) :: state(begchunk:endchunk)
     type (trfld),        intent(inout) :: flds(:)
@@ -1961,7 +1937,7 @@ contains
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
   subroutine get_dimension( fid, dname, dsize, dimid, data )
-    implicit none
+
     type(file_desc_t), intent(inout) :: fid
     character(*), intent(in) :: dname
     integer, intent(out) :: dsize
@@ -1988,14 +1964,12 @@ contains
           if ( associated(data) ) then
              deallocate(data, stat=ierr)
              if( ierr /= 0 ) then
-                write(iulog,'(a,i0)') 'get_dimension: data deallocation error = ',ierr
-                call endrun('get_dimension: failed to deallocate data array')
+                call endrun('get_dimension: failed to deallocate data array, error = '//int2str(ierr))
              end if
           endif
           allocate( data(dsize), stat=ierr )
           if( ierr /= 0 ) then
-             write(iulog,'(a,i0)') 'get_dimension: data allocation error = ',ierr
-             call endrun('get_dimension: failed to allocate data array')
+             call endrun('get_dimension: failed to allocate data array, error = '//int2str(ierr))
           end if
 
           ierr =  pio_inq_varid( fid, dname, vid )
@@ -2013,8 +1987,6 @@ contains
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
   subroutine set_cycle_indices( fileid, cyc_ndx_beg, cyc_ndx_end, cyc_yr )
-
-    implicit none
 
     type(file_desc_t), intent(inout)  :: fileid
     integer, intent(out) :: cyc_ndx_beg
@@ -2061,8 +2033,6 @@ contains
     use ioFileMod,     only: getfil
     use cam_pio_utils, only: cam_pio_openfile
 
-    implicit none
-
     character(*), intent(in) :: fname
     character(*), intent(in) :: path
     type(file_desc_t), intent(inout) :: piofile
@@ -2090,21 +2060,19 @@ contains
     !
     call getfil( filepath, filen, 0 )
     call cam_pio_openfile( piofile, filen, PIO_NOWRITE)
-    if(masterproc) write(iulog,'(a)')'open_trc_datafile: '//trim(filen)
+    if(masterproc) write(iulog,'(2a)')'open_trc_datafile: ', trim(filen)
 
     call get_dimension(piofile, 'time', timesize)
 
     if ( associated(times) ) then
        deallocate(times, stat=ierr)
        if( ierr /= 0 ) then
-          write(iulog,'(a,i0)') 'open_trc_datafile: data deallocation error = ',ierr
-          call endrun('open_trc_datafile: failed to deallocate data array')
+          call endrun('open_trc_datafile: failed to deallocate data array, error = '//int2str(ierr))
        end if
     endif
     allocate( times(timesize), stat=ierr )
     if( ierr /= 0 ) then
-       write(iulog,'(a,i0)') 'open_trc_datafile: data allocation error = ',ierr
-       call endrun('open_trc_datafile: failed to allocate data array')
+       call endrun('open_trc_datafile: failed to allocate data array, error = '//int2str(ierr))
     end if
 
     allocate( dates(timesize), stat=astat  )
@@ -2168,8 +2136,6 @@ contains
 !--------------------------------------------------------------------------
 !--------------------------------------------------------------------------
   subroutine specify_fields( specifier, fields )
-
-    implicit none
 
     character(len=*), intent(in) :: specifier(:)
     type(trfld), pointer, dimension(:) :: fields
@@ -2237,7 +2203,6 @@ contains
 
   subroutine init_trc_restart( whence, piofile, tr_file )
 
-    implicit none
     character(len=*), intent(in) :: whence
     type(file_desc_t), intent(inout) :: piofile
     type(trfile), intent(inout) :: tr_file
@@ -2281,8 +2246,6 @@ contains
 !-------------------------------------------------------------------------
   subroutine write_trc_restart( piofile, tr_file )
 
-    implicit none
-
     type(file_desc_t), intent(inout) :: piofile
     type(trfile), intent(inout) :: tr_file
 
@@ -2303,8 +2266,6 @@ contains
 ! reads file names from restart file
 !-------------------------------------------------------------------------
   subroutine read_trc_restart( whence, piofile, tr_file )
-
-    implicit none
 
     character(len=*), intent(in) :: whence
     type(file_desc_t), intent(inout) :: piofile
@@ -2341,8 +2302,6 @@ contains
   end subroutine read_trc_restart
 !------------------------------------------------------------------------------
   subroutine interpz_conserve( nsrc, ntrg, src_x, trg_x, src, trg)
-
-    implicit none
 
     integer, intent(in)   :: nsrc                  ! dimension source array
     integer, intent(in)   :: ntrg                  ! dimension target array
@@ -2410,8 +2369,6 @@ contains
 
 !------------------------------------------------------------------------------
   subroutine vert_interp_mixrat( ncol, nsrc, ntrg, trg_x, src, trg, p0, ps, hyai, hybi, use_flight_distance)
-
-    implicit none
 
     integer, intent(in)   :: ncol
     integer, intent(in)   :: nsrc                  ! dimension source array
@@ -2551,7 +2508,6 @@ contains
     !
     ! Interpolate data from current time-interpolated values to model levels
     !--------------------------------------------------------------------------
-    implicit none
     ! Arguments
     !
     integer,  intent(in)  :: ncol                ! number of atmospheric columns
@@ -2628,7 +2584,6 @@ contains
     ! Interpolate data from current time-interpolated values to top interface pressure
     !  -- from mo_tgcm_ubc.F90
     !--------------------------------------------------------------------------
-    implicit none
     ! Arguments
     !
     integer,  intent(in)  :: ncol
@@ -2737,8 +2692,6 @@ contains
     use shr_sys_mod, only: shr_sys_system
     use ioFileMod, only: getfil
 
-    implicit none
-
     type(trfile), intent(inout) :: file
 
     !-----------------------------------------------------------------------
@@ -2758,7 +2711,7 @@ contains
     !-----------------------------------------------------------------------
     if( file%remove_trc_file ) then
        call getfil( file%curr_filename, loc_fname, 0 )
-       write(iulog,'(a)') 'advance_file: removing file = ',trim(loc_fname)
+       write(iulog,'(2a)') 'advance_file: removing file = ',trim(loc_fname)
        ctmp = 'rm -f ' // trim(loc_fname)
        write(iulog,'(a)') 'advance_file: fsystem issuing command - '
        write(iulog,'(a)') trim(ctmp)

@@ -137,6 +137,7 @@ end subroutine getfil
 
 
    subroutine opnfil (locfn, iun, form, status)
+      use string_utils, only: int2str
 
 !-----------------------------------------------------------------------
 ! open file locfn in unformatted or formatted form on unit iun
@@ -173,7 +174,7 @@ end subroutine getfil
       if(masterproc) then
          write(iulog,'(3a,i0,a,i0)')'(OPNFIL): failed to open file ', trim(locfn), ' on unit ',iun,',  ierr=',ioe
       end if
-      call endrun ('opnfil')
+      call endrun('(OPNFIL): failed to open file '//trim(locfn)//' on unit '//int2str(iun)//',  ierr='//int2str(ioe))
    else
       if(masterproc) then
          write(iulog,'(3a,i0)')'(OPNFIL): Successfully opened file ', trim(locfn), ' on unit = ', iun
