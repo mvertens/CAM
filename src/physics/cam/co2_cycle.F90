@@ -250,8 +250,9 @@ contains
       !          read co2 flux form fuel, as data_flux_fuel
       !-------------------------------------------------------------------------------
 
-      use cam_history,  only: addfld, add_default, horiz_only
-      use constituents, only: cnst_name, cnst_longname, sflxnam
+      use cam_history,    only: addfld, add_default, horiz_only
+      use constituents,   only: cnst_name, cnst_longname, sflxnam
+      use physics_buffer, only: pbuf_get_index
 
       ! Local variables
       integer :: m, mm
@@ -289,7 +290,7 @@ contains
       !-------------------------------------------------------------------------------
 
       use physics_types,  only: physics_state, physics_ptend, physics_ptend_init
-      use physics_buffer, only: physics_buffer_desc, pbuf_get_index, pbuf_get_field
+      use physics_buffer, only: physics_buffer_desc, pbuf_get_field
       use constituents,   only: pcnst
       use ppgrid,         only: pver
       use physconst,      only: gravit

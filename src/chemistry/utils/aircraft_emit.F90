@@ -358,19 +358,20 @@ contains
       ! **** Advance to the aircraft data ****
       !-------------------------------------------------------------------
 
-      use dshr_methods_mod , only : dshr_fldbun_getfldptr
-      use dshr_strdata_mod , only : shr_strdata_init_from_inline, shr_strdata_advance
-      use cam_esmf_mod,      only : model_mesh, model_clock
-      use physics_types,     only : physics_state
-      use ppgrid,            only : begchunk, endchunk, pcols, pver, pverp
-      use string_utils,      only : to_lower, GLC
-      use cam_history,       only : outfld
-      use physconst,         only : mwdry ! molecular weight dry air ~ kg/kmole
-      use physconst,         only : boltz ! J/K/molecule
-      use phys_grid,         only : get_wght_all_p, get_ncols_p
-      use physics_buffer,    only : physics_buffer_desc, pbuf_get_field
-      use physics_buffer,    only : pbuf_get_chunk
-      use time_manager,      only : get_curr_date
+      use dshr_methods_mod , only: dshr_fldbun_getfldptr
+      use dshr_strdata_mod , only: shr_strdata_init_from_inline, shr_strdata_advance
+      use cam_esmf_mod,      only: model_mesh, model_clock
+      use physics_types,     only: physics_state
+      use ppgrid,            only: begchunk, endchunk, pcols, pver, pverp
+      use string_utils,      only: to_lower, GLC
+      use cam_history,       only: outfld
+      use physconst,         only: mwdry ! molecular weight dry air ~ kg/kmole
+      use physconst,         only: boltz ! J/K/molecule
+      use phys_grid,         only: get_wght_all_p, get_ncols_p
+      use physics_buffer,    only: physics_buffer_desc, pbuf_get_field
+      use physics_buffer,    only: pbuf_get_chunk
+      use string_utils,      only: int2str
+      use time_manager,      only: get_curr_date
 
       ! Arguments
       type(physics_state), intent(in)    :: state(begchunk:endchunk)
@@ -452,9 +453,9 @@ contains
             call chkrc(rc,__LINE__,u_FILE_u)
 
             ! Obtain datain on model horizontal grid but the same vertical levels as the forcing dataset
-            allocate(datain3d(pcols,pver,begchunk:endchunk), stat=ierr)
-            if ( ierr /= 0 ) then
-               call endrun(trim(subname)//': failed to allocate datain3d, error = '//int2str(ierr))
+            allocate(datain3d(pcols,pver,begchunk:endchunk), stat=rc)
+            if ( rc /= 0 ) then
+               call endrun(trim(subname)//': failed to allocate datain3d, error = '//int2str(rc))
             end if
             do klev = 1, forcing(nf)%nlev  !nlev is the number of levels in the forcing data
                gcell = 1

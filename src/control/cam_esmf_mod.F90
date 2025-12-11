@@ -62,6 +62,7 @@ contains
 
    !=====================================================================
    subroutine cam_esmf_set_areas(model_areas_in, mesh_areas_in, rc)
+      use spmd_utils, only: masterproc
 
       ! Arguments
       real(r8), intent(in)  :: model_areas_in(:)
