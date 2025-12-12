@@ -232,13 +232,13 @@ module nudging
   private :: calc_DryStaticEnergy
   private :: nudging_stream_init   ! position datasets for dynamic nudging
   private :: nudging_stream_interp ! interpolates between two years of nudging file data
+  private :: chkrc
 
-  integer, parameter :: maxfiles = 100
-
-  logical, public :: Nudge_On = .false.
+  logical, public, protected :: Nudge_On = .false.
 
   ! Nudging Parameters
   !--------------------
+  integer, parameter      :: maxfiles = 100
   logical                 :: Nudge_Model       =.false.
   logical                 :: Nudge_Initialized =.false.
   character(len=cl)       :: Nudge_Meshfile
@@ -563,101 +563,108 @@ contains
    call MPI_bcast(Nudge_ZonalNbasis, 1, mpi_integer, masterprocid, mpicom, ierr)
    if (ierr /= mpi_success) call endrun(subname//'FATAL: mpi_bcast: Nudge_ZonalNbasis '//int2str(Nudge_ZonalNbasis))
 
-   ! Set hi/lo values according to the given '_Invert' parameters
-   !--------------------------------------------------------------
-   if(Nudge_Hwin_Invert) then
-      Nudge_Hwin_lo = 1.0_r8
-      Nudge_Hwin_hi = 0.0_r8
-   else
-      Nudge_Hwin_lo = 0.0_r8
-      Nudge_Hwin_hi = 1.0_r8
-   end if
+   ! Note that this routine is called even if nudging is not on - so need to do the following
+   ! only if nudging is on
 
-   if(Nudge_Vwin_Invert) then
-      Nudge_Vwin_lo = 1.0_r8
-      Nudge_Vwin_hi = 0.0_r8
-   else
-      Nudge_Vwin_lo = 0.0_r8
-      Nudge_Vwin_hi = 1.0_r8
-   end if
+   check_valid: if (Nudge_Model) then
 
-   ! Check for valid namelist values
-   !----------------------------------
-   if (Nudge_Beg_year == iunset) then
-      call endrun('nudging_readnl:: Nudge_Beg_year '//int2str(Nudge_Beg_year)//' is not a valid value')
-   end if
-   if (Nudge_end_year == iunset) then
-      call endrun('nudging_readnl:: Nudge_end_year '//int2str(Nudge_end_year)//' is not a valid value')
-   end if
-   if (Nudge_Beg_year > Nudge_end_year) then
-      call endrun('nudging_readnl:: Nudge_Beg_year '//int2str(Nudge_Beg_year)//&
-           'cannot be greater than Nudge_end_year '//int2str(Nudge_end_year))
-   end if
-
-   ! Determine nudge_align_year if not set
-   if (Nudge_align_year == iunset) then
-      Nudge_align_year = Nudge_Beg_year
-   end if
-
-   ! Determine Nudge_tintalgo
-   if (Nudge_Force_Opt == 0) then
-      Nudge_tintalgo = 'upper'
-   elseif(Nudge_Force_Opt == 1) then
-      Nudge_tintalgo = 'linear'
-   else
-      call endrun('nudging_timestep_init:: ERROR unknown Nudge_Force_Opt '//int2str(Nudge_Force_Opt))
-   endif
-
-   if((Nudge_Hwin_lat0 < -90._r8) .or. (Nudge_Hwin_lat0 > +90._r8)) then
-     if (masterproc) then
-        write(iulog,*) 'NUDGING: Window lat0 must be in [-90,+90]'
-        write(iulog,*) 'NUDGING:  Nudge_Hwin_lat0=',Nudge_Hwin_lat0
-     end if
-     call endrun('nudging_readnl:: ERROR in namelist')
-   endif
-
-   if((Nudge_Hwin_lon0 < 0._r8) .or. (Nudge_Hwin_lon0 >= 360._r8)) then
-     if (masterproc) then
-        write(iulog,*) 'NUDGING: Window lon0 must be in [0,+360)'
-        write(iulog,*) 'NUDGING:  Nudge_Hwin_lon0=',Nudge_Hwin_lon0
-     end if
-     call endrun('nudging_readnl:: ERROR in namelist')
-   endif
-
-   if((Nudge_Vwin_Lindex > Nudge_Vwin_Hindex)                          .or.   &
-      (Nudge_Vwin_Hindex > float(pver+1)) .or. (Nudge_Vwin_Hindex < 0._r8) .or.  &
-      (Nudge_Vwin_Lindex > float(pver+1)) .or. (Nudge_Vwin_Lindex < 0._r8)   ) then
-     if (masterproc) then
-        write(iulog,*) 'NUDGING: Window Lindex must be in [0,pver+1]'
-        write(iulog,*) 'NUDGING: Window Hindex must be in [0,pver+1]'
-        write(iulog,*) 'NUDGING: Lindex must be LE than Hindex'
-        write(iulog,*) 'NUDGING:  Nudge_Vwin_Lindex=',Nudge_Vwin_Lindex
-        write(iulog,*) 'NUDGING:  Nudge_Vwin_Hindex=',Nudge_Vwin_Hindex
-     end if
-     call endrun('nudging_readnl:: ERROR in namelist')
-   endif
-
-   if((Nudge_Hwin_latDelta <= 0._r8) .or. (Nudge_Hwin_lonDelta <= 0._r8) .or. &
-      (Nudge_Vwin_Hdelta <= 0._r8) .or. (Nudge_Vwin_Ldelta <= 0._r8)    ) then
-     if (masterproc) then
-        write(iulog,*) 'NUDGING: Window Deltas must be positive'
-        write(iulog,*) 'NUDGING:  Nudge_Hwin_latDelta=',Nudge_Hwin_latDelta
-        write(iulog,*) 'NUDGING:  Nudge_Hwin_lonDelta=',Nudge_Hwin_lonDelta
-        write(iulog,*) 'NUDGING:  Nudge_Vwin_Hdelta=',Nudge_Vwin_Hdelta
-        write(iulog,*) 'NUDGING:  Nudge_Vwin_Ldelta=',Nudge_Vwin_Ldelta
-     end if
-     call endrun('nudging_readnl:: ERROR in namelist')
-
-   endif
-
-   if ((Nudge_Hwin_latWidth <= 0._r8) .or. (Nudge_Hwin_lonWidth <= 0._r8)) then
-      if (masterproc) then
-         write(iulog,*) 'NUDGING: Window widths must be positive'
-         write(iulog,*) 'NUDGING:  Nudge_Hwin_latWidth=',Nudge_Hwin_latWidth
-         write(iulog,*) 'NUDGING:  Nudge_Hwin_lonWidth=',Nudge_Hwin_lonWidth
+      ! Set hi/lo values according to the given '_Invert' parameters
+      !--------------------------------------------------------------
+      if(Nudge_Hwin_Invert) then
+         Nudge_Hwin_lo = 1.0_r8
+         Nudge_Hwin_hi = 0.0_r8
+      else
+         Nudge_Hwin_lo = 0.0_r8
+         Nudge_Hwin_hi = 1.0_r8
       end if
-      call endrun('nudging_readnl:: ERROR in namelist for Nudge_Hwin_LonWidgth')
-   endif
+
+      if(Nudge_Vwin_Invert) then
+         Nudge_Vwin_lo = 1.0_r8
+         Nudge_Vwin_hi = 0.0_r8
+      else
+         Nudge_Vwin_lo = 0.0_r8
+         Nudge_Vwin_hi = 1.0_r8
+      end if
+
+      ! Check for valid namelist values
+      !----------------------------------
+      if (Nudge_Beg_year == iunset) then
+         call endrun(trim(subname)//' Nudge_Beg_year '//int2str(Nudge_Beg_year)//' is not a valid value')
+      end if
+      if (Nudge_end_year == iunset) then
+         call endrun(trim(subname)//' Nudge_end_year '//int2str(Nudge_end_year)//' is not a valid value')
+      end if
+      if (Nudge_Beg_year > Nudge_end_year) then
+         call endrun(trim(subname)//' Nudge_Beg_year '//int2str(Nudge_Beg_year)//&
+              'cannot be greater than Nudge_end_year '//int2str(Nudge_end_year))
+      end if
+
+      ! Determine nudge_align_year if not set
+      if (Nudge_align_year == iunset) then
+         Nudge_align_year = Nudge_Beg_year
+      end if
+
+      ! Determine Nudge_tintalgo
+      if (Nudge_Force_Opt == 0) then
+         Nudge_tintalgo = 'upper'
+      elseif(Nudge_Force_Opt == 1) then
+         Nudge_tintalgo = 'linear'
+      else
+         call endrun('nudging_timestep_init:: ERROR unknown Nudge_Force_Opt '//int2str(Nudge_Force_Opt))
+      endif
+
+      if((Nudge_Hwin_lat0 < -90._r8) .or. (Nudge_Hwin_lat0 > +90._r8)) then
+         if (masterproc) then
+            write(iulog,*) 'NUDGING: Window lat0 must be in [-90,+90]'
+            write(iulog,*) 'NUDGING:  Nudge_Hwin_lat0=',Nudge_Hwin_lat0
+         end if
+         call endrun(trim(subname)//' ERROR Window lat0 must be in [-90,+90]')
+      endif
+
+      if((Nudge_Hwin_lon0 < 0._r8) .or. (Nudge_Hwin_lon0 >= 360._r8)) then
+         if (masterproc) then
+            write(iulog,*) 'NUDGING: Window lon0 must be in [0,+360)'
+            write(iulog,*) 'NUDGING:  Nudge_Hwin_lon0=',Nudge_Hwin_lon0
+         end if
+         call endrun(trim(subname)//' ERROR Windlow lon0 must be in [0,+360)')
+      endif
+
+      if((Nudge_Vwin_Lindex > Nudge_Vwin_Hindex)                                .or.  &
+           (Nudge_Vwin_Hindex > float(pver+1)) .or. (Nudge_Vwin_Hindex < 0._r8) .or.  &
+           (Nudge_Vwin_Lindex > float(pver+1)) .or. (Nudge_Vwin_Lindex < 0._r8)   ) then
+         if (masterproc) then
+            write(iulog,*) 'NUDGING: Window Lindex must be in [0,pver+1]'
+            write(iulog,*) 'NUDGING: Window Hindex must be in [0,pver+1]'
+            write(iulog,*) 'NUDGING: Lindex must be LE than Hindex'
+            write(iulog,*) 'NUDGING:  Nudge_Vwin_Lindex=',Nudge_Vwin_Lindex
+            write(iulog,*) 'NUDGING:  Nudge_Vwin_Hindex=',Nudge_Vwin_Hindex
+         end if
+         call endrun(trim(subname)//' ERROR Window Lindex and Window Hindex must be in [0,pver+1]')
+      endif
+
+      if((Nudge_Hwin_latDelta <= 0._r8) .or. (Nudge_Hwin_lonDelta <= 0._r8) .or. &
+           (Nudge_Vwin_Hdelta <= 0._r8) .or. (Nudge_Vwin_Ldelta <= 0._r8)    ) then
+         if (masterproc) then
+            write(iulog,*) 'NUDGING: Window Deltas must be positive'
+            write(iulog,*) 'NUDGING:  Nudge_Hwin_latDelta=',Nudge_Hwin_latDelta
+            write(iulog,*) 'NUDGING:  Nudge_Hwin_lonDelta=',Nudge_Hwin_lonDelta
+            write(iulog,*) 'NUDGING:  Nudge_Vwin_Hdelta  =',Nudge_Vwin_Hdelta
+            write(iulog,*) 'NUDGING:  Nudge_Vwin_Ldelta  =',Nudge_Vwin_Ldelta
+         end if
+         call endrun(trim(subname)//' ERROR Window Deltas must be positive')
+      endif
+
+      if ((Nudge_Hwin_latWidth <= 0._r8) .or. (Nudge_Hwin_lonWidth <= 0._r8)) then
+         if (masterproc) then
+            write(iulog,*) 'NUDGING: Window widths must be positive'
+            write(iulog,*) 'NUDGING:  Nudge_Hwin_latWidth=',Nudge_Hwin_latWidth
+            write(iulog,*) 'NUDGING:  Nudge_Hwin_lonWidth=',Nudge_Hwin_lonWidth
+         end if
+         call endrun(trim(subname)//' ERROR Window widths must be positive')
+      endif
+
+   end if check_valid
+
    ! End Routine
    !------------
 
