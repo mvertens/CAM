@@ -711,11 +711,11 @@ if ($sim_year =~ /(\d+)-(\d+)/) {
 if (!($simple_phys or $aqua_mode)) {
   my $chem_nitrodep = chem_has_species($cfg, 'NO') and chem_has_species($cfg, 'NH3');
   if ((!$chem_nitrodep) or ($chem =~ /geoschem/)) {
-    add_default($nl, 'stream_ndep_mesh_filename');
-    add_default($nl, 'stream_ndep_data_filename', 'sim_year'=>$sim_year_start);
-    add_default($nl, 'stream_ndep_year_first', 'sim_year'=>$sim_year_start);
-    add_default($nl, 'stream_ndep_year_last', 'sim_year'=>$sim_year_end);
-    add_default($nl, 'stream_ndep_year_align', 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_mesh_filename' , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_data_filename' , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year);
   }
 }
 
@@ -834,9 +834,9 @@ if ($co2_cycle) {
             add_default($nl, 'co2flux_fuel_tintalgo');
             add_default($nl, 'co2flux_fuel_meshfile');
             add_default($nl, 'co2flux_fuel_datafile');
-            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year_start);
-            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year_end);
-            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year_start);
+            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year;
+            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year;
+            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year;
         }
 
         add_default($nl, 'co2_readflux_aircraft', 'val'=>'.true.');
@@ -852,9 +852,9 @@ if ($co2_cycle) {
             add_default($nl, 'aircraft_co2_tintalgo');
             add_default($nl, 'aircraft_co2_meshfile');
             add_default($nl, 'aircraft_co2_datafile');
-            add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year_start);
-            add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year_end);
-            add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year_start);
+            add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year);
         }
       } else {
           # This case probably should not happen (co2_cycle on with no sim year)
