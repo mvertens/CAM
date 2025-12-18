@@ -858,12 +858,12 @@ contains
      write(iulog,'(a,l4)') 'NUDGING: Nudge_Model                = ',Nudge_Model
      write(iulog,'(2a)'  ) 'NUDGING: Nudge_Datapath             = ',trim(Nudge_Datapath)
      write(iulog,'(2a)'  ) 'NUDGING: Nudge_Meshfile             = ',trim(Nudge_Meshfile)
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Levname              = ',trim(Nudge_Levname)
      do nf = 1,maxfiles
         if (trim(Nudge_Filenames(nf)) /= ' ') then
-           write(iulog,'(a,a)')'NUDGING: Nudge_Datapath             = ',len_trim(Nudge_Datapath)
+           write(iulog,'(a,a)' )'NUDGING: Nudge_Filename              = ',len_trim(Nudge_Filenames(nf))
         end if
      end do
+     write(iulog,'(2a)'      ) 'NUDGING: Nudge_Levname              = ',trim(Nudge_Levname)
      write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Year             = ',Nudge_Beg_Year
      write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Month            = ',Nudge_Beg_Month
      write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Day              = ',Nudge_Beg_Day
@@ -1566,8 +1566,8 @@ contains
        write(iulog,'(a,a)' )  '  nudge meshfile   = ',trim(nudge_meshfile)
        write(iulog,'(a,a)' )  '  nudge datapath   = ',trim(nudge_datapath)
        do nfile = 1,size(nudge_filenames)
-          if (trim(nudge_filenames(nfile)) /= ' ') then
-             write(iulog,'(a,i8,2x,a)' )  '  nudge files = ',nfile,trim(nudge_filenames(nfile))
+          if (trim(nudge_filenames(nfile)) /= 'unset') then
+             write(iulog,'(a,i8,2x,a)' )  '  nudge file = ',nfile,trim(nudge_filenames(nfile))
           end if
        end do
        write(iulog,'(a)'   )  ' '
