@@ -221,7 +221,7 @@ module nudging
 
   integer, parameter :: maxfiles = 1000
 
-  logical, public :: Nudge_On = .false.
+   logical, public :: Nudge_On = .false.
 
   ! Nudging Parameters
   !--------------------
@@ -246,11 +246,6 @@ module nudging
   integer                 :: Model_Update_Times_Per_Day
   type(ESMF_TimeInterval) :: Model_Update_Interval
   type(ESMF_Time)         :: Model_Update_Next_Time
-
-  integer                 :: Nudge_File_Times_Per_Day
-  type(ESMF_Time)         :: Nudge_File_Next_Time
-  type(ESMF_TimeInterval) :: Nudge_File_Delta
-  integer                 :: Nudge_File_Step
 
   integer                 :: Nudge_Force_Opt
   integer                 :: Nudge_TimeScale_Opt
@@ -296,25 +291,11 @@ module nudging
 
   ! Nudging State Arrays
   !-----------------------
-  real(r8),allocatable:: Target_U    (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Target_V    (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Target_T    (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Target_S    (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Target_Q    (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Target_PS   (:,:)    !(pcols,begchunk:endchunk)
-
-  real(r8),allocatable:: Model_U     (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Model_V     (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Model_T     (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Model_S     (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Model_Q     (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Model_PS    (:,:)    !(pcols,begchunk:endchunk)
-
-  real(r8),allocatable:: Nudge_Utau  (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Nudge_Vtau  (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Nudge_Stau  (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Nudge_Qtau  (:,:,:)  !(pcols,pver,begchunk:endchunk)
-  real(r8),allocatable:: Nudge_PStau (:,:)    !(pcols,begchunk:endchunk)
+  real(r8),allocatable:: Nudge_Utau0 (:,:,:)  !(pcols,pver,begchunk:endchunk)
+  real(r8),allocatable:: Nudge_Vtau0 (:,:,:)  !(pcols,pver,begchunk:endchunk)
+  real(r8),allocatable:: Nudge_Stau0 (:,:,:)  !(pcols,pver,begchunk:endchunk)
+  real(r8),allocatable:: Nudge_Qtau0 (:,:,:)  !(pcols,pver,begchunk:endchunk)
+  real(r8),allocatable:: Nudge_PStau0(:,:)    !(pcols,begchunk:endchunk)
 
   real(r8),allocatable:: Nudge_Ustep (:,:,:)  !(pcols,pver,begchunk:endchunk)
   real(r8),allocatable:: Nudge_Vstep (:,:,:)  !(pcols,pver,begchunk:endchunk)
@@ -327,6 +308,8 @@ module nudging
   type(shr_strdata_type) :: sdat_nudging_multi, sdat_nudging_singl
   character(len=2)       :: nudge_varlist_multi(4) = (/'U ', 'V ','T ','Q '/)
   character(len=2)       :: nudge_varlist_singl(1) = (/'PS'/)
+
+  character(*),parameter :: u_FILE_u = __FILE__
 
 contains
 
@@ -356,7 +339,6 @@ contains
                          Nudge_Beg_Year, Nudge_Beg_Month, Nudge_Beg_Day,       &
                          Nudge_End_Year, Nudge_End_Month, Nudge_End_Day,       &
                          Model_Update_Times_Per_Day,                           &
-                         Nudge_File_Times_Per_Day,                             &
                          Nudge_Ucoef , Nudge_Uprof,                            &
                          Nudge_Vcoef , Nudge_Vprof,                            &
                          Nudge_Qcoef , Nudge_Qprof,                            &
@@ -385,7 +367,6 @@ contains
    !-----------------------------
    Nudge_Model              = .false.
    Model_Update_Times_Per_Day = 4
-   Nudge_File_Times_per_Day = 4
    Nudge_Filenames(:)       = ' '
    Nudge_Datapath           = ' '
    Nudge_Meshfile           = ' '
@@ -454,9 +435,6 @@ contains
 
    call MPI_bcast(Nudge_Meshfile, len(Nudge_Meshfile), mpi_character, masterprocid, mpicom, ierr)
    if (ierr /= mpi_success) call endrun(prefix//'FATAL: mpi_bcast: Nudge_Meshfile')
-
-   call MPI_bcast(Nudge_File_Times_Per_Day, 1, mpi_integer, masterprocid, mpicom, ierr)
-   if (ierr /= mpi_success) call endrun(prefix//'FATAL: mpi_bcast: Nudge_File_Times_Per_Day')
 
    call MPI_bcast(Model_Update_Times_Per_Day, 1, mpi_integer, masterprocid, mpicom, ierr)
    if (ierr /= mpi_success) call endrun(prefix//'FATAL: mpi_bcast: Model_Update_Times_Per_Day')
@@ -644,11 +622,9 @@ contains
    use ppgrid        ,only: pver,pcols,begchunk,endchunk
    use error_messages,only: alloc_err
    use dycore        ,only: dycore_is
-   use dyn_grid      ,only: get_horiz_grid_dim_d
    use phys_grid     ,only: get_rlat_p,get_rlon_p,get_ncols_p
    use cam_history   ,only: addfld
    use shr_const_mod ,only: SHR_CONST_PI
-   use filenames     ,only: interpret_filename_spec
 
    ! Local values
    !----------------
@@ -667,61 +643,38 @@ contains
    real(r8)        :: Val1_0,Val2_0,Val3_0,Val4_0
    real(r8)        :: Val1_n,Val2_n,Val3_n,Val4_n
    integer         :: nn
+   integer         :: size2d, size3d
    character(len=*), parameter :: prefix = 'nudging_init: '
    character(len=*), parameter :: sub = "(nudging_init) "
+   !----------------------------------------------------------
 
-   ! Allocate Space for Nudging data arrays
+   ! Allocate Space
    !-----------------------------------------
-   allocate(Target_U(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Target_U',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Target_V(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Target_V',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Target_T(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Target_T',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Target_S(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Target_S',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Target_Q(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Target_Q',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Target_PS(pcols,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Target_PS',pcols*((endchunk-begchunk)+1))
 
-   allocate(Model_U(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Model_U',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Model_V(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Model_V',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Model_T(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Model_T',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Model_S(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Model_S',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Model_Q(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Model_Q',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Model_PS(pcols,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Model_PS',pcols*((endchunk-begchunk)+1))
+   size3d = pcols*pver*((endchunk-begchunk)+1)
+   size2d = pcols*((endchunk-begchunk)+1)
 
-   ! Allocate Space for spatial dependence of
-   ! Nudging Coefs and Nudging Forcing.
-   !-------------------------------------------
-   allocate(Nudge_Utau(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Utau',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Nudge_Vtau(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Vtau',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Nudge_Stau(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Stau',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Nudge_Qtau(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Qtau',pcols*pver*((endchunk-begchunk)+1))
-   allocate(Nudge_PStau(pcols,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_PStau',pcols*((endchunk-begchunk)+1))
+   allocate(Nudge_Utau0(pcols,pver,begchunk:endchunk),stat=istat)
+   call alloc_err(istat,'nudging_init','Nudge_Utau',size3d)
+   allocate(Nudge_Vtau0(pcols,pver,begchunk:endchunk),stat=istat)
+   call alloc_err(istat,'nudging_init','Nudge_Vtau',size3d)
+   allocate(Nudge_Stau0(pcols,pver,begchunk:endchunk),stat=istat)
+   call alloc_err(istat,'nudging_init','Nudge_Stau',size3d)
+   allocate(Nudge_Qtau0(pcols,pver,begchunk:endchunk),stat=istat)
+   call alloc_err(istat,'nudging_init','Nudge_Qtau',size3d)
+   allocate(Nudge_PStau0(pcols,begchunk:endchunk),stat=istat)
+   call alloc_err(istat,'nudging_init','Nudge_PStau',size2d)
 
    allocate(Nudge_Ustep(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Ustep',pcols*pver*((endchunk-begchunk)+1))
+   call alloc_err(istat,'nudging_init','Nudge_Ustep',size3d)
    allocate(Nudge_Vstep(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Vstep',pcols*pver*((endchunk-begchunk)+1))
+   call alloc_err(istat,'nudging_init','Nudge_Vstep',size3d)
    allocate(Nudge_Sstep(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Sstep',pcols*pver*((endchunk-begchunk)+1))
+   call alloc_err(istat,'nudging_init','Nudge_Sstep',size3d)
    allocate(Nudge_Qstep(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_Qstep',pcols*pver*((endchunk-begchunk)+1))
+   call alloc_err(istat,'nudging_init','Nudge_Qstep',size3d)
    allocate(Nudge_PSstep(pcols,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,'nudging_init','Nudge_PSstep',pcols*((endchunk-begchunk)+1))
+   call alloc_err(istat,'nudging_init','Nudge_PSstep',size2d)
 
    ! Register output fields with the cam history module
    !-----------------------------------------------------
@@ -735,14 +688,11 @@ contains
    call addfld('Target_Q',(/ 'lev' /),'A','kg/kg'  ,'Q Nudging Target  ')
 
    ! Set the Stepping intervals for Model and Nudging values
-   ! Ensure that the Model_Update_Step is not smaller then one timestep
-   ! and not larger then the Nudge_File_Step.
    !--------------------------------------------------------
 
    ! Get the CAM time step size
    dtime = get_step_size()
    Model_Update_Step = 86400/Model_Update_Times_Per_Day
-   Nudge_File_Step=86400/Nudge_File_Times_Per_Day
 
    if(Model_Update_Step < dtime) then
       write(iulog,*) ' '
@@ -751,34 +701,24 @@ contains
       write(iulog,*) ' '
       Model_Update_Step = dtime
    endif
-   if(Model_Update_Step > Nudge_File_Step) then
-      write(iulog,*) ' '
-      write(iulog,*) 'NUDGING: Model_Update_Step cannot be more than Nudge_File_Step'
-      write(iulog,*) 'NUDGING:  Setting Model_Update_Step=Nudge_File_Step, Nudge_File_Step=',Nudge_File_Step
-      write(iulog,*) ' '
-      Model_Update_Step = Nudge_File_Step
-   endif
 
    ! Set module time and time interval variables
    !------------------------------------------------
 
    call get_curr_date(Year, Month, Day, Sec)
    call ESMF_TimeSet(curr_time, yy=Year, mm=Month, dd=Day, s=Sec, rc=rc)
-   call chkrc(rc, sub//': error return from ESMF_TimeSet for curr_time')
+   call chkrc(rc,__LINE__,u_FILE_u)
 
    call ESMF_TimeSet(Nudge_beg_time, &
         yy=Nudge_Beg_Year, mm=Nudge_Beg_Month, dd=Nudge_Beg_Day, s=Nudge_Beg_Sec, rc=rc)
-   call chkrc(rc, sub//': error return from ESMF_TimeSet for Nudge_beg_time')
+   call chkrc(rc,__LINE__,u_FILE_u)
 
    call ESMF_TimeSet(Nudge_end_time, &
         yy=Nudge_End_Year, mm=Nudge_End_Month, dd=Nudge_End_Day, s=Nudge_End_Sec, rc=rc)
-   call chkrc(rc, sub//': error return from ESMF_TimeSet for Nudge_end_time')
+   call chkrc(rc,__LINE__,u_FILE_u)
 
    call ESMF_TimeIntervalSet(Model_Update_Interval, s=Model_Update_Step, rc=rc)
-   call chkrc(rc, sub//': error return from ESMF_TimeInterval_Set for Model_Update_step')
-
-   call ESMF_TimeIntervalSet(Nudge_File_Delta, s=Nudge_File_Step, rc=rc)
-   call chkrc(rc, sub//': error return from ESMF_TimeInterval_Set for Nudge_File_delta')
+   call chkrc(rc,__LINE__,u_FILE_u)
 
    ! Initialize the time relative to the nudging window
    !------------------------------------------------
@@ -791,10 +731,7 @@ contains
       ! Set Time indicies so that the next call to timestep_init will initialize the Model_Update_Next_time
       call ESMF_TimeSet(Model_Update_next_time, &
            yy=Year, mm=Month, dd=Day, s=(Sec/Model_Update_Step)*Model_Update_Step, rc=rc)
-      call chkrc(rc, sub//': error return from ESMF_TimeSet for Model_Update_next_time')
-      call ESMF_TimeSet(Nudge_File_next_time, &
-           yy=Year, mm=Month, dd=Day, s=(Sec/Nudge_File_Step)*Nudge_File_Step, rc=rc)
-      call chkrc(rc, sub//': error return from ESMF_TimeSet for Nudge_next_time')
+      call chkrc(rc,__LINE__,u_FILE_u)
       if (masterproc) then
          write(iulog,*)'DEBUG: initial model update next time = ',year,month,day,(Sec/Model_Update_Step)*Model_Update_Step
       end if
@@ -804,10 +741,7 @@ contains
       ! Set Time indicies to Nudging start so next call to timestep_init will initialize the Model_Update_Next_time
       call ESMF_TimeSet(Model_Update_next_time, &
            yy=Nudge_Beg_Year, mm=Nudge_Beg_Month, dd=Nudge_Beg_Day, s=Nudge_Beg_Sec, rc=rc)
-      call chkrc(rc, sub//': error return from ESMF_TimeSet for Model_Update_next_time')
-      call ESMF_TimeSet(Nudge_File_next_time, &
-           yy=Nudge_Beg_Year, mm=Nudge_Beg_Month, dd=Nudge_Beg_Day, s=Nudge_Beg_Sec, rc=rc)
-      call chkrc(rc, sub//': error return from ESMF_TimeSet for Nudge_File_next_time')
+      call chkrc(rc,__LINE__,u_FILE_u)
       ! Still need to have nudge on so that streams can be initialized - but then it will be turned off
       ! in nudging_timestep_init
 
@@ -873,8 +807,6 @@ contains
      write(iulog,*) 'NUDGING: Nudge_TSmode               =',Nudge_TSmode
      write(iulog,*) 'NUDGING: Model_Update_Times_Per_Day =',Model_Update_Times_Per_Day
      write(iulog,*) 'NUDGING: Model_Update_Step          =',Model_Update_Step
-     write(iulog,*) 'NUDGING: Nudge_File_Times_Per_Day   =',Nudge_File_Times_Per_Day
-     write(iulog,*) 'NUDGING: Nudge_File_Step            =',Nudge_File_Step
      write(iulog,*) 'NUDGING: Nudge_ZonalFilter          =',Nudge_ZonalFilter
      write(iulog,*) 'NUDGING: Nudge_ZonalNbasis          =',Nudge_ZonalNbasis
      write(iulog,*) 'NUDGING: Nudge_Ucoef                =',Nudge_Ucoef
@@ -934,44 +866,22 @@ contains
    ! Load zeros into nudging arrays
    !------------------------------------------------------
    do lchnk = begchunk,endchunk
+
      ncol = get_ncols_p(lchnk)
      do icol = 1,ncol
        rlat = get_rlat_p(lchnk,icol)*180._r8/SHR_CONST_PI
        rlon = get_rlon_p(lchnk,icol)*180._r8/SHR_CONST_PI
 
        call nudging_set_profile(rlat,rlon,Nudge_Uprof,Wprof,pver)
-       Nudge_Utau(icol,:,lchnk) = Wprof(:)
-
+       Nudge_Utau0(icol,:,lchnk) = Wprof(:)
        call nudging_set_profile(rlat,rlon,Nudge_Vprof,Wprof,pver)
-       Nudge_Vtau(icol,:,lchnk) = Wprof(:)
-
+       Nudge_Vtau0(icol,:,lchnk) = Wprof(:)
        call nudging_set_profile(rlat,rlon,Nudge_Tprof,Wprof,pver)
-       Nudge_Stau(icol,:,lchnk) = Wprof(:)
-
+       Nudge_Stau0(icol,:,lchnk) = Wprof(:)
        call nudging_set_profile(rlat,rlon,Nudge_Qprof,Wprof,pver)
-       Nudge_Qtau(icol,:,lchnk) = Wprof(:)
-
-       Nudge_PStau(icol,lchnk) = nudging_set_PSprofile(rlat,rlon,Nudge_PSprof)
+       Nudge_Qtau0(icol,:,lchnk) = Wprof(:)
+       Nudge_PStau0(icol,lchnk) = nudging_set_PSprofile(rlat,rlon,Nudge_PSprof)
      end do
-
-     Nudge_Utau(:ncol,:pver,lchnk) = Nudge_Utau(:ncol,:pver,lchnk) * Nudge_Ucoef/float(Nudge_File_Step)
-     Nudge_Vtau(:ncol,:pver,lchnk) = Nudge_Vtau(:ncol,:pver,lchnk) * Nudge_Vcoef/float(Nudge_File_Step)
-     Nudge_Stau(:ncol,:pver,lchnk) = Nudge_Stau(:ncol,:pver,lchnk) * Nudge_Tcoef/float(Nudge_File_Step)
-     Nudge_Qtau(:ncol,:pver,lchnk) = Nudge_Qtau(:ncol,:pver,lchnk) * Nudge_Qcoef/float(Nudge_File_Step)
-     Nudge_PStau(:ncol,lchnk)      = Nudge_PStau(:ncol,lchnk)      * Nudge_PScoef/float(Nudge_File_Step)
-
-     Nudge_Ustep(:pcols,:pver,lchnk) = 0._r8
-     Nudge_Vstep(:pcols,:pver,lchnk) = 0._r8
-     Nudge_Sstep(:pcols,:pver,lchnk) = 0._r8
-     Nudge_Qstep(:pcols,:pver,lchnk) = 0._r8
-     Nudge_PSstep(:pcols,lchnk) = 0._r8
-
-     Target_U(:pcols,:pver,lchnk) = 0._r8
-     Target_V(:pcols,:pver,lchnk) = 0._r8
-     Target_T(:pcols,:pver,lchnk) = 0._r8
-     Target_S(:pcols,:pver,lchnk) = 0._r8
-     Target_Q(:pcols,:pver,lchnk) = 0._r8
-     Target_PS(:pcols,lchnk) = 0._r8
    end do
 
    ! End Routine
@@ -993,6 +903,9 @@ contains
    use physics_types,only: physics_state
    use constituents ,only: cnst_get_ind
    use ppgrid       ,only: pver,pcols,begchunk,endchunk
+   use phys_grid    ,only: get_ncols_p
+   use cam_history  ,only: outfld
+   use shr_cal_mod  ,only: shr_cal_timeSet
 
    ! Arguments
    !-----------
@@ -1004,10 +917,35 @@ contains
    logical                 :: Update_Model, Sync_Error
    logical                 :: Update_Nudge
    logical                 :: After_Beg, Before_End
-   integer                 :: lchnk,ncol,indw
+   integer                 :: lchnk,ncol,icol,indw
    type(ESMF_Time)         :: model_curr_time
    type(ESMF_Time)         :: curr_time
    type(ESMF_TimeInterval) :: date_diff
+   type(ESMF_Time)         :: time_data_LB  ! data lb time
+   type(ESMF_Time)         :: time_data_ub  ! data ub  time
+   type(ESMF_Time)         :: time_model    ! will have same calendar as input data
+   type(ESMF_TimeInterval) :: timeint_file  ! time_data_ub - time_data_lb
+   type(ESMF_TimeInterval) :: timeint_nudge ! time_data_ub - time_model
+   real(r8)                :: Model_U(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Model_V(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Model_T(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Model_S(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Model_Q(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Model_PS(pcols,begchunk:endchunk)
+   real(r8)                :: Nudge_Utau(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Nudge_Vtau(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Nudge_Stau(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Nudge_Qtau(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Nudge_PStau(pcols,begchunk:endchunk)
+   real(r8)                :: Target_U(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Target_V(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Target_T(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Target_S(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Target_Q(pcols,pver,begchunk:endchunk)
+   real(r8)                :: Target_PS(pcols,begchunk:endchunk)
+   character(CS)           :: calendar      ! calendar name
+   integer                 :: mcdate        ! current model date (yyyymmdd)
+   integer                 :: Nudge_File_Step
    integer                 :: DeltaT
    real(r8)                :: Tscale
    integer                 :: rc
@@ -1024,43 +962,27 @@ contains
    !-------------------------------------------------------
    ! Determine if the current CAM time is AFTER the begining nudging time
    ! and if it is BEFORE the ending nudging time.
-   !-------------------------------------------------------
+   ! Toggle Nudging flag when the time interval is between
+   ! beginning and ending times, and all of the analyses files exist.
+   ! When past the NEXT nudge time, update model
+   !----------------------------------------------------------------
 
    ! Get Current CAM time
    call get_curr_date(Year,Month,Day,Sec)
-   if (masterproc) then
-      write(iulog,*)'DEBUG: model curr date = ',year,month,day,sec
-   end if
-
+   mcdate = year*10000 + month*100 + day
    call ESMF_TimeSet(curr_time, yy=Year, mm=Month, dd=Day, s=Sec, rc=rc)
-   call chkrc(rc, sub//': error return from ESMF_TimeSet for curr_time')
+   call chkrc(rc,__LINE__,u_FILE_u)
 
    After_Beg  = (curr_time >= Nudge_beg_time)
    Before_End = (curr_time <= Nudge_end_time)
+   Nudge_On = (After_Beg .and. Before_End)
+   Update_Model = (Nudge_on .and. (curr_time >= Model_Update_Next_Time))
    if (masterproc) then
-      write(iulog,*)'DEBUG: after_beg, before_end = ',after_beg,before_end
+      write(iulog,'(a,4(i6,2x),l8)')' Nudge Status: year, month, day, sec, update_model = ',&
+           year, month, day, sec, update_model
    end if
 
-   !----------------------------------------------------------------
-   ! Toggle Nudging flag when the time interval is between
-   ! beginning and ending times, and all of the analyses files exist.
-   !----------------------------------------------------------------
-   if ((After_Beg) .and. (Before_End)) then
-      Nudge_ON = .true.
-   else
-      Nudge_ON = .false.
-   endif
-
-   !--------------------------------------------------------------
-   ! When past the NEXT nudge time, update model
-   !--------------------------------------------------------------
-
-   Update_Model = (curr_time >= Model_Update_Next_Time)
-   if (masterproc) then
-      write(iulog,*)'DEBUG: update_model = ',update_model
-   end if
-
-   if ((Before_End) .and. (Update_Model)) then
+   if (Update_Model) then
 
      ! Initialize nudging stream data type
      ! NOTE: this must be done once the ESMF mesh for the model is
@@ -1068,9 +990,6 @@ contains
      ! since that occurs before the creation of the model mesh
      !----------------------------------------------------------
      if (first_call) then
-        if (masterproc) then
-           write(iulog,*)'DEBUG: calling nuding_stream_init'
-        end if
         call nudging_stream_init()
         first_call = .false.
      end if
@@ -1106,24 +1025,24 @@ contains
 
      ! Optionally: Apply Zonal Filtering to Model state data
      !-------------------------------------------------------
-     if(Nudge_ZonalFilter) then
-       call ZM%calc_amps(Model_U,Zonal_Bamp3d)
-       call ZM%eval_grid(Zonal_Bamp3d,Model_U)
+     if (Nudge_ZonalFilter) then
+        call ZM%calc_amps(Model_U,Zonal_Bamp3d)
+        call ZM%eval_grid(Zonal_Bamp3d,Model_U)
 
-       call ZM%calc_amps(Model_V,Zonal_Bamp3d)
-       call ZM%eval_grid(Zonal_Bamp3d,Model_V)
+        call ZM%calc_amps(Model_V,Zonal_Bamp3d)
+        call ZM%eval_grid(Zonal_Bamp3d,Model_V)
 
-       call ZM%calc_amps(Model_T,Zonal_Bamp3d)
-       call ZM%eval_grid(Zonal_Bamp3d,Model_T)
+        call ZM%calc_amps(Model_T,Zonal_Bamp3d)
+        call ZM%eval_grid(Zonal_Bamp3d,Model_T)
 
-       call ZM%calc_amps(Model_S,Zonal_Bamp3d)
-       call ZM%eval_grid(Zonal_Bamp3d,Model_S)
+        call ZM%calc_amps(Model_S,Zonal_Bamp3d)
+        call ZM%eval_grid(Zonal_Bamp3d,Model_S)
 
-       call ZM%calc_amps(Model_Q,Zonal_Bamp3d)
-       call ZM%eval_grid(Zonal_Bamp3d,Model_Q)
+        call ZM%calc_amps(Model_Q,Zonal_Bamp3d)
+        call ZM%eval_grid(Zonal_Bamp3d,Model_Q)
 
-       call ZM%calc_amps(Model_PS,Zonal_Bamp2d)
-       call ZM%eval_grid(Zonal_Bamp2d,Model_PS)
+        call ZM%calc_amps(Model_PS,Zonal_Bamp2d)
+        call ZM%eval_grid(Zonal_Bamp2d,Model_PS)
      endif
 
      !-------------------------------------------------------
@@ -1133,7 +1052,14 @@ contains
      ! Using CDEPS:
      ! Read new nudging data and interpolate to model grid and Model_Update_Time
      !---------------------------------------------------
-     call nudging_stream_interp()
+     call nudging_stream_interp(Target_U, Target_V, Target_T, Target_Q, Target_PS)
+
+     do lchnk = begchunk,endchunk
+        call outfld('Target_U',Target_U(:,:,lchnk),pcols,lchnk)
+        call outfld('Target_V',Target_V(:,:,lchnk),pcols,lchnk)
+        call outfld('Target_T',Target_T(:,:,lchnk),pcols,lchnk)
+        call outfld('Target_Q',Target_Q(:,:,lchnk),pcols,lchnk)
+     end do
 
      ! Now load Dry Static Energy values for Target
      !---------------------------------------------
@@ -1152,47 +1078,66 @@ contains
         end do
      endif
 
+     ! Determine Nudge_File_Step
+     call get_calendar(sdat_nudging_multi, year, month, day, calendar)
+     call shr_cal_timeSet(time_data_lb, &
+          sdat_nudging_multi%pstrm(1)%ymdLB, sdat_nudging_multi%pstrm(1)%todLB, calendar, rc=rc)
+     call chkrc(rc,__LINE__,u_FILE_u)
+     call shr_cal_timeSet(time_data_ub, &
+          sdat_nudging_multi%pstrm(1)%ymdUB, sdat_nudging_multi%pstrm(1)%todUB, calendar, rc=rc)
+     call chkrc(rc,__LINE__,u_FILE_u)
+     timeint_file = time_data_ub - time_data_lb
+     call ESMF_TimeIntervalGet(timeint_file, s=Nudge_File_Step)
+     call chkrc(rc,__LINE__,u_FILE_u)
+
+     ! Determine deltaT
+     call shr_cal_timeset(time_model, mcdate, sec, calendar, rc=rc)
+     call chkrc(rc,__LINE__,u_FILE_u)
+     timeint_nudge = time_data_ub - time_model
+     call ESMF_TimeIntervalGet(timeint_nudge, s=DeltaT)
+     call chkrc(rc,__LINE__,u_FILE_u)
+
+     if (masterproc) then
+        write(iulog,*)'Nudging: sdat%ymdLB, sdat%todLB ',&
+             sdat_nudging_multi%pstrm(1)%ymdLB,sdat_nudging_multi%pstrm(1)%todLB
+        write(iulog,*)'Nudging: sdat%ymdUB, sdat%todUB ',&
+             sdat_nudging_multi%pstrm(1)%ymdUB,sdat_nudging_multi%pstrm(1)%todUB
+     end if
+
      ! Set Tscale for the specified Forcing Option
      !-----------------------------------------------
      if(Nudge_TimeScale_Opt == 0) then
-
        Tscale=1._r8
-
      elseif (Nudge_TimeScale_Opt == 1) then
-
-       Update_Nudge = (curr_time >= Nudge_file_next_time)
-       if ((Before_End) .and. (Update_Nudge)) then
-          ! Increment the Nudge times by the current interval
-          Nudge_File_Next_Time = Nudge_File_Next_Time + Nudge_File_Delta
-       endif
-       date_diff = Nudge_file_next_time - curr_time
-       call ESMF_TimeIntervalGet(date_diff, S=DeltaT, rc=rc)
-       call chkrc(rc, sub//': error return from ESMF_TimeIntervalSet')
        Tscale = float(Nudge_File_Step)/float(DeltaT)
-
      else
-
        if (masterproc) then
           write(iulog,*) 'NUDGING: Unknown Nudge_TimeScale_Opt=',Nudge_TimeScale_Opt
        end if
        call endrun('nudging_timestep_init:: ERROR unknown Nudging_TimeScale_Opt')
-
      endif
 
      ! Update the nudging tendencies
      !--------------------------------
      do lchnk=begchunk,endchunk
-       ncol = phys_state(lchnk)%ncol
-       Nudge_Ustep(:ncol,:pver,lchnk)=(  Target_U(:ncol,:pver,lchnk) - Model_U(:ncol,:pver,lchnk)) &
-                                      *Tscale*Nudge_Utau(:ncol,:pver,lchnk)
-       Nudge_Vstep(:ncol,:pver,lchnk)=(  Target_V(:ncol,:pver,lchnk) - Model_V(:ncol,:pver,lchnk)) &
-                                      *Tscale*Nudge_Vtau(:ncol,:pver,lchnk)
-       Nudge_Sstep(:ncol,:pver,lchnk)=(  Target_S(:ncol,:pver,lchnk) - Model_S(:ncol,:pver,lchnk)) &
-                                      *Tscale*Nudge_Stau(:ncol,:pver,lchnk)
-       Nudge_Qstep(:ncol,:pver,lchnk)=(  Target_Q(:ncol,:pver,lchnk) - Model_Q(:ncol,:pver,lchnk)) &
-                                      *Tscale*Nudge_Qtau(:ncol,:pver,lchnk)
-       Nudge_PSstep(:ncol,     lchnk)=(  Target_PS(:ncol,lchnk) - Model_PS(:ncol,lchnk))           &
-                                      *Tscale*Nudge_PStau(:ncol,lchnk)
+        ncol = phys_state(lchnk)%ncol
+
+        Nudge_Utau(:ncol,:pver,lchnk) = Nudge_Utau0(:ncol,:pver,lchnk) * Nudge_Ucoef/float(Nudge_File_Step)
+        Nudge_Vtau(:ncol,:pver,lchnk) = Nudge_Vtau0(:ncol,:pver,lchnk) * Nudge_Vcoef/float(Nudge_File_Step)
+        Nudge_Stau(:ncol,:pver,lchnk) = Nudge_Stau0(:ncol,:pver,lchnk) * Nudge_Tcoef/float(Nudge_File_Step)
+        Nudge_Qtau(:ncol,:pver,lchnk) = Nudge_Qtau0(:ncol,:pver,lchnk) * Nudge_Qcoef/float(Nudge_File_Step)
+        Nudge_PStau(:ncol,lchnk)      = Nudge_PStau0(:ncol,lchnk)      * Nudge_PScoef/float(Nudge_File_Step)
+
+        Nudge_Ustep(:ncol,:pver,lchnk) = &
+             (Target_U(:ncol,:pver,lchnk) - Model_U(:ncol,:pver,lchnk))*Tscale*Nudge_Utau(:ncol,:pver,lchnk)
+        Nudge_Vstep(:ncol,:pver,lchnk) = &
+             (Target_V(:ncol,:pver,lchnk) - Model_V(:ncol,:pver,lchnk))*Tscale*Nudge_Vtau(:ncol,:pver,lchnk)
+        Nudge_Sstep(:ncol,:pver,lchnk) = &
+             (Target_S(:ncol,:pver,lchnk) - Model_S(:ncol,:pver,lchnk))*Tscale*Nudge_Stau(:ncol,:pver,lchnk)
+        Nudge_Qstep(:ncol,:pver,lchnk) = &
+             (Target_Q(:ncol,:pver,lchnk) - Model_Q(:ncol,:pver,lchnk))*Tscale*Nudge_Qtau(:ncol,:pver,lchnk)
+        Nudge_PSstep(:ncol,lchnk) = &
+             (Target_PS(:ncol,lchnk) - Model_PS(:ncol,lchnk))*Tscale*Nudge_PStau(:ncol,lchnk)
      end do
 
      ! Increment the Model times by the current interval
@@ -1203,11 +1148,11 @@ contains
      ! time to a Model_Update_Step after the current time.
      Sync_Error = (curr_time >= Model_Update_next_time)
      if (Sync_Error) then
-      Model_Update_next_time = curr_time + Model_Update_Interval
-       write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
+        Model_Update_next_time = curr_time + Model_Update_Interval
+        write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
      endif
 
-   endif ! ((Before_End) .and. Update_Model)
+   endif ! (Update_Model)
 
    ! End Routine
    !------------
@@ -1220,10 +1165,11 @@ contains
   subroutine nudging_timestep_tend(phys_state,phys_tend)
    !
    ! NUDGING_TIMESTEP_TEND:
-   !                If Nudging is ON, return the Nudging contributions
-   !                to forcing using the current contents of the Nudge
-   !                arrays. Send output to the cam history module as well.
+   !   If Nudging is ON, return the Nudging contributions
+   !   to forcing using the current contents of the Nudge
+   !   arrays. Send output to the cam history module as well.
    !===============================================================
+
    use physconst    ,only: cpair
    use physics_types,only: physics_state,physics_ptend,physics_ptend_init
    use constituents ,only: cnst_get_ind,pcnst
@@ -1235,34 +1181,29 @@ contains
    type(physics_state), intent(in) :: phys_state
    type(physics_ptend), intent(out):: phys_tend
 
-   ! Local values
+   ! Local variables
    !--------------------
    integer :: indw,ncol,lchnk
    logical :: lq(pcnst)
 
    call cnst_get_ind('Q',indw)
-   lq(:)   =.false.
-   lq(indw)=.true.
+   lq(:)    = .false.
+   lq(indw) = .true.
    call physics_ptend_init(phys_tend,phys_state%psetcols,'nudging',lu=.true.,lv=.true.,ls=.true.,lq=lq)
 
    if (Nudge_ON) then
-     lchnk = phys_state%lchnk
-     ncol  = phys_state%ncol
-     Phys_tend%u(:ncol,:pver)      = Nudge_Ustep(:ncol,:pver,lchnk)
-     phys_tend%v(:ncol,:pver)      = Nudge_Vstep(:ncol,:pver,lchnk)
-     phys_tend%s(:ncol,:pver)      = Nudge_Sstep(:ncol,:pver,lchnk)
-     phys_tend%q(:ncol,:pver,indw) = Nudge_Qstep(:ncol,:pver,lchnk)
+      lchnk = phys_state%lchnk
+      ncol  = phys_state%ncol
+      Phys_tend%u(:ncol,:pver)      = Nudge_Ustep(:ncol,:pver,lchnk)
+      phys_tend%v(:ncol,:pver)      = Nudge_Vstep(:ncol,:pver,lchnk)
+      phys_tend%s(:ncol,:pver)      = Nudge_Sstep(:ncol,:pver,lchnk)
+      phys_tend%q(:ncol,:pver,indw) = Nudge_Qstep(:ncol,:pver,lchnk)
 
-     call outfld( 'Nudge_U',phys_tend%u          ,pcols,lchnk)
-     call outfld( 'Nudge_V',phys_tend%v          ,pcols,lchnk)
-     call outfld( 'Nudge_T',phys_tend%s/cpair    ,pcols,lchnk)
-     call outfld( 'Nudge_Q',phys_tend%q(1,1,indw),pcols,lchnk)
-
-     call outfld('Target_U',Target_U(:,:,lchnk),pcols,lchnk)
-     call outfld('Target_V',Target_V(:,:,lchnk),pcols,lchnk)
-     call outfld('Target_T',Target_T(:,:,lchnk),pcols,lchnk)
-     call outfld('Target_Q',Target_Q(:,:,lchnk),pcols,lchnk)
-   endif
+      call outfld( 'Nudge_U',phys_tend%u          ,pcols,lchnk)
+      call outfld( 'Nudge_V',phys_tend%v          ,pcols,lchnk)
+      call outfld( 'Nudge_T',phys_tend%s/cpair    ,pcols,lchnk)
+      call outfld( 'Nudge_Q',phys_tend%q(1,1,indw),pcols,lchnk)
+   end if
 
    ! End Routine
    !------------
@@ -1272,23 +1213,23 @@ contains
 
 
   !================================================================
-  subroutine nudging_set_profile(rlat,rlon,Nudge_prof,Wprof,nlev)
+  subroutine nudging_set_profile(rlat, rlon, Nudge_prof, Wprof, nlev)
    !
-   ! NUDGING_SET_PROFILE: for the given lat,lon, and Nudging_prof, set
-   !                      the verical profile of window coeffcients.
-   !                      Values range from 0. to 1. to affect spatial
-   !                      variations on nudging strength.
-   !===============================================================
+   ! NUDGING_SET_PROFILE:
+   !   for the given lat,lon, and Nudging_prof, set the verical profile
+   !   of window coeffcients.  Values range from 0. to 1. to affect
+   !   spatial variations on nudging strength.
+   ! ===============================================================
 
    ! Arguments
    !--------------
-   integer :: nlev,Nudge_prof
+   integer  :: nlev,Nudge_prof
    real(r8) :: rlat,rlon
    real(r8) :: Wprof(nlev)
 
-   ! Local values
+   ! Local variables
    !----------------
-   integer :: ilev
+   integer  :: ilev
    real(r8) :: Hcoef,latx,lonx,Vmax,Vmin
    real(r8) :: lon_lo,lon_hi,lat_lo,lat_hi,lev_lo,lev_hi
 
@@ -1379,30 +1320,20 @@ contains
   !================================================================
   subroutine nudging_final
 
-    if (allocated(Target_U))           deallocate(Target_U)
-    if (allocated(Target_V))           deallocate(Target_V)
-    if (allocated(Target_T))           deallocate(Target_T)
-    if (allocated(Target_S))           deallocate(Target_S)
-    if (allocated(Target_Q))           deallocate(Target_Q)
-    if (allocated(Target_PS))          deallocate(Target_PS)
-    if (allocated(Model_U))            deallocate(Model_U)
-    if (allocated(Model_V))            deallocate(Model_V)
-    if (allocated(Model_T))            deallocate(Model_T)
-    if (allocated(Model_S))            deallocate(Model_S)
-    if (allocated(Model_Q))            deallocate(Model_Q)
-    if (allocated(Model_PS))           deallocate(Model_PS)
-    if (allocated(Nudge_Utau))         deallocate(Nudge_Utau)
-    if (allocated(Nudge_Vtau))         deallocate(Nudge_Vtau)
-    if (allocated(Nudge_Stau))         deallocate(Nudge_Stau)
-    if (allocated(Nudge_Qtau))         deallocate(Nudge_Qtau)
-    if (allocated(Nudge_PStau))        deallocate(Nudge_PStau)
-    if (allocated(Nudge_Ustep))        deallocate(Nudge_Ustep)
-    if (allocated(Nudge_Vstep))        deallocate(Nudge_Vstep)
-    if (allocated(Nudge_Sstep))        deallocate(Nudge_Sstep)
-    if (allocated(Nudge_Qstep))        deallocate(Nudge_Qstep)
-    if (allocated(Nudge_PSstep))       deallocate(Nudge_PSstep)
-    if (allocated(Zonal_Bamp2d))       deallocate(Zonal_Bamp2d)
-    if (allocated(Zonal_Bamp3d))       deallocate(Zonal_Bamp3d)
+    if (allocated(Zonal_Bamp2d)) deallocate(Zonal_Bamp2d)
+    if (allocated(Zonal_Bamp3d)) deallocate(Zonal_Bamp3d)
+
+    if (allocated(Nudge_Utau0)) deallocate(Nudge_Utau0)
+    if (allocated(Nudge_Vtau0)) deallocate(Nudge_Vtau0)
+    if (allocated(Nudge_Stau0)) deallocate(Nudge_Stau0)
+    if (allocated(Nudge_Qtau0)) deallocate(Nudge_Qtau0)
+    if (allocated(Nudge_PStau0)) deallocate(Nudge_PStau0)
+
+    if (allocated(Nudge_Ustep)) deallocate(Nudge_Ustep)
+    if (allocated(Nudge_Vstep)) deallocate(Nudge_Vstep)
+    if (allocated(Nudge_Sstep)) deallocate(Nudge_Sstep)
+    if (allocated(Nudge_Qstep)) deallocate(Nudge_Qstep)
+    if (allocated(Nudge_PSstep)) deallocate(Nudge_PSstep)
 
     call ZM%final()
 
@@ -1455,7 +1386,6 @@ contains
    !                       and surface geopotential for a chunk containing 'ncol' columns,
    !                       calculate and return the corresponding dry static energy values.
    !--------------------------------------------------------------------------------------
-   use shr_kind_mod, only: r8 => shr_kind_r8
    use ppgrid,       only: pver, pverp
    use dycore,       only: dycore_is
    use hycoef,       only: hyai, hybi, ps0, hyam, hybm
@@ -1472,7 +1402,6 @@ contains
    !
    ! Local variables
    !------------------
-   logical  :: fvdyn                 ! finite volume dynamics
    integer  :: ii,kk                 ! Lon, level, level indices
    real(r8) :: tvfac                 ! Virtual temperature factor
    real(r8) :: hkk(ncol)             ! diagonal element of hydrostatic matrix
@@ -1481,10 +1410,6 @@ contains
    real(r8) :: pmid(ncol,pver )      ! Midpoint pressures
    real(r8) :: zi(ncol,pverp)        ! Height above surface at interfaces
    real(r8) :: zm(ncol,pver )        ! Geopotential height at mid level
-
-   ! Set dynamics flag
-   !-------------------
-   fvdyn = dycore_is ('LR')
 
    ! Load Pressure values and midpoint pressures
    !----------------------------------------------
@@ -1512,7 +1437,7 @@ contains
 
      ! First set hydrostatic elements consistent with dynamics
      !--------------------------------------------------------
-     if(fvdyn) then
+     if (dycore_is ('LR')) then
        do ii=1,ncol
          hkl(ii)=log(pint(ii,kk+1))-log(pint(ii,kk))
          hkk(ii)=1._r8-(hkl(ii)*pint(ii,kk)/(pint(ii,kk+1)-pint(ii,kk)))
@@ -1559,10 +1484,10 @@ contains
     ! Determine nudge_year_first,  nudge_year_last and tintalgo
 
     call ESMF_TimeGet(nudge_beg_time, yy=nudge_year_first, rc=rc)
-    call chkrc(rc, sub//': error return from ESMF_TimeGet for nudge_beg_time')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
     call ESMF_TimeGet(nudge_end_time, yy=nudge_year_last, rc=rc)
-    call chkrc(rc, sub//': error return from ESMF_TimeGet for nudge_end_time')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
     if (Nudge_Force_Opt == 0) then
        tintalgo = 'upper'
@@ -1595,7 +1520,7 @@ contains
 
     do nfile = 1,size(nudge_filenames)
        if (trim(nudge_filenames(nfile)) /= ' ') then
-          nudge_filenames(nfile) = trim(nudge_datapath)//trim(nudge_filenames(nfile))
+          nudge_filenames(nfile) = trim(nudge_datapath)//'/'//trim(nudge_filenames(nfile))
        end if
     end do
 
@@ -1624,7 +1549,7 @@ contains
          stream_tintalgo     = tintalgo,                  &
          stream_name         = 'NUDGING forcing data ',   &
          rc                  = rc)
-    call chkrc(rc, sub//': error return from shr_strdata_init_from_inline')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
     call shr_strdata_init_from_inline(sdat_nudging_singl, &
          my_task             = iam,                       &
@@ -1647,14 +1572,14 @@ contains
          stream_tintalgo     = tintalgo,                  &
          stream_name         = 'NUDGING forcing data ',   &
          rc                  = rc)
-    call chkrc(rc, sub//': error return from shr_strdata_init_from_inline')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
   end subroutine nudging_stream_init
   !================================================================
 
 
   !================================================================
-  subroutine nudging_stream_interp()
+  subroutine nudging_stream_interp(Target_U, Target_V, Target_T, Target_Q, Target_PS)
 
     ! Caculate Target_T, Target_U, Target_V, Target_Q and Target_PS
 
@@ -1662,6 +1587,13 @@ contains
     use dshr_methods_mod , only : dshr_fldbun_getfldptr
     use ppgrid           , only : pcols, pver, begchunk, endchunk
     use phys_grid        , only : get_ncols_p
+
+    ! Arguments
+    real(r8), intent(out) :: Target_U(pcols,pver,begchunk:endchunk)
+    real(r8), intent(out) :: Target_V(pcols,pver,begchunk:endchunk)
+    real(r8), intent(out) :: Target_T(pcols,pver,begchunk:endchunk)
+    real(r8), intent(out) :: Target_Q(pcols,pver,begchunk:endchunk)
+    real(r8), intent(out) :: Target_PS(pcols,begchunk:endchunk)
 
     ! Local variables
     integer :: rc     ! ESMF error return
@@ -1677,16 +1609,16 @@ contains
     integer :: day    ! day of month (1, ..., 31) for nstep+1
     integer :: sec    ! seconds into current date for nstep+1
     integer :: mcdate ! current model date (yyyymmdd)
-    real(r8), pointer     :: dataptr2d(:,:) ! first dimension is level, second is data on that level
-    real(r8), pointer     :: dataptr1d(:)
-    real(r8), allocatable :: Tmp3D(:,:,:)
-    real(r8), allocatable :: Tmp2D(:,:)
+    real(r8), pointer :: dataptr2d(:,:) ! first dimension is level, second is data on that level
+    real(r8), pointer :: dataptr1d(:)
+    real(r8)          :: Tmp3D(pcols,pver,begchunk:endchunk)
+    real(r8)          :: Tmp2D(pcols,begchunk:endchunk)
     character(len=*), parameter :: sub = "(nudging_stream_interp) "
     !-----------------------------------------------------------------------
 
     ! Extract YMD from model_update_next_time
     call ESMF_TimeGet(Model_Update_Next_Time, yy=year, mm=mon, dd=day, s=sec, rc=rc)
-    call chkrc(rc, sub//': error return from ESMF_TimeSet for Model_Update_Time')
+    call chkrc(rc,__LINE__,u_FILE_u)
     mcdate = year*10000 + mon*100 + day
     if (masterproc) then
        write(iulog,*)'DEBUG: nudging_stream_interp: interpolating nudge to ',year,mon,day,sec
@@ -1694,18 +1626,12 @@ contains
 
     ! Advance sdat streams
     call shr_strdata_advance(sdat_nudging_multi, ymd=mcdate, tod=sec, logunit=iulog, istr='nudging', rc=rc)
-    call chkrc(rc, sub//': error return from shr_strdata_advance')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
     call shr_strdata_advance(sdat_nudging_singl, ymd=mcdate, tod=sec, logunit=iulog, istr='nudging', rc=rc)
-    call chkrc(rc, sub//': error return from shr_strdata_advance')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
     ! Get pointer for stream data that is time and spatially interpolated to model time and grid
-    allocate(Tmp3D(pcols,pver,begchunk:endchunk), stat=istat)
-    call handle_allocate_error(istat, sub, 'TMP3d')
-
-    allocate(Tmp2D(pcols,begchunk:endchunk), stat=istat)
-    call handle_allocate_error(istat, sub, 'TM23d')
-
     ! Obtain Target_U, Target_V, Target_T and Target_Q
 
     do nvar = 1,4
@@ -1716,7 +1642,7 @@ contains
 
           call dshr_fldbun_getFldPtr(sdat_nudging_multi%pstrm(1)%fldbun_model, &
                nudge_varlist_multi(nvar), fldptr2=dataptr2d, rc=rc)
-          call chkrc(rc, sub//': error return from shr_strdata_advance')
+          call chkrc(rc,__LINE__,u_FILE_u)
 
           ! Obtain TMP3d
           do klev = 1, pver
@@ -1764,7 +1690,7 @@ contains
     ! Obtain Target_PS
 
     call dshr_fldbun_getFldPtr(sdat_nudging_singl%pstrm(1)%fldbun_model, 'PS', fldptr1=dataptr1d, rc=rc)
-    call chkrc(rc, sub//': error return from dshr_fldbun_getFldPtr')
+    call chkrc(rc,__LINE__,u_FILE_u)
 
     g = 1
     do lchnk = begchunk,endchunk
@@ -1790,12 +1716,70 @@ contains
 
 
   !================================================================
-  subroutine chkrc(rc, mes)
-    integer, intent(in)          :: rc   ! return code from time management library
-    character(len=*), intent(in) :: mes  ! error message
-    if ( rc == ESMF_SUCCESS ) return
-    write(iulog,*) mes
-    call endrun ('CHKRC')
+  subroutine get_calendar(sdat, model_year, model_month, model_day, calendar)
+
+     use shr_cal_mod, only : shr_cal_noleap, shr_cal_gregorian
+     use shr_cal_mod, only : shr_cal_date2ymd, shr_cal_leapyear
+
+     ! Arguments
+     type(shr_strdata_type), intent(in)  :: sdat
+     integer,                intent(in)  :: model_year  ! model year
+     integer,                intent(in)  :: model_month ! model month
+     integer,                intent(in)  :: model_day   ! model day
+     character(len=*),       intent(out) :: calendar
+
+     ! Local Variables
+     integer :: data_year, data_month, data_day ! data date year month day
+     !-----------------------------------------------------------------------
+
+     call shr_cal_date2ymd(sdat%pstrm(1)%ymdUB, data_year, data_month, data_day)
+
+     calendar = trim(sdat%stream(1)%calendar)
+     if (trim(sdat%model_calendar) /= trim(sdat%stream(1)%calendar)) then
+        if (( trim(sdat%model_calendar) == trim(shr_cal_gregorian)) .and. &
+             (trim(sdat%stream(1)%calendar) == trim(shr_cal_noleap))) then
+           ! set feb 29 = feb 28
+           if (model_month == 2 .and. model_day == 29) then
+              calendar = shr_cal_noleap
+           end if
+        elseif ((trim(sdat%model_calendar) == trim(shr_cal_noleap)) .and. &
+             (trim(sdat%stream(1)%calendar) == trim(shr_cal_gregorian))) then
+           ! feb 29 input data will be skipped automatically
+           if (data_month==3 .and. data_day==1 .and. model_month==2 .and. model_day==28) then
+              calendar = shr_cal_noleap
+           endif
+        endif
+     else ! calendars are the same
+        if (trim(sdat%model_calendar) == trim(shr_cal_gregorian)) then
+           ! Both are in gregorian - but it's possible that there is a mismatch
+           ! such that the model is in leapyear but the data is not
+           if (model_month == 2 .and. model_day >= 28) then
+              if (shr_cal_leapyear(model_year) .and. .not. shr_cal_leapyear(data_year)) then
+                 ! model is in leap year but data is not
+                 calendar = shr_cal_noleap
+              endif
+           else
+              calendar = sdat%model_calendar
+           endif
+        else
+           calendar = sdat%model_calendar
+        endif
+     endif
+
+  end subroutine get_calendar
+  !================================================================
+
+
+  !================================================================
+  subroutine chkrc(rc, line, file)
+     integer          , intent(in) :: rc
+     integer          , intent(in) :: line
+     character(len=*) , intent(in) :: file
+
+     if ( rc /= ESMF_SUCCESS ) then
+        call ESMF_LogWrite('ERROR:', ESMF_LOGMSG_ERROR, line=line, file=file)
+        call endrun('chkrc')
+     end if
   end subroutine chkrc
 
 end module nudging
