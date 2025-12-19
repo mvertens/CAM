@@ -220,15 +220,15 @@
        Default: FALSE
        </entry>
 
-<entry id="Nudge_Filenames" type="char*256(1000)" category="nudging"
-       group="nudging_nl" valid_values="" >
-       Filenames of analyses data to use for nudging.
-       Default: none
-       </entry>
-
 <entry id="Nudge_Datapath" type="char*256" category="nudging"
        group="nudging_nl" valid_values="" >
        Full pathname of datapath where Nudge_Filenames are located.
+       Default: none
+       </entry>
+
+<entry id="Nudge_Filenames" type="char*256(100)" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Filenames of analyses data to use for nudging.
        Default: none
        </entry>
 
@@ -238,11 +238,10 @@
        Default: none
        </entry>
 
-<entry id="Nudge_File_Times_Per_Day" type="integer" category="nudging"
+<entry id="Nudge_lev_dimname" type="char*256" category="nudging"
        group="nudging_nl" valid_values="" >
-       Number of analysis times per day in nudging filename(s).
-        (e.g. 4 --> 6 hourly analyses)
-       Default: 6
+       Name of vertical dimension in file.
+       Default: none
        </entry>
 
 <entry id="Model_Update_Times_Per_Day" type="integer" category="nudging"
@@ -288,6 +287,12 @@
        Default: none
        </entry>
 
+<entry id="Nudge_Align_Year" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Model year to align with Nudge_Beg_Year.
+       Default: none
+       </entry>
+
 <entry id="Nudge_Force_Opt" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
        Select the form of nudging forcing, where (t'==Analysis times ; t==Model Times)
@@ -303,6 +308,24 @@
          0 -->  TimeScale = 1/Tdlt_Anal
          1 -->  TimeScale = 1/(t'_next - t_curr )
        Default: 0
+       </entry>
+
+<entry id="Nudge_Mapalgo" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="bilinear,consf" >
+       Mapping algorithm to map nudge data to model grid.
+       Default: bilinear
+       </entry>
+
+<entry id="Nudge_Taxmode" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="limit,extend" >
+       Time extrapolation mode for time interpolation.
+       Default: limit
+       </entry>
+
+<entry id="Nudge_levname" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Name of vertical variable in Nudge_filenames.
+       Default: bilinear
        </entry>
 
 <entry id="Nudge_Uprof" type="integer" category="nudging"
