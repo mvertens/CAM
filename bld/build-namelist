@@ -713,9 +713,9 @@ if (!($simple_phys or $aqua_mode)) {
   if ((!$chem_nitrodep) or ($chem =~ /geoschem/)) {
     add_default($nl, 'stream_ndep_mesh_filename' , 'sim_year'=>$sim_year);
     add_default($nl, 'stream_ndep_data_filename' , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year_start);
+    add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year_end);
+    add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year_start);
   }
 }
 
@@ -834,9 +834,9 @@ if ($co2_cycle) {
             add_default($nl, 'co2flux_fuel_tintalgo');
             add_default($nl, 'co2flux_fuel_meshfile');
             add_default($nl, 'co2flux_fuel_datafile');
-            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year;
-            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year;
-            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year;
+            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year_start);
+            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year_end);
+            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year_start);
         }
 
         add_default($nl, 'co2_readflux_aircraft', 'val'=>'.true.');
