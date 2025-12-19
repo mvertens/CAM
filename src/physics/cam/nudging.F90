@@ -859,7 +859,7 @@ contains
      write(iulog,'(2a)'  ) 'NUDGING: Nudge_Datapath             = ',trim(Nudge_Datapath)
      write(iulog,'(2a)'  ) 'NUDGING: Nudge_Meshfile             = ',trim(Nudge_Meshfile)
      do nf = 1,maxfiles
-        if (trim(Nudge_Filenames(nf)) /= ' ') then
+        if (trim(Nudge_Filenames(nf)) /= 'unset') then
            write(iulog,'(a,a)' )'NUDGING: Nudge_Filename              = ',len_trim(Nudge_Filenames(nf))
         end if
      end do
@@ -1164,9 +1164,9 @@ contains
      call chkrc(rc,__LINE__,u_FILE_u)
 
      if (masterproc) then
-        write(iulog,*)'Nudging: sdat%ymdLB, sdat%todLB ',&
+        write(iulog,'(a,2x,2(i8,2x))')'Nudge Status: sdat%ymdLB, sdat%todLB ',&
              sdat_nudging_multi%pstrm(1)%ymdLB,sdat_nudging_multi%pstrm(1)%todLB
-        write(iulog,*)'Nudging: sdat%ymdUB, sdat%todUB ',&
+        write(iulog,'(a,2x,2(i8,2x))')'Nudge Status: sdat%ymdUB, sdat%todUB ',&
              sdat_nudging_multi%pstrm(1)%ymdUB,sdat_nudging_multi%pstrm(1)%todUB
      end if
 
@@ -1572,12 +1572,6 @@ contains
        end do
        write(iulog,'(a)'   )  ' '
     endif
-
-    do nfile = 1,size(nudge_filenames)
-       if (trim(nudge_filenames(nfile)) /= ' ') then
-          nudge_filenames(nfile) = trim(nudge_datapath)//'/'//trim(nudge_filenames(nfile))
-       end if
-    end do
 
     ! Create module stream data type sdat_nudging
 
