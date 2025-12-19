@@ -858,12 +858,12 @@ contains
      write(iulog,'(a,l4)') 'NUDGING: Nudge_Model                = ',Nudge_Model
      write(iulog,'(2a)'  ) 'NUDGING: Nudge_Datapath             = ',trim(Nudge_Datapath)
      write(iulog,'(2a)'  ) 'NUDGING: Nudge_Meshfile             = ',trim(Nudge_Meshfile)
+     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Levname              = ',trim(Nudge_Levname)
      do nf = 1,maxfiles
         if (trim(Nudge_Filenames(nf)) /= 'unset') then
-           write(iulog,'(a,a)' )'NUDGING: Nudge_Filename              = ',len_trim(Nudge_Filenames(nf))
+           write(iulog,'(a,a)')'NUDGING: Nudge_Datapath             = ',len_trim(Nudge_Datapath)
         end if
      end do
-     write(iulog,'(2a)'      ) 'NUDGING: Nudge_Levname              = ',trim(Nudge_Levname)
      write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Year             = ',Nudge_Beg_Year
      write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Month            = ',Nudge_Beg_Month
      write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Day              = ',Nudge_Beg_Day
@@ -1164,9 +1164,9 @@ contains
      call chkrc(rc,__LINE__,u_FILE_u)
 
      if (masterproc) then
-        write(iulog,'(a,2x,2(i8,2x))')'Nudge Status: sdat%ymdLB, sdat%todLB ',&
+        write(iulog,*)'Nudging: sdat%ymdLB, sdat%todLB ',&
              sdat_nudging_multi%pstrm(1)%ymdLB,sdat_nudging_multi%pstrm(1)%todLB
-        write(iulog,'(a,2x,2(i8,2x))')'Nudge Status: sdat%ymdUB, sdat%todUB ',&
+        write(iulog,*)'Nudging: sdat%ymdUB, sdat%todUB ',&
              sdat_nudging_multi%pstrm(1)%ymdUB,sdat_nudging_multi%pstrm(1)%todUB
      end if
 
@@ -1547,14 +1547,14 @@ contains
     character(*), parameter :: sub = "('nudging_stream_init')"
     !----------------------------------------------------------------
 
-    ! Write output log info
-
+    ! Set nudge_year_first, nudge_year_last and nudge_year_align
     call ESMF_TimeGet(nudge_beg_time, yy=nudge_year_first, rc=rc)
     call chkrc(rc,__LINE__,u_FILE_u)
     call ESMF_TimeGet(nudge_end_time, yy=nudge_year_last, rc=rc)
     call chkrc(rc,__LINE__,u_FILE_u)
     nudge_year_align = nudge_align_year
 
+    ! Write output log info
     if (masterproc) then
        write(iulog,'(a)'   ) ' '
        write(iulog,'(a,i8)')  'stream nudging settings:'
@@ -1562,16 +1562,26 @@ contains
        write(iulog,'(a,i8)')  '  nudge year first = ',nudge_year_first
        write(iulog,'(a,i8)')  '  nudge year last  = ',nudge_year_last
        write(iulog,'(a,i8)')  '  nudge year align = ',nudge_year_align
-       write(iulog,'(a,a)')   '  nudge tintalgo   = ',trim(nudge_tintalgo)
-       write(iulog,'(a,a)' )  '  nudge meshfile   = ',trim(nudge_meshfile)
-       write(iulog,'(a,a)' )  '  nudge datapath   = ',trim(nudge_datapath)
+       write(iulog,'(2a)'  )  '  nudge mapalgo    = ',trim(nudge_mapalgo)
+       write(iulog,'(2a)'  )  '  nudge tintalgo   = ',trim(nudge_tintalgo)
+       write(iulog,'(2a)'  )  '  nudge taxmode    = ',trim(nudge_taxmode)
+       write(iulog,'(2a)'  )  '  nudge levname    = ',trim(nudge_levname)
+       write(iulog,'(2a)'  )  '  nudge meshfile   = ',trim(nudge_meshfile)
+       write(iulog,'(2a)'  )  '  nudge datapath   = ',trim(nudge_datapath)
        do nfile = 1,size(nudge_filenames)
           if (trim(nudge_filenames(nfile)) /= 'unset') then
-             write(iulog,'(a,i8,2x,a)' )  '  nudge file = ',nfile,trim(nudge_filenames(nfile))
+             write(iulog,'(a,i8,2x,a)' )  '  nudge files = ',nfile,trim(nudge_filenames(nfile))
           end if
        end do
        write(iulog,'(a)'   )  ' '
     endif
+
+    ! Add datapath to filenames
+    do nfile = 1,size(nudge_filenames)
+       if (trim(nudge_filenames(nfile)) /= 'unset') then
+          nudge_filenames(nfile) = trim(nudge_datapath)//'/'//trim(nudge_filenames(nfile))
+       end if
+    end do
 
     ! Create module stream data type sdat_nudging
 
