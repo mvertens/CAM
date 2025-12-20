@@ -696,24 +696,16 @@ if (defined $nl->get_value('sim_year')) {
     $sim_year =~ s/['"]//g; #"'
 }
 
-# sim_year_start
-# If sim_year is input as a range of years, then select the first year
-# to use with some datasets
-my $sim_year_start = $sim_year;
-if ($sim_year =~ /(\d+)-(\d+)/) {
-    $sim_year_start = $1;
-}
-
 # Setup default ndep streams only if not simple_phys or aqua_mode and
 # the chemistry cannot produce the nitrogen depostion fluxes
 if (!($simple_phys or $aqua_mode)) {
   my $chem_nitrodep = chem_has_species($cfg, 'NO') and chem_has_species($cfg, 'NH3');
   if ((!$chem_nitrodep) or ($chem =~ /geoschem/)) {
-    add_default($nl, 'stream_ndep_mesh_filename');
-    add_default($nl, 'stream_ndep_data_filename', 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_first', 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_last', 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_align', 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_mesh_filename' , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_data_filename' , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year);
   }
 }
 
@@ -809,22 +801,32 @@ if ($cfg->get('cosp')) {
 # Carbon cycle constituents
 my $co2_cycle = $cfg->get('co2_cycle');
 
+# co2_flag turns on the co2_cycle code in CAM
+# defaults set in namelist_defaults_cam.xml
+add_default($nl, 'co2_flag');
+
 if ($co2_cycle) {
 
-    # co2_flag turns on the co2_cycle code in CAM
-    add_default($nl, 'co2_flag', 'val'=>'.true.');
-
-
-    # Supply a fossil fuel dataset if the co2_cycle is active and it's a
-    # transient run ...
-    if ($sim_year =~ /(\d+)-(\d+)/) {
+    # Supply a fossil fuel and aircraft emission datasets if the
+    # co2_cycle is active and it is a transient run
+    if ($sim_year =~ /(\d+)-(\d+)/ || $sim_year =~ /(\d+)/) {
 
         add_default($nl, 'co2_readflux_fuel', 'val'=>'.true.');
 
         # Check whether user has explicitly turned off reading the fossil fuel dataset.
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_fuel') =~ /$TRUE/io) {
-            add_default($nl, 'co2flux_fuel_file', 'sim_year'=>$sim_year);
+            if ($sim_year =~ /(\d+)-(\d+)/) {
+                add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'extend' );
+            } else {
+                add_default($nl, 'co2flux_fuel_taxmode', 'val'=>'cycle' );
+            }
+            add_default($nl, 'co2flux_fuel_tintalgo');
+            add_default($nl, 'co2flux_fuel_meshfile');
+            add_default($nl, 'co2flux_fuel_datafile');
+            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year);
         }
 
         add_default($nl, 'co2_readflux_aircraft', 'val'=>'.true.');
@@ -832,19 +834,26 @@ if ($co2_cycle) {
         # Check whether user has explicitly turned off reading the aircraft CO2 dataset.
         # (user specification has higher precedence than the true value set above)
         if ($nl->get_value('co2_readflux_aircraft') =~ /$TRUE/io) {
-
-            my $rel_filepath = get_default_value('ac_CO2_emis');
-            my $emisval = quote_string('ac_CO2 -> ' . $rel_filepath);
-            add_default($nl, 'aircraft_specifier', 'val'=>$emisval);
-
-            add_default($nl, 'aircraft_datapath');
-            add_default($nl, 'aircraft_type');
-            # This should be the same file as the one in the aircraft_specifier file.
-            # This is a workaround to get this filepath into the cam.input_data_list file
-            # to allow the CESM scripts to obtain all required data for a run.
-            add_default($nl, 'aircraft_co2_file');
+            if ($sim_year =~ /(\d+)-(\d+)/) {
+                add_default($nl, 'aircraft_co2_taxmode', 'val'=>'extend' );
+            } else {
+                add_default($nl, 'aircraft_co2_taxmode', 'val'=>'cycle' );
+            }
+            add_default($nl, 'aircraft_co2_tintalgo');
+            add_default($nl, 'aircraft_co2_meshfile');
+            add_default($nl, 'aircraft_co2_datafile');
+            add_default($nl, 'aircraft_co2_year_first', 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_last' , 'sim_year'=>$sim_year);
+            add_default($nl, 'aircraft_co2_year_align', 'sim_year'=>$sim_year);
         }
-    }
+      } else {
+          # This case probably should not happen (co2_cycle on with no sim year)
+          add_default($nl, 'co2_readflux_fuel', 'val'=>'.false.');
+          add_default($nl, 'co2_readflux_aircraft', 'val'=>'.false.');
+      }
+} else {
+    add_default($nl, 'co2_readflux_fuel', 'val'=>'.false.');
+    add_default($nl, 'co2_readflux_aircraft', 'val'=>'.false.');
 }
 
 # By default the prognostic co2_cycle CO2 will be radiative active, unless the

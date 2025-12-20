@@ -69,6 +69,7 @@ module atm_comp_nuopc
    use pio                 , only : pio_noerr, pio_bcast_error, pio_internal_error, pio_seterrorhandling
    use pio                 , only : pio_def_var, pio_get_var, pio_put_var, PIO_INT
    use ioFileMod
+   use cam_esmf_mod        , only : cam_esmf_set_clock, cam_esmf_set_mesh
    !$use omp_lib           , only : omp_set_num_threads
 
   implicit none
@@ -128,9 +129,6 @@ module atm_comp_nuopc
   character(len=*) , parameter :: orb_fixed_parameters = 'fixed_parameters'
 
   real(R8) , parameter         :: grid_tol = 1.e-2_r8 ! tolerance for calculated lat/lon vs read in
-
-  type(ESMF_Mesh)  :: model_mesh     ! model_mesh
-  type(ESMF_Clock) :: model_clock    ! model_clock
 
 !===============================================================================
 contains
@@ -335,6 +333,8 @@ contains
     integer, intent(out) :: rc
 
     ! local variables
+    type(ESMF_Mesh)           :: model_mesh
+    type(ESMF_Clock)          :: model_clock
     type(ESMF_VM)             :: vm
     type(ESMF_Time)           :: currTime                          ! Current time
     type(ESMF_Time)           :: startTime                         ! Start time
@@ -623,6 +623,10 @@ contains
        call shr_sys_abort( subname//'ERROR:: bad calendar for ESMF' )
     end if
 
+    ! Create model_clock as a variable in cam_esmf_mod.F90 - needed for generating streams
+    call cam_esmf_set_clock(clock, rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
     ! Initialize module orbital values and update orbital
     call cam_orbital_init(gcomp, iulog, masterproc, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -761,11 +765,11 @@ contains
        call realize_fields(gcomp, model_mesh, flds_scalar_name, flds_scalar_num, single_column, rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-       ! Create model_clock as a module variable - needed for generating streams
-       model_clock = clock
+       ! Set module variables in src/control/cam_esmf_mod.F90 (must be done before call to export_fields)
+       call cam_esmf_set_mesh(model_mesh)
 
        ! Create cam export array and set the state scalars
-       call export_fields( gcomp, model_mesh, model_clock, cam_out, rc=rc )
+       call export_fields( gcomp, cam_out, rc=rc )
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
        call get_horiz_grid_dim_d(hdim1_d, hdim2_d)
@@ -920,7 +924,7 @@ contains
           call import_fields( gcomp, cam_in, rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
           call cam_run1 ( cam_in, cam_out )
-          call export_fields( gcomp, model_mesh, model_clock, cam_out, rc=rc )
+          call export_fields( gcomp, cam_out, rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
        else
           call cam_read_srfrest( gcomp, clock, rc=rc )
@@ -928,7 +932,7 @@ contains
           call import_fields( gcomp, cam_in, restart_init=.true., rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
           call cam_run1 ( cam_in, cam_out )
-          call export_fields( gcomp, model_mesh, model_clock, cam_out, rc=rc )
+          call export_fields( gcomp, cam_out, rc=rc )
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
        end if
 
@@ -1175,7 +1179,7 @@ contains
     if (mediator_present) then
        ! Set export fields
        call t_startf ('CAM_export')
-       call export_fields( gcomp, model_mesh, model_clock, cam_out, rc )
+       call export_fields( gcomp, cam_out, rc )
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
        call t_stopf ('CAM_export')
 
