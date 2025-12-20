@@ -1797,24 +1797,24 @@ Default: TRUE for transient model runs, FALSE otherwise.
 <entry id="co2flux_fuel_datafile" type="char*256" input_pathname="abs" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
 Full filepath for dataset containing CO2 flux from fossil fuel.
-Default: none
+Default: set by build-namelist, see namelist_defaults_cam.xml
 </entry>
 
 <entry id="co2flux_fuel_meshfile" type="char*256" input_pathname="abs" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
 Full filepath for ESMF Mesh corresponding to co2flux_fuel_datafile File.
-Default: none
+Default: set by build-namelist
 </entry>
 
 <entry id="co2flux_fuel_year_first" type="integer" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
 First year to use in co2flux_fuel_datafile.
-Default: 0
+Default: set by build-namelist based on sim_year.
 
 <entry id="co2flux_fuel_year_last" type="integer" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="" >
 Last year to use in co2flux_fuel_datafile.
-Default: 0
+Default: set by build-namelist based on sim_year.
 </entry>
 
 <entry id="co2flux_fuel_year_align" type="integer" category="co2_cycle"
@@ -1830,7 +1830,7 @@ to the forcing calendar being the same as the model calendar. The
 forcing for a given model year would be the forcing of the same
 year. This would be appropriate in transient runs where the model
 calendar is setup to span the same year range as the forcing data.
-Set by build-namelist.
+Default set by build-namelist based on sim_year.
 </entry>
 
 <entry id="co2flux_fuel_tintalgo" type="char*16" category="co2_cycle"
@@ -1854,7 +1854,7 @@ Default: extend for transient, otherwise cycle
 <entry id="aircraft_co2_datafile" type="char*256" input_pathname="abs" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="" >
 Full pathname of the data file containing aircraft co2 emissions.
-Default: set by build-namelist.
+Default: set by build-namelist based on sim_year.
 </entry>
 
 <entry id="aircraft_co2_meshfile" type="char*256" input_pathname="abs" category="co2_cycle"
@@ -1866,13 +1866,13 @@ Default: set by build-namelist.
 <entry id="aircraft_co2_year_first" type="integer" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="" >
 First year of the aircraft_co2_datafile to use.
-Default: set by build-namelist.
+Default: set by build-namelist based on sim_year.
 </entry>
 
 <entry id="aircraft_co2_year_last" type="integer" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="" >
 Last year of the aircraft_co2_datafile to use.
-Default: set by build-namelist.
+Default: set by build-namelist based on sim_year.
 </entry>
 
 <entry id="aircraft_co2_year_align" type="integer" category="co2_cycle"
@@ -1888,8 +1888,7 @@ to the forcing calendar being the same as the model calendar. The
 forcing for a given model year would be the forcing of the same
 year. This would be appropriate in transient runs where the model
 calendar is setup to span the same year range as the forcing data.
-Set by build-namelist.
-Default: set by build-namelist.
+Default: set by build-namelist based on sim_year
 </entry>
 
 <entry id="aircraft_co2_tintalgo" type="char*16" category="co2_cycle"
@@ -7050,12 +7049,14 @@ Full pathname of the ESMF mesh file corresponding to aircraft_h2o_datafile.
 
 <entry id="aircraft_h2o_year_first" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-First year of the aircraft_h2o_datafile to use.
+  First year of the aircraft_h2o_datafile to use.
+  Default: NONE
 </entry>
 
 <entry id="aircraft_h2o_year_last" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Last year of the aircraft_h2o_datafile to use.
+  Last year of the aircraft_h2o_datafile to use.
+  Default: NONE
 </entry>
 
 <entry id="aircraft_h2o_year_align" type="integer" category="cam_chem"
@@ -7071,8 +7072,7 @@ to the forcing calendar being the same as the model calendar. The
 forcing for a given model year would be the forcing of the same
 year. This would be appropriate in transient runs where the model
 calendar is setup to span the same year range as the forcing data.
-Set by build-namelist.
-Default: set by build-namelist.
+Default: NONE
 </entry>
 
 <entry id="aircraft_h2o_tintalgo" type="char*16" category="h2o_cycle"
@@ -7095,27 +7095,32 @@ Default: extend for transient, otherwise cycle
 
 <entry id="aircraft_slant_dist_datafile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Full pathname of the data file containing ac_SLANT_DIST (by default).
+  Full pathname of the data file containing ac_SLANT_DIST (by default).
+  Default: NONE
 </entry>
 
 <entry id="aircraft_slant_dist_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Full pathname of the ESMF mesh file corresponding to aircraft_slant_dist.
+  Full pathname of the ESMF mesh file corresponding to aircraft_slant_dist.
+  Default: NONE
 </entry>
 
 <entry id="aircraft_slant_dist_meshfile" type="char*256" input_pathname="abs" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Full pathname of the ESMF mesh file corresponding to aircraft_slant_dist.
+  Full pathname of the ESMF mesh file corresponding to aircraft_slant_dist.
+  Default: NONE
 </entry>
 
 <entry id="aircraft_slant_dist_year_first" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-First year of the aircraft_slant_dist to use.
+  First year of the aircraft_slant_dist to use.
+  Default: NONE
 </entry>
 
 <entry id="aircraft_slant_dist_year_last" type="integer" category="cam_chem"
        group="aircraft_emit_nl" valid_values="" >
-Last year of the aircraft_slant_dist to use.
+  Last year of the aircraft_slant_dist to use.
+  Default: NONE
 </entry>
 
 <entry id="aircraft_slant_dist_year_align" type="integer" category="cam_chem"
@@ -7131,8 +7136,7 @@ to the forcing calendar being the same as the model calendar. The
 forcing for a given model year would be the forcing of the same
 year. This would be appropriate in transient runs where the model
 calendar is setup to span the same year range as the forcing data.
-Set by build-namelist.
-Default: set by build-namelist.
+Default: NONE
 </entry>
 
 <entry id="aircraft_slant_dist_tintalgo" type="char*16" category="slant_dist_cycle"
