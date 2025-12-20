@@ -8192,12 +8192,14 @@ Default: FALSE
 
 <entry id="stream_ndep_year_first" type="integer" category="Nitrogen Deposition"
        group="ndep_stream_nl" valid_values="" >
-First year to use in nitrogen deposition stream data.
+  First year to use in nitrogen deposition stream data.
+  Default: 2000
 </entry>
 
 <entry id="stream_ndep_year_last" type="integer" category="Nitrogen Deposition"
        group="ndep_stream_nl" valid_values="" >
-Last year last to use in nitrogen deposition stream data.
+  Last year last to use in nitrogen deposition stream data.
+  Default: 2000
 </entry>
 
 <entry id="stream_ndep_year_align" type="integer" category="Nitrogen Deposition"
@@ -8214,7 +8216,7 @@ forcing for a given model year would be the forcing of the same
 year. This would be appropriate in transient runs where the model
 calendar is setup to span the same year range as the forcing data.
 Set by build-namelist.
-Default: set by build-namelist.
+Default: 1
 </entry>
 
 <entry id="stream_ndep_data_filename" type="char*256" input_pathname="abs" category="Nitrogen Deposition"
@@ -9368,7 +9370,7 @@ Default: "."
        group="camexp" valid_values="1850,2000,2010,1850-2000,1850-2015">
 This varible is only used internally by build-namelist to determine
 appropriate defaults for climatological or transient forcing datasets.
-Default: set by build-namelist.
+Default: 2000
 </entry>
 
 <!-- ========================================================================================  -->

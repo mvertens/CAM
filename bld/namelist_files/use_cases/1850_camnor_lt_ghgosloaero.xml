@@ -98,4 +98,7 @@
 <cldfrc_iceopt    hgrid="1.9x2.5"> 4 </cldfrc_iceopt>       <!--cldfrc_nl-->
 <do_circulation_diags> .true. </do_circulation_diags>       <!-- only used in fv -->
 
+<!-- for prescribed deposition and emission fluxes -->
+<sim_year>1850</sim_year>
+
 </namelist_defaults>

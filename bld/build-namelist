@@ -696,16 +696,6 @@ if (defined $nl->get_value('sim_year')) {
     $sim_year =~ s/['"]//g; #"'
 }
 
-# sim_year_start
-# If sim_year is input as a range of years, then select the first year
-# to use with some datasets
-my $sim_year_start = $sim_year;
-my $sim_year_end = $sim_year;
-if ($sim_year =~ /(\d+)-(\d+)/) {
-    $sim_year_start = $1;
-    $sim_year_end = $2;
-}
-
 # Setup default ndep streams only if not simple_phys or aqua_mode and
 # the chemistry cannot produce the nitrogen depostion fluxes
 if (!($simple_phys or $aqua_mode)) {
@@ -713,9 +703,9 @@ if (!($simple_phys or $aqua_mode)) {
   if ((!$chem_nitrodep) or ($chem =~ /geoschem/)) {
     add_default($nl, 'stream_ndep_mesh_filename' , 'sim_year'=>$sim_year);
     add_default($nl, 'stream_ndep_data_filename' , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year_start);
-    add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year_end);
-    add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year_start);
+    add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year);
   }
 }
 
@@ -834,9 +824,9 @@ if ($co2_cycle) {
             add_default($nl, 'co2flux_fuel_tintalgo');
             add_default($nl, 'co2flux_fuel_meshfile');
             add_default($nl, 'co2flux_fuel_datafile');
-            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year_start);
-            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year_end);
-            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year_start);
+            add_default($nl, 'co2flux_fuel_year_first', 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_last' , 'sim_year'=>$sim_year);
+            add_default($nl, 'co2flux_fuel_year_align', 'sim_year'=>$sim_year);
         }
 
         add_default($nl, 'co2_readflux_aircraft', 'val'=>'.true.');

@@ -71,7 +71,7 @@
 
 <!--Options for mineral dust -->
 <dust_emis_fact> 4.60D0  </dust_emis_fact>                   <!--dust_nl-->
-<dust_emis_method>Leung_2023</dust_emis_method>              <!--dust_emi--> 
+<dust_emis_method>Leung_2023</dust_emis_method>              <!--dust_emi-->
 
 <!-- ================================================= -->
 <!-- noresm-physics -->
@@ -90,5 +90,8 @@
 <cldfrc2m_rhmini  hgrid="0.9x1.25">0.90D0</cldfrc2m_rhmini> <!--cldfrc2m_nl-->
 <cldfrc_iceopt    hgrid="1.9x2.5">4</cldfrc_iceopt>         <!--cldfrc_nl-->
 <do_circulation_diags>.true.</do_circulation_diags>         <!-- only used in fv -->
+
+<!-- for prescribed deposition and emission fluxes -->
+<sim_year>2000</sim_year>
 
 </namelist_defaults>
