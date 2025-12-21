@@ -13,7 +13,7 @@ module atm_import_export
   use shr_mpi_mod       , only : shr_mpi_min, shr_mpi_max
   use nuopc_shr_methods , only : chkerr
   use cam_logfile       , only : iulog
-  use cam_history       , only: outfld
+  use cam_history       , only : outfld
   use spmd_utils        , only : masterproc, mpicom
   use srf_field_check   , only : set_active_Sl_ram1
   use srf_field_check   , only : set_active_Sl_fv
@@ -27,6 +27,7 @@ module atm_import_export
   use atm_stream_ndep   , only : ndep_stream_active
   use chemistry         , only : chem_has_ndep_flx
   use cam_control_mod   , only : aqua_planet, simple_phys
+  use cam_esmf_mod      , only : cam_esmf_set_areas
 
   implicit none
   private ! except
@@ -497,6 +498,9 @@ contains
        end do
        deallocate(area)
 
+       call cam_esmf_set_areas(model_areas, mesh_areas, rc=rc)
+       if (chkerr(rc,__LINE__,u_FILE_u)) return
+
        ! Determine flux correction factors (module variables)
        do n = 1,numOwnedElements
           mod2med_areacor(n) = model_areas(n) / mesh_areas(n)
@@ -540,9 +544,9 @@ contains
     use phys_grid         , only : get_ncols_p
     use ppgrid            , only : begchunk, endchunk
     use shr_const_mod     , only : shr_const_stebol
-    use co2_cycle         , only : c_i, co2_readFlux_ocn, co2_readFlux_fuel
-    use co2_cycle         , only : co2_transport, co2_time_interp_ocn, co2_time_interp_fuel
-    use co2_cycle         , only : data_flux_ocn, data_flux_fuel
+    use co2_cycle         , only : c_i, co2_readFlux_fuel
+    use co2_cycle         , only : co2_transport
+    use co2_data_flux     , only : data_flux_fuel, co2_data_flux_advance
     use physconst         , only : mwco2
     use time_manager      , only : is_first_step, get_nstep
 
@@ -882,11 +886,6 @@ contains
              g = g + 1
           end do
        end do
-    else
-       ! Consistency check
-       if (co2_readFlux_ocn) then
-          call shr_sys_abort(subname // ':: co2_readFlux_ocn and x2a_Faoo_fco2_ocn cannot both be active')
-       end if
     end if
 
     call state_getfldptr(importState,  'Faoo_fdms_ocn', fldptr=fldptr1d, exists=exists, rc=rc)
@@ -950,16 +949,13 @@ contains
     if (co2_transport() .and. overwrite_flds) then
 
        ! Interpolate in time for flux data read in
-       if (co2_readFlux_ocn) then
-          call co2_time_interp_ocn
-       end if
        if (co2_readFlux_fuel) then
-          call co2_time_interp_fuel
+          call co2_data_flux_advance()
        end if
 
-       ! from ocn : data read in or from coupler or zero
        ! from fuel: data read in or zero
-       ! from lnd : through coupler or zero
+       ! from ocn : from mediator or zero
+       ! from lnd : from mediator or zero
        ! all co2 fluxes in unit kgCO2/m2/s
 
        do c=begchunk,endchunk
@@ -968,10 +964,6 @@ contains
              ! co2 flux from ocn
              if (exists_fco2_ocn) then
                 cam_in(c)%cflx(i,c_i(1)) = cam_in(c)%fco2_ocn(i)
-             else if (co2_readFlux_ocn) then
-                ! convert from molesCO2/m2/s to kgCO2/m2/s
-                cam_in(c)%cflx(i,c_i(1)) = &
-                     -data_flux_ocn%co2flx(i,c)*(1._r8- cam_in(c)%landfrac(i))*mwco2*1.0e-3_r8
              else
                 cam_in(c)%cflx(i,c_i(1)) = 0._r8
              end if
