@@ -706,6 +706,7 @@ if (!($simple_phys or $aqua_mode)) {
     add_default($nl, 'stream_ndep_year_first'    , 'sim_year'=>$sim_year);
     add_default($nl, 'stream_ndep_year_last'     , 'sim_year'=>$sim_year);
     add_default($nl, 'stream_ndep_year_align'    , 'sim_year'=>$sim_year);
+    add_default($nl, 'stream_ndep_varlist');
   }
 }
 
