@@ -136,15 +136,15 @@ contains
     end do
 
     if (masterproc) then
-       write(iulog,'(a)'   ) ' '
-       write(iulog,'(2a,i0)') trim(subname),' stream ndep settings:'
-       write(iulog,'(3a)')    trim(subname),'  stream_ndep_data_filename = ',trim(stream_ndep_data_filename)
-       write(iulog,'(3a)')    trim(subname),'  stream_ndep_mesh_filename = ',trim(stream_ndep_mesh_filename)
-       write(iulog,'(3a)')    trim(subname),'  stream_ndep_varlist       = ',trim(stream_ndep_varlist)
-       write(iulog,'(2a,i0)') trim(subname),'  stream_ndep_year_first    = ',stream_ndep_year_first
-       write(iulog,'(2a,i0)') trim(subname),'  stream_ndep_year_last     = ',stream_ndep_year_last
-       write(iulog,'(2a,i0)') trim(subname),'  stream_ndep_year_align    = ',stream_ndep_year_align
-       write(iulog,'(a)'   )  ' '
+       write(iulog,'(a)')  ' '
+       write(iulog,'(2a)')    subname,' stream ndep settings:'
+       write(iulog,'(3a)')    subname,'  stream_ndep_data_filename = ',trim(stream_ndep_data_filename)
+       write(iulog,'(3a)')    subname,'  stream_ndep_mesh_filename = ',trim(stream_ndep_mesh_filename)
+       write(iulog,'(3a)')    subname,'  stream_ndep_varlist       = ',trim(stream_ndep_varlist)
+       write(iulog,'(2a,i0)') subname,'  stream_ndep_year_first    = ',stream_ndep_year_first
+       write(iulog,'(2a,i0)') subname,'  stream_ndep_year_last     = ',stream_ndep_year_last
+       write(iulog,'(2a,i0)') subname,'  stream_ndep_year_align    = ',stream_ndep_year_align
+       write(iulog,'(a)') ' '
     endif
 
   end subroutine stream_ndep_readnl
@@ -300,7 +300,7 @@ contains
     select case (trim(stream_ndep_varlist))
     case ('NDEP_NHx_month:NDEP_NOy_month')
 
-       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'NDEP_NHX_month', fldptr1=dataptr1d_nhx, rc=rc)
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'NDEP_NHx_month', fldptr1=dataptr1d_nhx, rc=rc)
        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
           call ESMF_Finalize(endflag=ESMF_END_ABORT)
        end if
