@@ -31,18 +31,21 @@ module atm_stream_ndep
   ! The ndep stream is not needed for aquaplanet or simple model configurations.  It
   ! is disabled by setting the namelist variable stream_ndep_data_filename to 'UNSET' or empty string.
   logical, public, protected :: ndep_stream_active = .false.
+  logical, public, protected :: stream_ndep_is_initialized = .false.
 
-  type(shr_strdata_type) :: sdat_ndep                      ! input data stream
-  logical, public        :: stream_ndep_is_initialized = .false.
-  character(len=CS)      :: stream_varlist_ndep(2)
+  type(shr_strdata_type) :: sdat_ndep     ! input data stream
 
   character(len=*), parameter :: sourcefile = __FILE__
 
+  ! namelist variables
   character(len=CL) :: stream_ndep_data_filename
   character(len=CL) :: stream_ndep_mesh_filename
+  character(len=CL) :: stream_ndep_varlist    ! colon delimited string of ndep field names
   integer           :: stream_ndep_year_first ! first year in stream to use
   integer           :: stream_ndep_year_last  ! last year in stream to use
   integer           :: stream_ndep_year_align ! align stream_year_firstndep with
+
+  character(len=CS), allocatable :: stream_ndep_varnames(:) ! array of ndep field names
 
 !==============================================================================
 contains
@@ -51,34 +54,37 @@ contains
   subroutine stream_ndep_readnl(nlfile)
 
     ! Uses:
-    use shr_nl_mod, only: shr_nl_find_group_name
+    use shr_nl_mod,     only: shr_nl_find_group_name
+    use shr_string_mod, only: shr_string_listGetNum, shr_string_listGetName
+    use error_messages, only: alloc_err
 
     ! input/output variables
     character(len=*), intent(in) :: nlfile
 
     ! local variables
-    integer                 :: nu_nml                 ! unit for namelist file
-    integer                 :: nml_error              ! namelist i/o error flag
-    integer                 :: ierr
+    integer :: nu_nml    ! unit for namelist file
+    integer :: nml_error ! namelist i/o error flag
+    integer :: ierr      ! error status
+    integer :: nf        ! field counter
+    integer :: numflds   ! number of fields in stream_ndep_varlist
     character(*), parameter :: subName = "('stream_ndep_readnl')"
     !-----------------------------------------------------------------------
 
-    namelist /ndep_stream_nl/      &
+    namelist /ndep_stream_nl/       &
          stream_ndep_data_filename, &
          stream_ndep_mesh_filename, &
          stream_ndep_year_first,    &
          stream_ndep_year_last,     &
-         stream_ndep_year_align
+         stream_ndep_year_align,    &
+         stream_ndep_varlist
 
     ! Default values for namelist
     stream_ndep_data_filename = ' '
     stream_ndep_mesh_filename = ' '
+    stream_ndep_varlist       = ' '
     stream_ndep_year_first    = 1 ! first year in stream to use
     stream_ndep_year_last     = 1 ! last  year in stream to use
     stream_ndep_year_align    = 1 ! align stream_ndep_year_first with this model year
-
-    ! For now variable list in stream data file is hard-wired
-    stream_varlist_ndep = (/'NDEP_NHx_month', 'NDEP_NOy_month'/)
 
     ! Read ndep_stream namelist
     if (masterproc) then
@@ -99,6 +105,8 @@ contains
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_mesh_filename")
     call mpi_bcast(stream_ndep_data_filename, len(stream_ndep_data_filename), mpi_character, 0, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_data_filename")
+    call mpi_bcast(stream_ndep_varlist, len(stream_ndep_varlist), mpi_character, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_varlist")
     call mpi_bcast(stream_ndep_year_first, 1, mpi_integer, 0, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_first")
     call mpi_bcast(stream_ndep_year_last, 1, mpi_integer, 0, mpicom, ierr)
@@ -106,28 +114,37 @@ contains
     call mpi_bcast(stream_ndep_year_align, 1, mpi_integer, 0, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_align")
 
-    ndep_stream_active = len_trim(stream_ndep_data_filename)>0 .and. stream_ndep_data_filename/='UNSET'
+    ! Determine if ndep stream is active, and if not return
+    ndep_stream_active = (len_trim(stream_ndep_data_filename)>0 .and. stream_ndep_data_filename/='UNSET')
 
     ! Check whether the stream is being used.
-    if (.not.ndep_stream_active) then
+    if (.not. ndep_stream_active) then
        if (masterproc) then
           write(iulog,'(a)') ' '
-          write(iulog,'(a)') 'NDEP STREAM IS NOT USED.'
+          write(iulog,'(2a)') trim(subname),' NDEP STREAM IS NOT USED.'
           write(iulog,'(a)') ' '
        endif
-       return
+       RETURN
     endif
 
+    ! Create array of variable names on ndep forcing file - needed to initialize sdat
+    numflds = shr_string_listGetNum(stream_ndep_varlist)
+    allocate(stream_ndep_varnames(numflds), stat=ierr)
+    call alloc_err(ierr, subname, 'varnames', numflds)
+    do nf = 1,numflds
+       call shr_string_listGetName(stream_ndep_varlist, nf, stream_ndep_varnames(nf))
+    end do
+
     if (masterproc) then
-       write(iulog,'(a)'   ) ' '
-       write(iulog,'(a,i8)')  'stream ndep settings:'
-       write(iulog,'(a,a)' )  '  stream_ndep_data_filename = ',trim(stream_ndep_data_filename)
-       write(iulog,'(a,a)' )  '  stream_ndep_mesh_filename = ',trim(stream_ndep_mesh_filename)
-       write(iulog,'(a,a,a)') '  stream_varlist_ndep       = ',trim(stream_varlist_ndep(1)), trim(stream_varlist_ndep(2))
-       write(iulog,'(a,i8)')  '  stream_ndep_year_first    = ',stream_ndep_year_first
-       write(iulog,'(a,i8)')  '  stream_ndep_year_last     = ',stream_ndep_year_last
-       write(iulog,'(a,i8)')  '  stream_ndep_year_align    = ',stream_ndep_year_align
-       write(iulog,'(a)'   )  ' '
+       write(iulog,'(a)')  ' '
+       write(iulog,'(2a)')    subname,' stream ndep settings:'
+       write(iulog,'(3a)')    subname,'  stream_ndep_data_filename = ',trim(stream_ndep_data_filename)
+       write(iulog,'(3a)')    subname,'  stream_ndep_mesh_filename = ',trim(stream_ndep_mesh_filename)
+       write(iulog,'(3a)')    subname,'  stream_ndep_varlist       = ',trim(stream_ndep_varlist)
+       write(iulog,'(2a,i0)') subname,'  stream_ndep_year_first    = ',stream_ndep_year_first
+       write(iulog,'(2a,i0)') subname,'  stream_ndep_year_last     = ',stream_ndep_year_last
+       write(iulog,'(2a,i0)') subname,'  stream_ndep_year_align    = ',stream_ndep_year_align
+       write(iulog,'(a)') ' '
     endif
 
   end subroutine stream_ndep_readnl
@@ -145,7 +162,7 @@ contains
 
     rc = ESMF_SUCCESS
     if (.not.ndep_stream_active) then
-       return
+       RETURN
     end if
 
     ! Read in units
@@ -163,8 +180,8 @@ contains
          stream_yearFirst    = stream_ndep_year_first,              &
          stream_yearLast     = stream_ndep_year_last,               &
          stream_yearAlign    = stream_ndep_year_align,              &
-         stream_fldlistFile  = stream_varlist_ndep,                 &
-         stream_fldListModel = stream_varlist_ndep,                 &
+         stream_fldlistFile  = stream_ndep_varnames,                &
+         stream_fldListModel = stream_ndep_varnames,                &
          stream_lev_dimname  = 'null',                              &
          stream_mapalgo      = 'bilinear',                          &
          stream_offset       = 0,                                   &
@@ -176,6 +193,8 @@ contains
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
     end if
+
+    stream_ndep_is_initialized = .true.
 
   end subroutine stream_ndep_init
 
@@ -195,30 +214,41 @@ contains
     character(len=*), intent(in)  :: stream_fldFileName_ndep  ! ndep filename
     !
     ! Local variables
-    type(file_desc_t) :: File     ! NetCDF filehandle for ndep file
-    type(var_desc_t)  :: vardesc  ! variable descriptor
-    integer           :: ierr     ! error status
+    type(file_desc_t) :: fileid       ! NetCDF filehandle for ndep file
+    type(var_desc_t)  :: vardesc      ! variable descriptor
+    integer           :: ierr         ! error status
     integer           :: err_handling ! temporary
-    character(len=CS) :: ndepunits! ndep units
+    character(len=CS) :: ndepunits    ! ndep units
+    character(*), parameter :: subName = "('stream_ndep_check_units')"
     !-----------------------------------------------------------------------
 
-    call cam_pio_openfile( File, trim(stream_fldFileName_ndep), PIO_NOWRITE)
-    call pio_seterrorhandling(File, PIO_BCAST_ERROR, err_handling)
-    ierr = pio_inq_varid(File, stream_varlist_ndep(1), vardesc)
+    call cam_pio_openfile( fileid, trim(stream_fldFileName_ndep), PIO_NOWRITE)
+    call pio_seterrorhandling(fileid, PIO_BCAST_ERROR, err_handling)
+    ierr = pio_inq_varid(fileid, stream_ndep_varnames(1), vardesc)
     if (ierr /= PIO_NOERR) then
-       call endrun(' ERROR finding variable: '//trim(stream_varlist_ndep(1))//" in file: "// &
+       call endrun(' ERROR finding variable: '//trim(stream_ndep_varnames(1))//" in file: "// &
             trim(stream_fldFileName_ndep)//errMsg(sourcefile, __LINE__))
     else
-       ierr = PIO_get_att(File, vardesc, "units", ndepunits)
+       ierr = PIO_get_att(fileid, vardesc, "units", ndepunits)
     end if
-    call pio_seterrorhandling(File, err_handling)
-    call cam_pio_closefile(File)
+    call pio_seterrorhandling(fileid, err_handling)
+    call cam_pio_closefile(fileid)
 
-    ! Now check to make sure they are correct
-    if (.not. trim(ndepunits) == "g(N)/m2/s"  )then
-       call endrun(' ERROR in units for nitrogen deposition equal to: '//trim(ndepunits)//" not units expected"// &
-            errMsg(sourcefile, __LINE__))
-    end if
+    select case (trim(stream_ndep_varlist))
+    case ('NDEP_NHx_month:NDEP_NOy_month')
+       ! Now check to make sure they are correct
+       if (.not. trim(ndepunits) == "g(N)/m2/s"  )then
+          call endrun(' ERROR in units for nitrogen deposition equal to: '//trim(ndepunits)//" not units expected"// &
+               errMsg(sourcefile, __LINE__))
+       end if
+    case ('drynhx:wetnhx:drynoy:wetnoy')
+       if (.not. trim(ndepunits) == "kg m-2 s-1")then
+          call endrun(' ERROR in units for nitrogen deposition equal to: '//trim(ndepunits)//" not units expected"// &
+               errMsg(sourcefile, __LINE__))
+       end if
+    case default
+       call endrun(trim(subname)//'stream_ndep_varlist '//trim(stream_ndep_varlist)//' is not supported')
+    end select
 
   end subroutine stream_ndep_check_units
 
@@ -237,19 +267,26 @@ contains
     integer         , intent(out)    :: rc
 
     ! local variables
-    integer :: i,c,g
-    integer :: year    ! year (0, ...) for nstep+1
-    integer :: mon     ! month (1, ..., 12) for nstep+1
-    integer :: day     ! day of month (1, ..., 31) for nstep+1
-    integer :: sec     ! seconds into current date for nstep+1
-    integer :: mcdate  ! Current model date (yyyymmdd)
+    integer  :: ig,icol,lchnk
+    integer  :: year    ! year (0, ...) for nstep+1
+    integer  :: mon     ! month (1, ..., 12) for nstep+1
+    integer  :: day     ! day of month (1, ..., 31) for nstep+1
+    integer  :: sec     ! seconds into current date for nstep+1
+    integer  :: mcdate  ! Current model date (yyyymmdd)
+    real(r8) :: scale_ndep
     real(r8), pointer :: dataptr1d_nhx(:)
     real(r8), pointer :: dataptr1d_noy(:)
-
-    ! NDEP read from forcing is expected to be in units of gN/m2/sec - but the mediator
-    ! expects units of kgN/m2/sec
-    real(r8), parameter :: scale_ndep = .001_r8
+    real(r8), pointer :: dataptr1d_nhx_dry(:)
+    real(r8), pointer :: dataptr1d_nhx_wet(:)
+    real(r8), pointer :: dataptr1d_noy_dry(:)
+    real(r8), pointer :: dataptr1d_noy_wet(:)
+    character(*), parameter :: subName = "('stream_ndep_interp')"
     !-----------------------------------------------------------------------
+
+    rc = ESMF_SUCCESS
+    if (.not.ndep_stream_active) then
+       RETURN
+    end if
 
     ! Advance sdat stream
     call get_curr_date(year, mon, day, sec)
@@ -260,23 +297,60 @@ contains
     end if
 
     ! Get pointer for stream data that is time and spatially interpolated to model time and grid
-    call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, stream_varlist_ndep(1), fldptr1=dataptr1d_nhx, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
-       call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    end if
-    call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, stream_varlist_ndep(2), fldptr1=dataptr1d_noy, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
-       call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    end if
+    select case (trim(stream_ndep_varlist))
+    case ('NDEP_NHx_month:NDEP_NOy_month')
 
-    g = 1
-    do c = begchunk,endchunk
-       do i = 1,get_ncols_p(c)
-          cam_out(c)%nhx_nitrogen_flx(i) = dataptr1d_nhx(g) * scale_ndep
-          cam_out(c)%noy_nitrogen_flx(i) = dataptr1d_noy(g) * scale_ndep
-          g = g + 1
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'NDEP_NHx_month', fldptr1=dataptr1d_nhx, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+       end if
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'NDEP_NOy_month', fldptr1=dataptr1d_noy, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+       end if
+
+       ! NDEP read from forcing is in units of gN/m2/sec - but the mediator
+       ! expects units of kgN/m2/sec
+       scale_ndep = .001_r8
+       ig = 1
+       do lchnk = begchunk,endchunk
+          do icol = 1,get_ncols_p(lchnk)
+             cam_out(lchnk)%nhx_nitrogen_flx(icol) = dataptr1d_nhx(ig) * scale_ndep
+             cam_out(lchnk)%noy_nitrogen_flx(icol) = dataptr1d_noy(ig) * scale_ndep
+             ig = ig + 1
+          end do
        end do
-    end do
+
+    case ('drynhx:wetnhx:drynoy:wetnoy')
+
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'drynhx', fldptr1=dataptr1d_nhx_dry, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+       end if
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'wetnhx', fldptr1=dataptr1d_nhx_wet, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+       end if
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'drynoy', fldptr1=dataptr1d_noy_dry, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+       end if
+       call dshr_fldbun_getFldPtr(sdat_ndep%pstrm(1)%fldbun_model, 'wetnoy', fldptr1=dataptr1d_noy_wet, rc=rc)
+       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, line=__LINE__, file=__FILE__)) then
+          call ESMF_Finalize(endflag=ESMF_END_ABORT)
+       end if
+
+       ! NDEP read from forcing is in units of kgN/m2/sec
+       ig = 1
+       do lchnk = begchunk,endchunk
+          do icol = 1,get_ncols_p(lchnk)
+             cam_out(lchnk)%nhx_nitrogen_flx(icol) = dataptr1d_nhx_dry(ig) + dataptr1d_nhx_wet(ig)
+             cam_out(lchnk)%noy_nitrogen_flx(icol) = dataptr1d_noy_dry(ig) + dataptr1d_noy_wet(ig)
+             ig = ig + 1
+          end do
+       end do
+
+    end select
 
   end subroutine stream_ndep_interp
 
