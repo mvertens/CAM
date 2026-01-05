@@ -33,7 +33,7 @@ use constituents,   only: cnst_add, cnst_get_ind, &
 
 use cldfrc2m,       only: rhmini=>rhmini_const
 
-use cam_history,    only: addfld, add_default, outfld, horiz_only
+use cam_history,    only: addfld, add_default, outfld, horiz_only, hist_fld_active
 
 use cam_logfile,    only: iulog
 use cam_abortutils, only: endrun
@@ -1927,6 +1927,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    real(r8) :: umsout_grid(pcols,pver)
    real(r8) :: qcsevapout_grid(pcols,pver)
    real(r8) :: qisevapout_grid(pcols,pver)
+   real(r8) :: ncal_grid(pcols,pver)
 
    real(r8) :: nc_grid(pcols,pver)
    real(r8) :: ni_grid(pcols,pver)
@@ -2886,6 +2887,8 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
       call subcol_field_avg(icinc,     ngrdcol, lchnk, icinc_grid)
       call subcol_field_avg(state_loc%pdel,            ngrdcol, lchnk, pdel_grid)
 
+      call subcol_field_avg(ncal,    ngrdcol, lchnk, ncal_grid)
+
       pratot_sc(:ncol,:) = proc_rates%pratot(:ncol,1:nlev)
       call subcol_field_avg(pratot_sc,      ngrdcol, lchnk, prao_grid(:,top_lev:))
       prctot_sc(:ncol,:) = proc_rates%prctot(:ncol,1:nlev)
@@ -3049,6 +3052,8 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
       pdel_grid       = state_loc%pdel
       prao_grid(:ncol,top_lev:)       = proc_rates%pratot
       prco_grid(:ncol,top_lev:)       = proc_rates%prctot
+
+      ncal_grid       = ncal
 
       nc_grid = state_loc%q(:,:,ixnumliq)
       ni_grid = state_loc%q(:,:,ixnumice)
@@ -3563,23 +3568,26 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    if (qisevap_idx > 0 ) qisevapout_grid_ptr  = qisevapout_grid
 
    !Calculate values for comparing with Bennartz 2017
-   do i = 1, ncol
-      do k = top_lev, pver
-         !Criterions for Bennartz (2017) to use values from a column
-         !1) 268 < T < 300 [K]
-         !2) liquid cloud fraction > 10 %
-         if (   liqcldf_grid(i,k) > 0.1_r8   &
-               .and. state_loc%t(i,k) > 268.0_r8 &
-               .and. state_loc%t(i,k) < 300.0_r8 ) then
-            !Save cloud fraction and in-cloud number conc
-            ctnl_b(i)  = icwnc_grid(i,k) * liqcldf_grid(i,k)
-            fctl_b(i)  = liqcldf_grid(i,k)
-            ccn_b(i)   = ncal(i,k) * liqcldf_grid(i,k)
-            exit !==> Go out to i=1,ncol-loop
-         end if
-         !--IH
+   if (hist_fld_active('ACTNL_B') .or. hist_fld_active('FCTL_B') .or. &
+       hist_fld_active('CCN_B')) then
+      do i = 1, ngrdcol
+         do k = top_lev, pver
+            !Criterions for Bennartz (2017) to use values from a column
+            !1) 268 < T < 300 [K]
+            !2) liquid cloud fraction > 10 %
+            if (   liqcldf_grid(i,k) > 0.1_r8   &
+                  .and. state_loc%t(i,k) > 268.0_r8 &
+                  .and. state_loc%t(i,k) < 300.0_r8 ) then
+               !Save cloud fraction and in-cloud number conc
+               ctnl_b(i)  = icwnc_grid(i,k) * liqcldf_grid(i,k)
+               fctl_b(i)  = liqcldf_grid(i,k)
+               ccn_b(i)   = ncal_grid(i,k) * liqcldf_grid(i,k)
+               exit !==> Go out to i=1,ncol-loop
+            end if
+            !--IH
+         end do
       end do
-   end do
+   end if
 
    ! --------------------------------------------- !
    ! General outfield calls for microphysics       !
