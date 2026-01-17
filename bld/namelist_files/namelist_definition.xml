@@ -1836,8 +1836,7 @@ Default set by build-namelist based on sim_year.
 <entry id="co2flux_fuel_tintalgo" type="char*16" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="linear,lower,upper,nearest">
 Time interpolation algorithm to use for co2flux_fuel_datafile.
-If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
-the forcing file otherwise, set to 'linear'
+Default: nearest
 </entry>
 
 <entry id="co2flux_fuel_taxmode" type="char*16" category="co2_cycle"
@@ -1894,8 +1893,7 @@ Default: set by build-namelist based on sim_year
 <entry id="aircraft_co2_tintalgo" type="char*16" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="linear,lower,upper,nearest">
 Time interpolation algorithm to use for aircraft_co2_datafile.
-If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
-the forcing file otherwise, set to 'linear'
+Default: nearest
 </entry>
 
 <entry id="aircraft_co2_taxmode" type="char*16" category="co2_cycle"
