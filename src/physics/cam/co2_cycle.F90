@@ -277,7 +277,8 @@ contains
       end do
 
       ! Find and store the aircraft CO2 index
-      idx_ac_CO2 = pbuf_get_index('ac_CO2')
+      ! We can ignore the error code, idx_ac_CO2 is unchanged on error
+      idx_ac_CO2 = pbuf_get_index('ac_CO2', errcode=mm)
 
    end subroutine co2_init
 
