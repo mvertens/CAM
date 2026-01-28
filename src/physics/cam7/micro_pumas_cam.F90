@@ -33,7 +33,7 @@ use constituents,   only: cnst_add, cnst_get_ind, &
 
 use cldfrc2m,       only: rhmini=>rhmini_const
 
-use cam_history,    only: addfld, add_default, outfld, horiz_only
+use cam_history,    only: addfld, add_default, outfld, horiz_only, hist_fld_active
 
 use cam_logfile,    only: iulog
 use cam_abortutils, only: endrun
@@ -1152,6 +1152,11 @@ subroutine micro_pumas_cam_init(pbuf2d)
    call addfld ('FCTL',        horiz_only,   'A', 'fraction', 'Fractional occurrence of cloud top liquid',  sampled_on_subcycle=.true.)
    call addfld ('FCTI',        horiz_only,   'A', 'fraction', 'Fractional occurrence of cloud top ice',     sampled_on_subcycle=.true.)
 
+   ! Bennartz cloud top diagnostics for comparing to Bernartz CDNC concentrations
+   call addfld ('ACTNL_B', horiz_only, 'A', 'm-3',  'Average Cloud Top   droplet number (Bennartz)',        sampled_on_subcycle=.true.)       
+   call addfld ('FCTL_B', horiz_only, 'A', 'fraction','Fractional occurrence of cloud top liquid (Bennartz)', sampled_on_subcycle=.true.)      
+   call addfld ('CCN_B', horiz_only, 'A', 'm-3', 'Average Cloud Top liquid CCN (Bennartz)',                 sampled_on_subcycle=.true.)
+
    ! New frequency arrays for mixed phase and supercooled liquid (only and mixed) for (a) Cloud Top and (b) everywhere..
    call addfld ('FREQM',       (/ 'lev' /),  'A', 'fraction', 'Fractional occurrence of mixed phase',                  sampled_on_subcycle=.true.)
    call addfld ('FREQSL',      (/ 'lev' /),  'A', 'fraction', 'Fractional occurrence of only supercooled liquid',      sampled_on_subcycle=.true.)
@@ -1287,6 +1292,17 @@ subroutine micro_pumas_cam_init(pbuf2d)
       call add_default ('FREQS    ', 1, ' ')
       call add_default ('FREQL    ', 1, ' ')
       call add_default ('FREQI    ', 1, ' ')
+      call add_default ('ACTNL     ', 1, ' ')
+      call add_default ('ACTREL     ', 1, ' ')
+      call add_default ('FCTL    ', 1, ' ')
+      call add_default ('ACTNI     ', 1, ' ')
+      call add_default ('ACTREI     ', 1, ' ')
+      call add_default ('FCTI    ', 1, ' ')
+      !These are for comparing to Bennartz
+      call add_default ('FCTL_B    ', 1, ' ')
+      call add_default ('ACTNL_B     ', 1, ' ')
+      call add_default ('CCN_B       ', 1, ' ')
+
       do m = 1, ncnst
          call cnst_get_ind(cnst_names(m), mm)
          call add_default(cnst_name(mm), 1, ' ')
@@ -1813,6 +1829,10 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
 
    real(r8) :: ftem_grid(pcols,pver)
 
+   real(r8) :: fctl_b(pcols) !frequency of occurrence for Bennartz
+   real(r8) :: ctnl_b(pcols) !cdnc [/m3] for Bennartz
+   real(r8) :: ccn_b(pcols)  !ccm [/m3] defined as for cdnc for Bennartz
+
    ! Variables for precip efficiency calculation
    real(r8) :: minlwp        ! LWP threshold
 
@@ -1907,6 +1927,7 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    real(r8) :: umsout_grid(pcols,pver)
    real(r8) :: qcsevapout_grid(pcols,pver)
    real(r8) :: qisevapout_grid(pcols,pver)
+   real(r8) :: ncal_grid(pcols,pver)
 
    real(r8) :: nc_grid(pcols,pver)
    real(r8) :: ni_grid(pcols,pver)
@@ -3492,6 +3513,10 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    fctsl_grid = 0._r8
    fctslm_grid= 0._r8
 
+   fctl_b  = 0._r8
+   ctnl_b  = 0._r8
+   ccn_b   = 0._r8
+
    do i = 1, ngrdcol
       do k = top_lev, pver
          if ( liqcldf_grid(i,k) > 0.01_r8 .and. icwmrst_grid(i,k) > 1.e-7_r8 ) then
@@ -3537,6 +3562,34 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    if (ums_idx > 0)      umsout_grid_ptr      = umsout_grid
    if (qcsevap_idx > 0 ) qcsevapout_grid_ptr  = qcsevapout_grid
    if (qisevap_idx > 0 ) qisevapout_grid_ptr  = qisevapout_grid
+
+   !Calculate values for comparing with Bennartz 2017
+   if (hist_fld_active('ACTNL_B') .or. hist_fld_active('FCTL_B') .or. &
+       hist_fld_active('CCN_B')) then
+      if (use_subcol_microp) then
+         call subcol_field_avg(ncal,    ngrdcol, lchnk, ncal_grid)
+      else
+          ncal_grid = ncal
+      end if
+      
+      do i = 1, ngrdcol
+         do k = top_lev, pver
+            !Criterions for Bennartz (2017) to use values from a column
+            !1) 268 < T < 300 [K]
+            !2) liquid cloud fraction > 10 %
+            if (   liqcldf_grid(i,k) > 0.1_r8   &
+                  .and. state_loc%t(i,k) > 268.0_r8 &
+                  .and. state_loc%t(i,k) < 300.0_r8 ) then
+               !Save cloud fraction and in-cloud number conc
+               ctnl_b(i)  = icwnc_grid(i,k) * liqcldf_grid(i,k)
+               fctl_b(i)  = liqcldf_grid(i,k)
+               ccn_b(i)   = ncal_grid(i,k) * liqcldf_grid(i,k)
+               exit !==> Go out to i=1,ncol-loop
+            end if
+            !--IH
+         end do
+      end do
+   end if
 
    ! --------------------------------------------- !
    ! General outfield calls for microphysics       !
@@ -3827,6 +3880,10 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    call outfld('FCTM',        fctm_grid,        pcols, lchnk)
    call outfld('FCTSL',       fctsl_grid,       pcols, lchnk)
    call outfld('FCTSLM',      fctslm_grid,      pcols, lchnk)
+
+   call outfld( 'FCTL_B'       , fctl_b,      pcols, lchnk )
+   call outfld( 'ACTNL_B'      , ctnl_b,      pcols, lchnk )
+   call outfld( 'CCN_B'      , ccn_b,          pcols, lchnk )
 
    if (micro_mg_version > 2) then
       call outfld('PRACGO',      pracgo_grid,      pcols, lchnk)
