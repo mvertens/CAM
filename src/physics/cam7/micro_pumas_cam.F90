@@ -2887,8 +2887,6 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
       call subcol_field_avg(icinc,     ngrdcol, lchnk, icinc_grid)
       call subcol_field_avg(state_loc%pdel,            ngrdcol, lchnk, pdel_grid)
 
-      call subcol_field_avg(ncal,    ngrdcol, lchnk, ncal_grid)
-
       pratot_sc(:ncol,:) = proc_rates%pratot(:ncol,1:nlev)
       call subcol_field_avg(pratot_sc,      ngrdcol, lchnk, prao_grid(:,top_lev:))
       prctot_sc(:ncol,:) = proc_rates%prctot(:ncol,1:nlev)
@@ -3052,8 +3050,6 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
       pdel_grid       = state_loc%pdel
       prao_grid(:ncol,top_lev:)       = proc_rates%pratot
       prco_grid(:ncol,top_lev:)       = proc_rates%prctot
-
-      ncal_grid       = ncal
 
       nc_grid = state_loc%q(:,:,ixnumliq)
       ni_grid = state_loc%q(:,:,ixnumice)
@@ -3570,6 +3566,12 @@ subroutine micro_pumas_cam_tend(state, ptend, dtime, pbuf)
    !Calculate values for comparing with Bennartz 2017
    if (hist_fld_active('ACTNL_B') .or. hist_fld_active('FCTL_B') .or. &
        hist_fld_active('CCN_B')) then
+      if (use_subcol_microp) then
+         call subcol_field_avg(ncal,    ngrdcol, lchnk, ncal_grid)
+      else
+          ncal_grid = ncal
+      end if
+      
       do i = 1, ngrdcol
          do k = top_lev, pver
             !Criterions for Bennartz (2017) to use values from a column
