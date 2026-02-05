@@ -1618,7 +1618,7 @@ contains
          stream_filenames    = nudge_filenames,           &
          stream_yearFirst    = nudge_year_first,          &
          stream_yearLast     = nudge_year_last,           &
-         stream_yearAlign    = nudge_year_first,          &
+         stream_yearAlign    = nudge_year_align,          &
          stream_fldlistFile  = nudge_varlist_singl,       &
          stream_fldListModel = nudge_varlist_singl,       &
          stream_lev_dimname  = 'null',                    &
