@@ -11,7 +11,6 @@ module atm_comp_nuopc
    use ESMF                , only : ESMF_DistGrid, ESMF_DistGridCreate
    use ESMF                , only : ESMF_Mesh, ESMF_MeshCreate, ESMF_MeshGet, ESMF_FILEFORMAT_ESMFMESH
    use ESMF                , only : ESMF_Clock, ESMF_ClockGet, ESMF_ClockSet, ESMF_ClockGetNextTime, ESMF_ClockAdvance
-   use ESMF                , only : ESMF_CLockCreate
    use ESMF                , only : ESMF_Time, ESMF_TimeGet
    use ESMF                , only : ESMF_Alarm, ESMF_ClockGetAlarm, ESMF_AlarmRingerOff, ESMF_AlarmIsRinging
    use ESMF                , only : ESMF_ClockGetAlarmList, ESMF_ALARMLIST_ALL, ESMF_AlarmSet

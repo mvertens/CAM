@@ -238,12 +238,6 @@
        Default: none
        </entry>
 
-<entry id="Nudge_lev_dimname" type="char*256" category="nudging"
-       group="nudging_nl" valid_values="" >
-       Name of vertical dimension in file.
-       Default: none
-       </entry>
-
 <entry id="Model_Update_Times_Per_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
        Number of time to update model data per day.
