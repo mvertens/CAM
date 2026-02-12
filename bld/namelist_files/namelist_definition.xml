@@ -238,6 +238,42 @@
        Default: none
        </entry>
 
+<entry id="Nudge_Data_Year_First" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       First nudging year of data to use (nudging calendar)
+       Default: none
+       </entry>
+
+<entry id="Nudge_Data_Year_Last" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Last nudging year of data to use (nudging calendar)
+       Default: none
+       </entry>
+
+<entry id="Nudge_Data_Year_Align" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Model year to align with Nudge_Data_Year_First.
+       Default: none
+       </entry>
+
+<entry id="Nudge_Data_Mapalgo" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="bilinear,consf" >
+       Mapping algorithm to map nudge data to model grid.
+       Default: bilinear
+       </entry>
+
+<entry id="Nudge_Data_Taxmode" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="limit,extend" >
+       Time extrapolation mode for time interpolation.
+       Default: limit
+       </entry>
+
+<entry id="Nudge_Data_levname" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Name of vertical variable in Nudge_filenames.
+       Default: lev
+       </entry>
+
 <entry id="Model_Update_Times_Per_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
        Number of time to update model data per day.
@@ -281,12 +317,6 @@
        Default: none
        </entry>
 
-<entry id="Nudge_Align_Year" type="integer" category="nudging"
-       group="nudging_nl" valid_values="" >
-       Model year to align with Nudge_Beg_Year.
-       Default: none
-       </entry>
-
 <entry id="Nudge_Force_Opt" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
        Select the form of nudging forcing, where (t'==Analysis times ; t==Model Times)
@@ -302,24 +332,6 @@
          0 -->  TimeScale = 1/Tdlt_Anal
          1 -->  TimeScale = 1/(t'_next - t_curr )
        Default: 0
-       </entry>
-
-<entry id="Nudge_Mapalgo" type="char*256" category="nudging"
-       group="nudging_nl" valid_values="bilinear,consf" >
-       Mapping algorithm to map nudge data to model grid.
-       Default: bilinear
-       </entry>
-
-<entry id="Nudge_Taxmode" type="char*256" category="nudging"
-       group="nudging_nl" valid_values="limit,extend" >
-       Time extrapolation mode for time interpolation.
-       Default: limit
-       </entry>
-
-<entry id="Nudge_levname" type="char*256" category="nudging"
-       group="nudging_nl" valid_values="" >
-       Name of vertical variable in Nudge_filenames.
-       Default: bilinear
        </entry>
 
 <entry id="Nudge_Uprof" type="integer" category="nudging"
