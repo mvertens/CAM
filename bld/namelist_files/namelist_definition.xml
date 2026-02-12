@@ -252,7 +252,12 @@
 
 <entry id="Nudge_Data_Year_Align" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Model year to align with Nudge_Data_Year_First.
+       Model year to align with Nudge_Beg_Year.
+       Model (simulation) year to align with Nudge_Data_Year_First.
+       If this is set to Nudge_Beg_Year, then nudging will begin with
+       the beginning of the dataset.  If this is set to some other
+       year, there will be an offset between the model year and the
+       year in the nudging data currently being used.
        Default: none
        </entry>
 

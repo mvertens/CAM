@@ -121,15 +121,17 @@ module nudging
 !                              48 --> 1800 Second timestep.
 !                              96 -->  900 Second timestep.
 !
-!      Nudge_Beg_Year      - INT nudging begining year.  [1979- ]
-!      Nudge_Beg_Month     - INT nudging begining month. [1-12]
-!      Nudge_Beg_Day       - INT nudging begining day.   [1-31]
+!      Nudge_Beg_Year      - INT model time nudging begining year.  [1979- ]
+!      Nudge_Beg_Month     - INT model time nudging begining month. [1-12]
+!      Nudge_Beg_Day       - INT model time nudging begining day.   [1-31]
 !
-!      Nudge_End_Year      - INT nudging ending year.    [1979-]
-!      Nudge_End_Month     - INT nudging ending month.   [1-12]
-!      Nudge_End_Day       - INT nudging ending day.     [1-31]
+!      Nudge_End_Year      - INT model time nudging ending year.    [1979-]
+!      Nudge_End_Month     - INT model time nudging ending month.   [1-12]
+!      Nudge_End_Day       - INT model time nudging ending day.     [1-31]
 !
-!      Nudge_Align_Year    - INT simulation year corresponding to NUDGE_BEG_YEAR.
+!      Nudge_Data_Year_First- INT first year of nudging data to use
+!      Nudge_Data_Year_Last - INT last year of nudging data to use
+!      Nudge_Data_Year_Align - INT nudging data year corresponding to NUDGE_BEG_YEAR.
 !                            A common usage is to set this to the first year of the model run
 !                            (corresponding to the xml variable RUN_STARTDATE). With this setting,
 !                            the forcing in the first year of the run will be the forcing of year
@@ -141,17 +143,17 @@ module nudging
 !                            year. This would be appropriate in transient runs where the model
 !                            calendar is setup to span the same year range as the forcing data.
 !                            If Nudge_Align_Year is not set - then it is set to NUDGE_BEG_YEAR.
+!     Nudge_Data_Mapalgo   - CHAR mapping algorithm to map nudge data to model grid. Default: bilinear
+!     Nudge_Data_Taxmode   - CHAR Time extrapolation mode for time interpolation. Default: limit
 !
-!      Nudge_Force_Opt     - INT Index to select the nudging Target for a relaxation forcing of the form:
+!     Nudge_Force_Opt      - INT Index to select the nudging Target for a relaxation forcing of the form:
 !                                where (t'==Analysis times ; t==Model Times)
-!
 !                              0 -> NEXT-OBS: Target=Anal(t'_next)    [DEFAULT]
 !                              1 -> LINEAR:   Target=(F*Anal(t'_curr) +(1-F)*Anal(t'_next))
 !                                                 F =(t'_next - t_curr )/Tdlt_Anal
 !
 !      Nudge_TimeScale_Opt - INT Index to select the timescale for nudging.
 !                                where (t'==Analysis times ; t==Model Times)
-!
 !                              0 -->  TimeScale = 1/Tdlt_Anal [DEFAULT]
 !                              1 -->  TimeScale = 1/(t'_next - t_curr )
 !
@@ -160,7 +162,6 @@ module nudging
 !      Nudge_Tprof         - INT index of profile structure to use for T.  [0,1,2]
 !      Nudge_Qprof         - INT index of profile structure to use for Q.  [0,1,2]
 !      Nudge_PSprof        - INT index of profile structure to use for PS. [0,N/A]
-!
 !                                The spatial distribution is specified with a profile index.
 !                                 Where:  0 == OFF      (No Nudging of this variable)
 !                                         1 == CONSTANT (Spatially Uniform Nudging)
@@ -171,7 +172,6 @@ module nudging
 !      Nudge_Tcoef         - REAL fractional nudging coeffcient for T.
 !      Nudge_Qcoef         - REAL fractional nudging coeffcient for Q.
 !      Nudge_PScoef        - REAL fractional nudging coeffcient for PS.
-!
 !                                 The strength of the nudging is specified as a fractional
 !                                 coeffcient between [0,1].
 !
@@ -206,6 +206,7 @@ module nudging
   use ESMF              , only : ESMF_SUCCESS, ESMF_LogWrite, ESMF_LOGMSG_ERROR
   use ESMF              , only : operator(==), operator(-), operator(+), operator(<=), operator(>=)
   use shr_kind_mod      , only : r8=>SHR_KIND_R8, cs=>SHR_KIND_CS, cl=>SHR_KIND_CL
+  use ppgrid            , only : pver
   use time_manager      , only : get_curr_date, get_step_size
   use cam_abortutils    , only : endrun, handle_allocate_error
   use cam_logfile       , only : iulog
@@ -223,10 +224,6 @@ module nudging
   implicit none
   private
 
-  ! public variables
-  logical, public, protected :: Nudge_Model =.false.
-  logical, public, protected :: Nudge_On = .false.
-
   public  :: nudging_readnl
   public  :: nudging_init
   public  :: nudging_timestep_init
@@ -242,76 +239,86 @@ module nudging
 
   ! Nudging Parameters
   !--------------------
+  integer, parameter         :: iunset = -999
+  !
+  logical, public, protected :: Nudge_Model =.false.
+  logical, public, protected :: Nudge_On = .false.
+  logical                    :: Nudge_Initialized = .false.
+  !
   integer, parameter      :: maxfiles = 100
-  logical                 :: Nudge_Initialized =.false.
-  character(len=cl)       :: Nudge_Meshfile
-  character(len=cl)       :: Nudge_Filenames(maxfiles)
-  character(len=cl)       :: Nudge_Datapath
-  integer                 :: Nudge_Data_Year_First ! namelist - relative to nudging data dates
-  integer                 :: Nudge_Data_Year_Last  ! namelist - relative to nudging data dates
-  integer                 :: Nudge_Data_Year_Align ! namelist - align year for nudging
-  character(len=cs)       :: Nudge_Data_mapalgo    ! namelist - [bilinear, consf, nn]
-  character(len=cs)       :: Nudge_Data_tintalgo   ! namelist - [linear, upper]
-  character(len=cs)       :: Nudge_Data_taxmode    ! namelist - [limit, extend]
-  character(len=cs)       :: Nudge_Data_levname    ! namelist
+  character(len=cl)       :: Nudge_Datapath            = 'unset'    ! derived
+  character(len=cl)       :: Nudge_Meshfile            = 'unset'    ! namelist
+  character(len=cl)       :: Nudge_Filenames(maxfiles) = 'unset'    ! namelist
+  integer                 :: Nudge_Data_Year_First     = iunset     ! namelist
+  integer                 :: Nudge_Data_Year_Last      = iunset     ! namelist
+  integer                 :: Nudge_Data_Year_Align     = iunset     ! namelist
+  character(len=cs)       :: Nudge_Data_mapalgo        = 'bilinear' ! namelist - [bilinear, consf, nn]
+  character(len=cs)       :: Nudge_Data_taxmode        = 'limit'    ! namelist - [limit, extend]
+  character(len=cs)       :: Nudge_Data_levname        = 'lev'      ! namelist - default is 'lev'
+  character(len=cs)       :: Nudge_Data_tintalgo                    ! derived  - [linear, upper]
 
-  integer                 :: Nudge_Beg_year        ! namelist  (model time)
-  integer                 :: Nudge_Beg_month       ! namelist  (model time)
-  integer                 :: Nudge_Beg_day         ! namelist  (model time)
-  integer                 :: Nudge_Beg_sec         ! hard-wired to 0
-  type(ESMF_Time)         :: Nudge_Beg_time        ! derived
+  integer                 :: Nudge_Beg_year  = iunset               ! namelist  (model time)
+  integer                 :: Nudge_Beg_month = iunset               ! namelist  (model time)
+  integer                 :: Nudge_Beg_day   = iunset               ! namelist  (model time)
+  integer                 :: Nudge_Beg_sec   = 0                    ! hard-wired (Nudging always begins at midnight)
+  type(ESMF_Time)         :: Nudge_Beg_time                         ! derived from above
 
-  integer                 :: Nudge_End_year        ! namelist  (model time)
-  integer                 :: Nudge_End_month       ! namelist  (model time)
-  integer                 :: Nudge_End_day         ! namelist  (model time)
-  integer                 :: Nudge_End_sec         ! hard-wired to 0
-  type(ESMF_Time)         :: Nudge_End_time        ! derived
+  integer                 :: Nudge_End_year  = iunset               ! namelist  (model time)
+  integer                 :: Nudge_End_month = iunset               ! namelist  (model time)
+  integer                 :: Nudge_End_day   = iunset               ! namelist  (model time)
+  integer                 :: Nudge_End_sec   = 0                    ! hard-wired (Nudging always ends at midnight)
+  type(ESMF_Time)         :: Nudge_End_time                         ! derived from above
 
-  integer                 :: Model_Update_Times_Per_Day
-  type(ESMF_TimeInterval) :: Model_Update_Interval
-  type(ESMF_Time)         :: Model_Update_Next_Time
+  integer                 :: Model_Update_Times_Per_Day = 4         ! namelist
+  type(ESMF_TimeInterval) :: Model_Update_Interval                  ! derived
+  type(ESMF_Time)         :: Model_Update_Next_Time                 ! derived
 
-  integer                 :: Nudge_Force_Opt
-  integer                 :: Nudge_TimeScale_Opt
-  integer                 :: Nudge_TSmode
+  integer                 :: Nudge_Force_Opt = 0                    ! namelist
+  integer                 :: Nudge_TimeScale_Opt = 0                ! namelist
+  integer                 :: Nudge_TSmode = 0                       ! hard-wired
 
-  real(r8)                :: Nudge_Ucoef,Nudge_Vcoef
-  integer                 :: Nudge_Uprof,Nudge_Vprof
-  real(r8)                :: Nudge_Qcoef,Nudge_Tcoef
-  integer                 :: Nudge_Qprof,Nudge_Tprof
-  real(r8)                :: Nudge_PScoef
-  integer                 :: Nudge_PSprof
+  real(r8)                :: Nudge_Ucoef  = 0._r8                   ! namelist
+  real(r8)                :: Nudge_Vcoef  = 0._r8                   ! namelist
+  real(r8)                :: Nudge_Qcoef  = 0._r8                   ! namelist
+  real(r8)                :: Nudge_Tcoef  = 0._r8                   ! namelist
+  real(r8)                :: Nudge_PScoef = 0._r8                   ! namelist
 
-  real(r8)                :: Nudge_Hwin_lat0
-  real(r8)                :: Nudge_Hwin_latWidth
-  real(r8)                :: Nudge_Hwin_latDelta
-  real(r8)                :: Nudge_Hwin_lon0
-  real(r8)                :: Nudge_Hwin_lonWidth
-  real(r8)                :: Nudge_Hwin_lonDelta
-  logical                 :: Nudge_Hwin_Invert = .false.
-  real(r8)                :: Nudge_Hwin_lo
-  real(r8)                :: Nudge_Hwin_hi
+  integer                 :: Nudge_Uprof  = 0                       ! namelist
+  integer                 :: Nudge_Vprof  = 0                       ! namelist
+  integer                 :: Nudge_Qprof  = 0                       ! namelist
+  integer                 :: Nudge_Tprof  = 0                       ! namelist
+  integer                 :: Nudge_PSprof = 0                       ! namelist
 
-  real(r8)                :: Nudge_Vwin_Hindex
-  real(r8)                :: Nudge_Vwin_Hdelta
-  real(r8)                :: Nudge_Vwin_Lindex
-  real(r8)                :: Nudge_Vwin_Ldelta
-  logical                 :: Nudge_Vwin_Invert =.false.
-  real(r8)                :: Nudge_Vwin_lo
-  real(r8)                :: Nudge_Vwin_hi
+  real(r8)                :: Nudge_Hwin_lat0     = 0._r8            ! namelist
+  real(r8)                :: Nudge_Hwin_lon0     = 180._r8          ! namelist
+  real(r8)                :: Nudge_Hwin_latWidth = 9999._r8         ! namelist
+  real(r8)                :: Nudge_Hwin_lonWidth = 9999._r8         ! namelist
+  real(r8)                :: Nudge_Hwin_latDelta = 1.0_r8           ! namelist
+  real(r8)                :: Nudge_Hwin_lonDelta = 1.0_r8           ! namelist
+  real(r8)                :: Nudge_Hwin_lo       = 0._r8            ! namelist
+  real(r8)                :: Nudge_Hwin_hi       = 1.0_r8           ! namelist
+  logical                 :: Nudge_Hwin_Invert   = .false.          ! namelist
 
-  real(r8)                :: Nudge_Hwin_latWidthH
-  real(r8)                :: Nudge_Hwin_lonWidthH
-  real(r8)                :: Nudge_Hwin_max
-  real(r8)                :: Nudge_Hwin_min
+  real(r8)                :: Nudge_Vwin_Hindex   = float(pver+1)    ! namelist
+  real(r8)                :: Nudge_Vwin_Hdelta   = 0.001_r8         ! namelist
+  real(r8)                :: Nudge_Vwin_Lindex   = 0.0_r8           ! namelist
+  real(r8)                :: Nudge_Vwin_Ldelta   = 0.001_r8         ! namelist
+  real(r8)                :: Nudge_Vwin_lo       = 0.0_r8           ! namelist
+  real(r8)                :: Nudge_Vwin_hi       = 1.0_r8           ! namelist
+  logical                 :: Nudge_Vwin_Invert   = .false.          ! namelist
+
+  real(r8)                :: Nudge_Hwin_latWidthH                   ! derived
+  real(r8)                :: Nudge_Hwin_lonWidthH                   ! derived
+  real(r8)                :: Nudge_Hwin_max                         ! derived
+  real(r8)                :: Nudge_Hwin_min                         ! derived
 
   ! Nudging Zonal Filter variables
   !---------------------------------
-  logical             :: Nudge_ZonalFilter =.false.
-  integer             :: Nudge_ZonalNbasis = -1
-  type(ZonalMean_t)   :: ZM
-  real(r8),allocatable:: Zonal_Bamp2d(:)
-  real(r8),allocatable:: Zonal_Bamp3d(:,:)
+  logical             :: Nudge_ZonalFilter =.false.                 ! namelist
+  integer             :: Nudge_ZonalNbasis = -1                     ! namelist
+  type(ZonalMean_t)   :: ZM                                         ! derived
+  real(r8),allocatable:: Zonal_Bamp2d(:)                            ! derived
+  real(r8),allocatable:: Zonal_Bamp3d(:,:)                          ! derived
 
   ! Nudging State Arrays
   !-----------------------
@@ -333,7 +340,6 @@ module nudging
   character(len=2)       :: nudge_varlist_multi(4) = (/'U ', 'V ','T ','Q '/)
   character(len=2)       :: nudge_varlist_singl(1) = (/'PS'/)
 
-  integer, parameter :: iunset = -999
   logical :: stream_initialized = .false.
 
   character(len=*),parameter :: u_FILE_u = __FILE__
@@ -343,11 +349,8 @@ contains
   !================================================================
   subroutine nudging_readnl(nlfile)
    !
-   ! NUDGING_READNL: Initialize default values controlling the Nudging
-   !                 process. Then read namelist values to override
-   !                 them.
+   ! NUDGING_READNL: Read in namelist values to override default settings
    !===============================================================
-   use ppgrid,         only: pver
    use namelist_utils, only: find_group_name
    !
    ! Arguments
@@ -384,67 +387,6 @@ contains
    ! For Zonal Mean Filtering
    namelist /nudging_nl/ Nudge_ZonalFilter, Nudge_ZonalNbasis
    ! ----------------------------------------------------------------------------
-
-   ! Nudging is NOT initialized yet, For now
-   ! Nudging will always begin/end at midnight.
-   !--------------------------------------------
-   Nudge_Initialized =.false.
-   Nudge_End_Sec     = 0
-   Nudge_Beg_Sec     = 0
-
-   ! Set Default Namelist values
-   !-----------------------------
-   Nudge_Model              = .false.
-   Model_Update_Times_Per_Day = 4
-
-   Nudge_Datapath           = 'unset'
-   Nudge_Filenames(:)       = 'unset'
-   Nudge_Meshfile           = 'unset'
-   Nudge_Data_Year_Align    = iunset
-   Nudge_Data_Year_First    = iunset
-   Nudge_Data_Year_Last     = iunset
-   Nudge_Data_Mapalgo       = 'bilinear'
-   Nudge_Data_taxmode       = 'limit'
-   Nudge_Data_levname       = 'lev'
-
-   Nudge_Beg_Year           = iunset
-   Nudge_Beg_Month          = iunset
-   Nudge_Beg_Day            = iunset
-   Nudge_End_Year           = iunset
-   Nudge_End_Month          = iunset
-   Nudge_End_Day            = iunset
-
-   Nudge_Force_Opt          = 0
-   Nudge_TimeScale_Opt      = 0
-   Nudge_TSmode             = 0
-
-   Nudge_Ucoef              = 0._r8
-   Nudge_Vcoef              = 0._r8
-   Nudge_Qcoef              = 0._r8
-   Nudge_Tcoef              = 0._r8
-   Nudge_PScoef             = 0._r8
-
-   Nudge_Uprof              = 0
-   Nudge_Vprof              = 0
-   Nudge_Qprof              = 0
-   Nudge_Tprof              = 0
-   Nudge_PSprof             = 0
-
-   Nudge_Hwin_lat0          = 0._r8
-   Nudge_Hwin_latWidth      = 9999._r8
-   Nudge_Hwin_latDelta      = 1.0_r8
-   Nudge_Hwin_lon0          = 180._r8
-   Nudge_Hwin_lonWidth      = 9999._r8
-   Nudge_Hwin_lonDelta      = 1.0_r8
-   Nudge_Hwin_Invert        = .false.
-
-   Nudge_Vwin_Hindex        = float(pver+1)
-   Nudge_Vwin_Hdelta        = 0.001_r8
-   Nudge_Vwin_Lindex        = 0.0_r8
-   Nudge_Vwin_Ldelta        = 0.001_r8
-   Nudge_Vwin_Invert        = .false.
-   Nudge_Vwin_lo            = 0.0_r8
-   Nudge_Vwin_hi            = 1.0_r8
 
    ! Read in namelist values
    !------------------------
@@ -661,9 +603,6 @@ contains
       endif
 
    end if check_valid
-
-   ! End Routine
-   !------------
 
   end subroutine nudging_readnl
   !================================================================
@@ -952,9 +891,6 @@ contains
      end do
    end do
 
-   ! End Routine
-   !------------
-
   end subroutine nudging_init
   !================================================================
 
@@ -1219,9 +1155,6 @@ contains
 
    endif ! (Update_Model)
 
-   ! End Routine
-   !------------
-
   end subroutine nudging_timestep_init
   !================================================================
 
@@ -1269,9 +1202,6 @@ contains
       call outfld( 'Nudge_T',phys_tend%s/cpair    ,pcols,lchnk)
       call outfld( 'Nudge_Q',phys_tend%q(:,:,indw),pcols,lchnk)
    end if
-
-   ! End Routine
-   !------------
 
   end subroutine nudging_timestep_tend
   !================================================================
@@ -1377,11 +1307,9 @@ contains
      call endrun('nudging_set_profile:: Unknown Nudge_prof value')
    endif
 
-   ! End Routine
-   !------------
-
   end subroutine nudging_set_profile
   !================================================================
+
 
   !================================================================
   subroutine nudging_final
@@ -1405,6 +1333,7 @@ contains
 
   end subroutine nudging_final
   !================================================================
+
 
   !================================================================
   real(r8) function nudging_set_PSprofile(rlat,rlon,Nudge_PSprof)
@@ -1525,9 +1454,6 @@ contains
      end do
 
    end do ! kk=pver,1,-1
-
-   ! End Routine
-   !-----------
 
   end subroutine calc_DryStaticEnergy
   !================================================================
