@@ -240,24 +240,19 @@
 
 <entry id="Nudge_Data_Year_First" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       First nudging year of data to use (nudging calendar)
+       First year of nudging data to use.
        Default: none
        </entry>
 
 <entry id="Nudge_Data_Year_Last" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Last nudging year of data to use (nudging calendar)
+       Last year of nudging data to use.
        Default: none
        </entry>
 
 <entry id="Nudge_Data_Year_Align" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Model year to align with Nudge_Beg_Year.
        Model (simulation) year to align with Nudge_Data_Year_First.
-       If this is set to Nudge_Beg_Year, then nudging will begin with
-       the beginning of the dataset.  If this is set to some other
-       year, there will be an offset between the model year and the
-       year in the nudging data currently being used.
        Default: none
        </entry>
 
@@ -288,37 +283,37 @@
 
 <entry id="Nudge_Beg_Year" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Year at which Nudging Begins.
+       Model year at which nudging begins.
        Default: none
        </entry>
 
 <entry id="Nudge_Beg_Month" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Month at which Nudging Begins.
+       Model month at which nudging begins.
        Default: none
        </entry>
 
 <entry id="Nudge_Beg_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Day at which Nudging Begins.
+       Model day at which nudging begins.
        Default: none
        </entry>
 
 <entry id="Nudge_End_Year" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Year at which Nudging Ends.
+       Model year at which nudging ends.
        Default: none
        </entry>
 
 <entry id="Nudge_End_Month" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Month at which Nudging Ends.
+       Model month at which nudging ends.
        Default: none
        </entry>
 
 <entry id="Nudge_End_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Day at which Nudging Ends.
+       Model day at which nudging ends.
        Default: none
        </entry>
 

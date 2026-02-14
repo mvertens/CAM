@@ -129,22 +129,12 @@ module nudging
 !      Nudge_End_Month     - INT model time nudging ending month.   [1-12]
 !      Nudge_End_Day       - INT model time nudging ending day.     [1-31]
 !
-!      Nudge_Data_Year_First- INT first year of nudging data to use
-!      Nudge_Data_Year_Last - INT last year of nudging data to use
-!      Nudge_Data_Year_Align - INT nudging data year corresponding to NUDGE_BEG_YEAR.
-!                            A common usage is to set this to the first year of the model run
-!                            (corresponding to the xml variable RUN_STARTDATE). With this setting,
-!                            the forcing in the first year of the run will be the forcing of year
-!                            yearFirst.
-!                            Another usage is to align the calendar of transient forcing with the
-!                            model calendar. For example, setting yearAlign = yearFirst will lead
-!                            to the forcing calendar being the same as the model calendar. The
-!                            forcing for a given model year would be the forcing of the same
-!                            year. This would be appropriate in transient runs where the model
-!                            calendar is setup to span the same year range as the forcing data.
-!                            If Nudge_Align_Year is not set - then it is set to NUDGE_BEG_YEAR.
-!     Nudge_Data_Mapalgo   - CHAR mapping algorithm to map nudge data to model grid. Default: bilinear
-!     Nudge_Data_Taxmode   - CHAR Time extrapolation mode for time interpolation. Default: limit
+!      Nudge_Data_Year_First - INT first year of nudging data to use
+!      Nudge_Data_Year_Last  - INT last year of nudging data to use
+!      Nudge_Data_Year_Align - INT model (simulation) year to align with Nudge_Data_Year_First.
+!                              If Nudge_Data_Year_Align is not set - then it is set to NUDGE_BEG_YEAR.
+!     Nudge_Data_Mapalgo     - CHAR mapping algorithm to map nudge data to model grid. Default: bilinear
+!     Nudge_Data_Taxmode     - CHAR Time extrapolation mode for time interpolation. Default: limit
 !
 !     Nudge_Force_Opt      - INT Index to select the nudging Target for a relaxation forcing of the form:
 !                                where (t'==Analysis times ; t==Model Times)
@@ -1691,6 +1681,10 @@ contains
 
   !================================================================
   subroutine get_calendar(sdat, model_year, model_month, model_day, calendar)
+
+     ! Determine calendar to use for nudging (used in calling shr_cal_timeSet)
+     ! The model calendar is determined based on the model ESMF clock
+     ! The stream calendar is determined from the input stream data 'time' calendar attribute
 
      use shr_cal_mod, only : shr_cal_noleap, shr_cal_gregorian
      use shr_cal_mod, only : shr_cal_date2ymd, shr_cal_leapyear
