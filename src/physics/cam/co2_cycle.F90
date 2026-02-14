@@ -13,6 +13,7 @@ module co2_cycle
    !-------------------------------------------------------------------------------
 
    use shr_kind_mod,  only: r8=>shr_kind_r8
+   use cam_abortutils,  only: endrun
 
    implicit none
    private
@@ -38,7 +39,7 @@ module co2_cycle
    integer, parameter         :: ncnst=4    ! number of constituents implemented
    integer, public, protected :: c_i(ncnst) ! global index for new constituents
 
-   character(len=7), dimension(ncnst), parameter :: & ! constituent names
+   character(len=7), dimension(ncnst), parameter, public :: & ! constituent names
         c_names = (/'CO2_OCN', 'CO2_FFF', 'CO2_LND', 'CO2    '/)
 
    integer :: co2_fff_glo_ind = -1 ! global index of 'CO2_FFF'
@@ -320,6 +321,9 @@ contains
 
       if (idx_ac_CO2 > 0) then
          call pbuf_get_field(pbuf, idx_ac_CO2, ac_CO2)
+         if (any(ac_CO2 /= 0.0_r8)) then
+            call endrun('ac_CO2 from aircraft is nonzero')
+         end if
 
          ! [ac_CO2] = 'kg m-2 s-1'
          ! [ptend%q] = 'kg kg-1 s-1'

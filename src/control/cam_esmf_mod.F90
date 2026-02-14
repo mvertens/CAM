@@ -15,6 +15,7 @@ module cam_esmf_mod
   public :: cam_esmf_set_mesh
   public :: cam_esmf_set_areas
   public :: cam_esmf_global_sum
+  public :: cam_esmf_global_sum2
 
   type(ESMF_Mesh) , public, protected :: model_mesh     ! model mesh
   type(ESMF_Clock), public, protected :: model_clock    ! model clock
@@ -161,5 +162,33 @@ contains
       global_sum_mesh = global_mesh(1)
 
    end subroutine cam_esmf_global_sum
+
+   !=====================================================================
+   subroutine cam_esmf_global_sum2(flddata, global_sum_model, rc)
+
+      ! Arguments
+      real(r8), intent(in)  :: flddata
+      real(r8), intent(out) :: global_sum_model
+      integer , intent(out) :: rc
+
+      ! local variables
+      type(ESMF_VM) :: vm
+      real(r8)      :: local_sum_model(1)
+      real(r8)      :: global_model(1)
+      !---------------------------------------
+
+      rc = ESMF_SUCCESS
+
+      local_sum_model(1) = flddata
+
+      call ESMF_VMGetCurrent(vm, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+      call ESMF_VMAllreduce(vm, senddata=local_sum_model, recvdata=global_model, &
+           count=1, reduceflag=ESMF_REDUCE_SUM, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      global_sum_model = global_model(1)
+
+   end subroutine cam_esmf_global_sum2
 
 end module cam_esmf_mod
