@@ -236,7 +236,7 @@ module nudging
   logical                    :: Nudge_Initialized = .false.
   !
   integer, parameter      :: maxfiles = 100
-  character(len=cl)       :: Nudge_Datapath            = 'unset'    ! derived
+  character(len=cl)       :: Nudge_Datapath            = 'unset'    ! namelist
   character(len=cl)       :: Nudge_Meshfile            = 'unset'    ! namelist
   character(len=cl)       :: Nudge_Filenames(maxfiles) = 'unset'    ! namelist
   integer                 :: Nudge_Data_Year_First     = iunset     ! namelist
@@ -544,16 +544,16 @@ contains
 
       if((Nudge_Hwin_lat0 < -90._r8) .or. (Nudge_Hwin_lat0 > +90._r8)) then
          if (masterproc) then
-            write(iulog,*) 'NUDGING: Window lat0 must be in [-90,+90]'
-            write(iulog,*) 'NUDGING:  Nudge_Hwin_lat0=',Nudge_Hwin_lat0
+            write(iulog,'(2a)') subname,'NUDGING: Window lat0 must be in [-90,+90]'
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Hwin_lat0=',Nudge_Hwin_lat0
          end if
          call endrun(trim(subname)//' ERROR Window lat0 must be in [-90,+90]')
       endif
 
       if((Nudge_Hwin_lon0 < 0._r8) .or. (Nudge_Hwin_lon0 >= 360._r8)) then
          if (masterproc) then
-            write(iulog,*) 'NUDGING: Window lon0 must be in [0,+360)'
-            write(iulog,*) 'NUDGING:  Nudge_Hwin_lon0=',Nudge_Hwin_lon0
+            write(iulog,'(2a)') subname,'NUDGING: Window lon0 must be in [0,+360)'
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Hwin_lon0=',Nudge_Hwin_lon0
          end if
          call endrun(trim(subname)//' ERROR Windlow lon0 must be in [0,+360)')
       endif
@@ -562,11 +562,11 @@ contains
            (Nudge_Vwin_Hindex > float(pver+1)) .or. (Nudge_Vwin_Hindex < 0._r8) .or.  &
            (Nudge_Vwin_Lindex > float(pver+1)) .or. (Nudge_Vwin_Lindex < 0._r8)   ) then
          if (masterproc) then
-            write(iulog,*) 'NUDGING: Window Lindex must be in [0,pver+1]'
-            write(iulog,*) 'NUDGING: Window Hindex must be in [0,pver+1]'
-            write(iulog,*) 'NUDGING: Lindex must be LE than Hindex'
-            write(iulog,*) 'NUDGING:  Nudge_Vwin_Lindex=',Nudge_Vwin_Lindex
-            write(iulog,*) 'NUDGING:  Nudge_Vwin_Hindex=',Nudge_Vwin_Hindex
+            write(iulog,'(2a)') subname,'NUDGING: Window Lindex must be in [0,pver+1]'
+            write(iulog,'(2a)') subname,'NUDGING: Window Hindex must be in [0,pver+1]'
+            write(iulog,'(2a)') subname,'NUDGING: Lindex must be LE than Hindex'
+            write(iulog,'(2a,d13.5 )') subname,'NUDGING:  Nudge_Vwin_Lindex=',Nudge_Vwin_Lindex
+            write(iulog,'(2a,d13.5 )') subname,'NUDGING:  Nudge_Vwin_Hindex=',Nudge_Vwin_Hindex
          end if
          call endrun(trim(subname)//' ERROR Window Lindex and Window Hindex must be in [0,pver+1]')
       endif
@@ -574,20 +574,20 @@ contains
       if((Nudge_Hwin_latDelta <= 0._r8) .or. (Nudge_Hwin_lonDelta <= 0._r8) .or. &
            (Nudge_Vwin_Hdelta <= 0._r8) .or. (Nudge_Vwin_Ldelta <= 0._r8)    ) then
          if (masterproc) then
-            write(iulog,*) 'NUDGING: Window Deltas must be positive'
-            write(iulog,*) 'NUDGING:  Nudge_Hwin_latDelta=',Nudge_Hwin_latDelta
-            write(iulog,*) 'NUDGING:  Nudge_Hwin_lonDelta=',Nudge_Hwin_lonDelta
-            write(iulog,*) 'NUDGING:  Nudge_Vwin_Hdelta  =',Nudge_Vwin_Hdelta
-            write(iulog,*) 'NUDGING:  Nudge_Vwin_Ldelta  =',Nudge_Vwin_Ldelta
+            write(iulog,'(2a)') subname,'NUDGING: Window Deltas must be positive'
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Hwin_latDelta=',Nudge_Hwin_latDelta
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Hwin_lonDelta=',Nudge_Hwin_lonDelta
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Vwin_Hdelta  =',Nudge_Vwin_Hdelta
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Vwin_Ldelta  =',Nudge_Vwin_Ldelta
          end if
          call endrun(trim(subname)//' ERROR Window Deltas must be positive')
       endif
 
       if ((Nudge_Hwin_latWidth <= 0._r8) .or. (Nudge_Hwin_lonWidth <= 0._r8)) then
          if (masterproc) then
-            write(iulog,*) 'NUDGING: Window widths must be positive'
-            write(iulog,*) 'NUDGING:  Nudge_Hwin_latWidth=',Nudge_Hwin_latWidth
-            write(iulog,*) 'NUDGING:  Nudge_Hwin_lonWidth=',Nudge_Hwin_lonWidth
+            write(iulog,'(2a)') subname,'NUDGING: Window widths must be positive'
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Hwin_latWidth=',Nudge_Hwin_latWidth
+            write(iulog,'(2a,d13.5)') subname,'NUDGING:  Nudge_Hwin_lonWidth=',Nudge_Hwin_lonWidth
          end if
          call endrun(trim(subname)//' ERROR Window widths must be positive')
       endif
@@ -638,13 +638,13 @@ contains
    size2d = pcols*((endchunk-begchunk)+1)
 
    allocate(Nudge_Utau0(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,subname,'Nudge_Utau',size3d)
+   call alloc_err(istat,subname,'Nudge_Utau0',size3d)
    allocate(Nudge_Vtau0(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,subname,'Nudge_Vtau',size3d)
+   call alloc_err(istat,subname,'Nudge_Vtau0',size3d)
    allocate(Nudge_Stau0(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,subname,'Nudge_Stau',size3d)
+   call alloc_err(istat,subname,'Nudge_Stau0',size3d)
    allocate(Nudge_Qtau0(pcols,pver,begchunk:endchunk),stat=istat)
-   call alloc_err(istat,subname,'Nudge_Qtau',size3d)
+   call alloc_err(istat,subname,'Nudge_Qtau0',size3d)
    allocate(Nudge_PStau0(pcols,begchunk:endchunk),stat=istat)
    call alloc_err(istat,subname,'Nudge_PStau0',size2d)
 
@@ -782,67 +782,67 @@ contains
      write(iulog,*) '---------------------------------------------------------'
      write(iulog,*) '  MODEL NUDGING INITIALIZED WITH THE FOLLOWING SETTINGS: '
      write(iulog,*) '---------------------------------------------------------'
-     write(iulog,'(a,l4)') 'NUDGING: Nudge_Model                = ',Nudge_Model
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Datapath             = ',trim(Nudge_Datapath)
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Meshfile             = ',trim(Nudge_Meshfile)
-     write(iulog,'(a,i8)') 'NUDGING: Nudge_Data_Year_First      = ',Nudge_Data_Year_First
-     write(iulog,'(a,i8)') 'NUDGING: Nudge_Data_Year_Last       = ',Nudge_Data_Year_Last
-     write(iulog,'(a,i8)') 'NUDGING: Nudge_Data_Year_Align      = ',Nudge_Data_Year_Align
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Data_Mapalgo         = ',trim(Nudge_Data_Mapalgo)
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Data_Tintalgo        = ',trim(Nudge_Data_Tintalgo)
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Data_Taxmode         = ',trim(Nudge_Data_Taxmode)
-     write(iulog,'(2a)'  ) 'NUDGING: Nudge_Levname              = ',trim(Nudge_Data_Levname)
+     write(iulog,'(2a,l4)') subname,'NUDGING: Nudge_Model                = ',Nudge_Model
+     write(iulog,'(3a)'   ) subname,'NUDGING: Nudge_Datapath             = ',trim(Nudge_Datapath)
+     write(iulog,'(3a)'   ) subname,'NUDGING: Nudge_Meshfile             = ',trim(Nudge_Meshfile)
+     write(iulog,'(2a,i8)') subname,'NUDGING: Nudge_Data_Year_First      = ',Nudge_Data_Year_First
+     write(iulog,'(2a,i8)') subname,'NUDGING: Nudge_Data_Year_Last       = ',Nudge_Data_Year_Last
+     write(iulog,'(2a,i8)') subname,'NUDGING: Nudge_Data_Year_Align      = ',Nudge_Data_Year_Align
+     write(iulog,'(3a)'   ) subname,'NUDGING: Nudge_Data_Mapalgo         = ',trim(Nudge_Data_Mapalgo)
+     write(iulog,'(3a)'   ) subname,'NUDGING: Nudge_Data_Tintalgo        = ',trim(Nudge_Data_Tintalgo)
+     write(iulog,'(3a)'   ) subname,'NUDGING: Nudge_Data_Taxmode         = ',trim(Nudge_Data_Taxmode)
+     write(iulog,'(3a)'   ) subname,'NUDGING: Nudge_Levname              = ',trim(Nudge_Data_Levname)
      do nf = 1,maxfiles
         if (trim(Nudge_Filenames(nf)) /= 'unset') then
-           write(iulog,'(a,a)')'NUDGING: Nudge_Datapath             = ',trim(Nudge_Datapath)
+           write(iulog,'(3a)')  subname,'NUDGING: Nudge_Filename             = ',trim(Nudge_Filenames(nf))
         end if
      end do
      ! Model time
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Year             = ',Nudge_Beg_Year
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Month            = ',Nudge_Beg_Month
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Beg_Day              = ',Nudge_Beg_Day
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_End_Year             = ',Nudge_End_Year
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_End_Month            = ',Nudge_End_Month
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_End_Day              = ',Nudge_End_Day
-     write(iulog,'(a,i8)'    ) 'NUDGING: Model_Update_Times_Per_Day = ',Model_Update_Times_Per_Day
-     write(iulog,'(a,i8)'    ) 'NUDGING: Model_Update_Step          = ',Model_Update_Step
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_Beg_Year             = ',Nudge_Beg_Year
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_Beg_Month            = ',Nudge_Beg_Month
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_Beg_Day              = ',Nudge_Beg_Day
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_End_Year             = ',Nudge_End_Year
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_End_Month            = ',Nudge_End_Month
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_End_Day              = ',Nudge_End_Day
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Model_Update_Times_Per_Day = ',Model_Update_Times_Per_Day
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Model_Update_Step          = ',Model_Update_Step
      !
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_PSprof               = ',Nudge_PSprof
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_Force_Opt            = ',Nudge_Force_Opt
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_TimeScale_Opt        = ',Nudge_TimeScale_Opt
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_TSmode               = ',Nudge_TSmode
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_ZonalFilter          = ',Nudge_ZonalFilter
-     write(iulog,'(a,i8)'    ) 'NUDGING: Nudge_ZonalNbasis          = ',Nudge_ZonalNbasis
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Ucoef                = ',Nudge_Ucoef
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vcoef                = ',Nudge_Vcoef
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Qcoef                = ',Nudge_Qcoef
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Tcoef                = ',Nudge_Tcoef
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_PScoef               = ',Nudge_PScoef
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Uprof                = ',Nudge_Uprof
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vprof                = ',Nudge_Vprof
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Qprof                = ',Nudge_Qprof
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Tprof                = ',Nudge_Tprof
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_lat0            = ',Nudge_Hwin_lat0
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_latWidth        = ',Nudge_Hwin_latWidth
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_latDelta        = ',Nudge_Hwin_latDelta
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_lon0            = ',Nudge_Hwin_lon0
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_lonWidth        = ',Nudge_Hwin_lonWidth
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_lonDelta        = ',Nudge_Hwin_lonDelta
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_Invert          = ',Nudge_Hwin_Invert
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_lo              = ',Nudge_Hwin_lo
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_hi              = ',Nudge_Hwin_hi
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_Hindex          = ',Nudge_Vwin_Hindex
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_Hdelta          = ',Nudge_Vwin_Hdelta
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_Lindex          = ',Nudge_Vwin_Lindex
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_Ldelta          = ',Nudge_Vwin_Ldelta
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_Invert          = ',Nudge_Vwin_Invert
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_lo              = ',Nudge_Vwin_lo
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Vwin_hi              = ',Nudge_Vwin_hi
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_latWidthH       = ',Nudge_Hwin_latWidthH
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_lonWidthH       = ',Nudge_Hwin_lonWidthH
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_max             = ',Nudge_Hwin_max
-     write(iulog,'(a,f13.5)' ) 'NUDGING: Nudge_Hwin_min             = ',Nudge_Hwin_min
-     write(iulog,'(a,l4)'    ) 'NUDGING: Nudge_Initialized          = ',Nudge_Initialized
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_PSprof               = ',Nudge_PSprof
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_Force_Opt            = ',Nudge_Force_Opt
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_TimeScale_Opt        = ',Nudge_TimeScale_Opt
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_TSmode               = ',Nudge_TSmode
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_ZonalFilter          = ',Nudge_ZonalFilter
+     write(iulog,'(2a,i8)'    ) subname,'NUDGING: Nudge_ZonalNbasis          = ',Nudge_ZonalNbasis
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Ucoef                = ',Nudge_Ucoef
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vcoef                = ',Nudge_Vcoef
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Qcoef                = ',Nudge_Qcoef
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Tcoef                = ',Nudge_Tcoef
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_PScoef               = ',Nudge_PScoef
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Uprof                = ',Nudge_Uprof
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vprof                = ',Nudge_Vprof
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Qprof                = ',Nudge_Qprof
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Tprof                = ',Nudge_Tprof
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_lat0            = ',Nudge_Hwin_lat0
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_latWidth        = ',Nudge_Hwin_latWidth
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_latDelta        = ',Nudge_Hwin_latDelta
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_lon0            = ',Nudge_Hwin_lon0
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_lonWidth        = ',Nudge_Hwin_lonWidth
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_lonDelta        = ',Nudge_Hwin_lonDelta
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_Invert          = ',Nudge_Hwin_Invert
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_lo              = ',Nudge_Hwin_lo
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_hi              = ',Nudge_Hwin_hi
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_Hindex          = ',Nudge_Vwin_Hindex
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_Hdelta          = ',Nudge_Vwin_Hdelta
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_Lindex          = ',Nudge_Vwin_Lindex
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_Ldelta          = ',Nudge_Vwin_Ldelta
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_Invert          = ',Nudge_Vwin_Invert
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_lo              = ',Nudge_Vwin_lo
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Vwin_hi              = ',Nudge_Vwin_hi
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_latWidthH       = ',Nudge_Hwin_latWidthH
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_lonWidthH       = ',Nudge_Hwin_lonWidthH
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_max             = ',Nudge_Hwin_max
+     write(iulog,'(2a,f13.5)' ) subname,'NUDGING: Nudge_Hwin_min             = ',Nudge_Hwin_min
+     write(iulog,'(2a,l4)'    ) subname,'NUDGING: Nudge_Initialized          = ',Nudge_Initialized
      write(iulog,*) ' '
 
    endif ! (masterproc) then
@@ -941,7 +941,7 @@ contains
    integer                 :: DeltaT
    real(r8)                :: Tscale
    integer                 :: rc
-   character(len=*), parameter :: sub = "(nudging_timestep_init) "
+   character(len=*), parameter :: subname = "(nudging_timestep_init) "
    !--------------------------------------------------------------
 
    ! Check if Nudging is initialized
@@ -969,7 +969,7 @@ contains
    Nudge_On = (After_Beg .and. Before_End)
    Update_Model = (Nudge_on .and. (curr_time >= Model_Update_Next_Time))
    if (masterproc) then
-      write(iulog,'(a,4(i6,2x),l8)')' Nudge Status: year, month, day, sec, update_model = ',&
+      write(iulog,'(2a,4(i6,2x),l8)') subname,' Nudge Status: year, month, day, sec, update_model = ',&
            year, month, day, sec, update_model
    end if
 
@@ -1088,9 +1088,9 @@ contains
      call chkrc(rc,__LINE__,u_FILE_u)
 
      if (masterproc) then
-        write(iulog,*)'Nudging: sdat%ymdLB, sdat%todLB ',&
+        write(iulog,'(2a,2x,i0)') subname,'Nudging: sdat%ymdLB, sdat%todLB ',&
              sdat_nudging_multi%pstrm(1)%ymdLB,sdat_nudging_multi%pstrm(1)%todLB
-        write(iulog,*)'Nudging: sdat%ymdUB, sdat%todUB ',&
+        write(iulog,'(2a,2x,i0)') subname,'Nudging: sdat%ymdUB, sdat%todUB ',&
              sdat_nudging_multi%pstrm(1)%ymdUB,sdat_nudging_multi%pstrm(1)%todUB
      end if
 
@@ -1102,7 +1102,7 @@ contains
        Tscale = real(Nudge_File_Step,r8)/real(DeltaT, r8)
      else
        if (masterproc) then
-          write(iulog,*) 'NUDGING: Unknown Nudge_TimeScale_Opt=',Nudge_TimeScale_Opt
+          write(iulog,'(2a,2x,i0)') subname,'NUDGING: Unknown Nudge_TimeScale_Opt=',Nudge_TimeScale_Opt
        end if
        call endrun('nudging_timestep_init:: ERROR unknown Nudging_TimeScale_Opt')
      endif
@@ -1140,7 +1140,7 @@ contains
      Sync_Error = (curr_time >= Model_Update_next_time)
      if (Sync_Error) then
         Model_Update_next_time = curr_time + Model_Update_Interval
-        write(iulog,*) 'NUDGING: WARNING - Model_Update_Time Sync ERROR... CORRECTED'
+        write(iulog,'(2a)') subname,'NUDGING:  WARNING - Model_Update_Time Sync ERROR... CORRECTED'
      endif
 
    endif ! (Update_Model)
@@ -1457,26 +1457,26 @@ contains
     ! local variables
     integer                 :: rc
     integer                 :: nfile
-    character(*), parameter :: sub = "('nudging_stream_init')"
+    character(len=*), parameter :: subname = "('nudging_stream_init')"
     !----------------------------------------------------------------
 
     ! Write output log info
     if (masterproc) then
-       write(iulog,'(a)'   ) ' '
-       write(iulog,'(a)'   )  'stream nudging settings:'
-       write(iulog,'(2a)'  )  '  nudge varlist    = ','U,V,T,Q,PS'
-       write(iulog,'(a,i8)')  '  nudge year first = ',nudge_data_year_first
-       write(iulog,'(a,i8)')  '  nudge year last  = ',nudge_data_year_last
-       write(iulog,'(a,i8)')  '  nudge year align = ',nudge_data_year_align
-       write(iulog,'(2a)'  )  '  nudge mapalgo    = ',trim(nudge_data_mapalgo)
-       write(iulog,'(2a)'  )  '  nudge tintalgo   = ',trim(nudge_data_tintalgo)
-       write(iulog,'(2a)'  )  '  nudge taxmode    = ',trim(nudge_data_taxmode)
-       write(iulog,'(2a)'  )  '  nudge levname    = ',trim(nudge_data_levname)
-       write(iulog,'(2a)'  )  '  nudge meshfile   = ',trim(nudge_meshfile)
-       write(iulog,'(2a)'  )  '  nudge datapath   = ',trim(nudge_datapath)
+       write(iulog,'(a)'    ) ' '
+       write(iulog,'(2a)'   )  subname,'stream nudging settings:'
+       write(iulog,'(3a)'   )  subname,'  nudge varlist    = ','U,V,T,Q,PS'
+       write(iulog,'(2a,i8)')  subname,'  nudge year first = ',nudge_data_year_first
+       write(iulog,'(2a,i8)')  subname,'  nudge year last  = ',nudge_data_year_last
+       write(iulog,'(2a,i8)')  subname,'  nudge year align = ',nudge_data_year_align
+       write(iulog,'(3a)'   )  subname,'  nudge mapalgo    = ',trim(nudge_data_mapalgo)
+       write(iulog,'(3a)'   )  subname,'  nudge tintalgo   = ',trim(nudge_data_tintalgo)
+       write(iulog,'(3a)'   )  subname,'  nudge taxmode    = ',trim(nudge_data_taxmode)
+       write(iulog,'(3a)'   )  subname,'  nudge levname    = ',trim(nudge_data_levname)
+       write(iulog,'(3a)'   )  subname,'  nudge meshfile   = ',trim(nudge_meshfile)
+       write(iulog,'(3a)'   )  subname,'  nudge datapath   = ',trim(nudge_datapath)
        do nfile = 1,size(nudge_filenames)
           if (trim(nudge_filenames(nfile)) /= 'unset') then
-             write(iulog,'(a,i0,2a)' )  '  nudge files(, ',nfile,') = ',trim(nudge_filenames(nfile))
+             write(iulog,'(2a,i0,2a)' )  subname,'  nudge files(, ',nfile,') = ',trim(nudge_filenames(nfile))
           end if
        end do
        write(iulog,'(a)'   )  ' '
@@ -1577,7 +1577,7 @@ contains
     real(r8), pointer :: dataptr1d(:)
     real(r8)          :: Tmp3D(pcols,pver,begchunk:endchunk)
     real(r8)          :: Tmp2D(pcols,begchunk:endchunk)
-    character(len=*), parameter :: sub = "(nudging_stream_interp) "
+    character(len=*), parameter :: subname = "(nudging_stream_interp) "
     !-----------------------------------------------------------------------
 
     ! Extract YMD from model_update_next_time
@@ -1585,7 +1585,7 @@ contains
     call chkrc(rc,__LINE__,u_FILE_u)
     mcdate = year*10000 + mon*100 + day
     if (masterproc) then
-       write(iulog,'(a,4(i6,2x))')' nudging_stream_interp: interpolating nudge to ',year,mon,day,sec
+       write(iulog,'(2a,4(i0,2x))') subname,' nudging_stream_interp: interpolating nudge to ',year,mon,day,sec
     end if
 
     ! Advance sdat streams
@@ -1702,14 +1702,21 @@ contains
 
      call shr_cal_date2ymd(sdat%pstrm(1)%ymdUB, data_year, data_month, data_day)
 
+     ! By default return stream calendar
      calendar = trim(sdat%stream(1)%calendar)
+
+     ! If model calendar not equal to stream calendar
      if (trim(sdat%model_calendar) /= trim(sdat%stream(1)%calendar)) then
+        ! If model calendar is gregorian and stream calendar is nolep then
+        ! return no leap calendar for February 29 
         if (( trim(sdat%model_calendar) == trim(shr_cal_gregorian)) .and. &
              (trim(sdat%stream(1)%calendar) == trim(shr_cal_noleap))) then
            ! set feb 29 = feb 28
            if (model_month == 2 .and. model_day == 29) then
               calendar = shr_cal_noleap
            end if
+        ! If model calendar is noleap and stream calendar is gregorian
+        ! then return no leap calendar 
         elseif ((trim(sdat%model_calendar) == trim(shr_cal_noleap)) .and. &
              (trim(sdat%stream(1)%calendar) == trim(shr_cal_gregorian))) then
            ! feb 29 input data will be skipped automatically
@@ -1726,12 +1733,8 @@ contains
                  ! model is in leap year but data is not
                  calendar = shr_cal_noleap
               endif
-           else
-              calendar = sdat%model_calendar
            endif
-        else
-           calendar = sdat%model_calendar
-        endif
+        end if
      endif
 
   end subroutine get_calendar
