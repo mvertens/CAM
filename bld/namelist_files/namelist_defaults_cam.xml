@@ -277,7 +277,7 @@
 <bnd_topo hgrid="ne3np4"          >atm/cam/topo/se/ne3np4_gmted2010_modis_bedmachine_nc0540_Laplace1000_noleak_20230717.nc</bnd_topo>
 <bnd_topo hgrid="ne3np4"   npg="3">atm/cam/topo/se/ne3pg3_gmted2010_modis_bedmachine_nc0540_Laplace1000_noleak_20230209.nc</bnd_topo>
 <bnd_topo hgrid="ne5np4"   npg="3">atm/cam/topo/se/ne5pg3_nc3000_Co360_Fi001_MulG_PF_nullRR_Nsw064_20170516.nc</bnd_topo>
-<bnd_topo hgrid="ne16np4"  npg="3">atm/cam/topo/se/ne16pg3_gmted2010_modis_bedmachine_nc3000_Laplace0200_20230202.nc</bnd_topo>
+<bnd_topo hgrid="ne16np4"  npg="3">atm/cam/topo/se/ne16pg3_gmted2010_modis_bedmachine_nc3000_Laplace0200_noleak_greenlndantarcsgh30fac2.50_20250825.nc</bnd_topo>
 <bnd_topo hgrid="ne30np4" npg="3">atm/cam/topo/se/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_greenlndantarcsgh30fac2.50_20250828.nc</bnd_topo>
 <bnd_topo hgrid="ne60np4"  npg="3">atm/cam/topo/se/ne60pg3_nc3000_Co030_Fi001_PF_nullRR_Nsw021_20171012.nc</bnd_topo>
 <bnd_topo hgrid="ne120np4" npg="3">atm/cam/topo/se/ne120pg3_nc3000_Co015_Fi001_PF_nullRR_Nsw010_20171014.nc</bnd_topo>
@@ -658,28 +658,30 @@
 <!-- Time-variant CO2 fossil fuel emissions -->
 <co2flux_fuel_datafile>atm/cam/ggas/emissions-cmip6_CO2_anthro_surface_175001-201512_fv_0.9x1.25_c20181011.nc</co2flux_fuel_datafile>
 <co2flux_fuel_meshfile>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</co2flux_fuel_meshfile>
+<co2flux_fuel_tintalgo>nearest</co2flux_fuel_tintalgo>
 <co2flux_fuel_year_first sim_year="2000">2000</co2flux_fuel_year_first>
-<co2flux_fuel_year_end   sim_year="2000">2000</co2flux_fuel_year_end>
+<co2flux_fuel_year_last  sim_year="2000">2000</co2flux_fuel_year_last>
 <co2flux_fuel_year_align sim_year="2000">1</co2flux_fuel_year_align>
 <co2flux_fuel_year_first sim_year="1850">1850</co2flux_fuel_year_first>
-<co2flux_fuel_year_end   sim_year="1850">1850</co2flux_fuel_year_end>
+<co2flux_fuel_year_last  sim_year="1850">1850</co2flux_fuel_year_last>
 <co2flux_fuel_year_align sim_year="1850">1</co2flux_fuel_year_align>
 <co2flux_fuel_year_first sim_year="1850-2015">1850</co2flux_fuel_year_first>
-<co2flux_fuel_year_end   sim_year="1850-2015">2015</co2flux_fuel_year_end>
+<co2flux_fuel_year_last  sim_year="1850-2015">2015</co2flux_fuel_year_last>
 <co2flux_fuel_year_align sim_year="1850-2015">1850</co2flux_fuel_year_align>
 
 <!-- Time-variant CO2 aircraft emissions -->
 <aircraft_co2_datafile>atm/cam/ggas/emissions-cmip6_CO2_anthro_ac_175001-201512_fv_0.9x1.25_c20181011.nc</aircraft_co2_datafile>
 <aircraft_co2_meshfile>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</aircraft_co2_meshfile>
-<aircraft_co2_year_first sim_year="2000">2000</aircraft_co2_year_first>
-<aircraft_co2_year_end   sim_year="2000">2000</aircraft_co2_year_end>
-<aircraft_co2_year_align sim_year="2000">1</aircraft_co2_year_align>
-<aircraft_co2_year_first sim_year="1850">1850</aircraft_co2_year_first>
-<aircraft_co2_year_end   sim_year="1850">1850</aircraft_co2_year_end>
-<aircraft_co2_year_align sim_year="1850">1</aircraft_co2_year_align>
-<aircraft_co2_year_first sim_year="1850-2015">1850</aircraft_co2_year_first>
-<aircraft_co2_year_end   sim_year="1850-2015">2015</aircraft_co2_year_end>
-<aircraft_co2_year_align sim_year="1850-2015">1850</aircraft_co2_year_align>
+<aircraft_co2_tintalgo>nearest</aircraft_co2_tintalgo>
+<aircraft_co2_year_first  sim_year="2000">2000</aircraft_co2_year_first>
+<aircraft_co2_year_last   sim_year="2000">2000</aircraft_co2_year_last>
+<aircraft_co2_year_align  sim_year="2000">1</aircraft_co2_year_align>
+<aircraft_co2_year_first  sim_year="1850">1850</aircraft_co2_year_first>
+<aircraft_co2_year_last   sim_year="1850">1850</aircraft_co2_year_last>
+<aircraft_co2_year_align  sim_year="1850">1</aircraft_co2_year_align>
+<aircraft_co2_year_first  sim_year="1850-2015">1850</aircraft_co2_year_first>
+<aircraft_co2_year_last   sim_year="1850-2015">2015</aircraft_co2_year_last>
+<aircraft_co2_year_align  sim_year="1850-2015">1850</aircraft_co2_year_align>
 
 <!-- Greenhouse gas production/loss rates -->
 <bndtvg>atm/cam/ggas/noaamisc.r8.nc</bndtvg>
@@ -2014,12 +2016,16 @@
 <soil_erod_file phys="cam4"  >atm/cam/dst/dst_source2x2tuned-cam4-06132012.nc</soil_erod_file>
 <soil_erod_file phys="cam4" hgrid="0.9x1.25">atm/cam/dst/dst_source1x1tuned-cam4-06202012.nc</soil_erod_file>
 
-<!-- nitrogen deposition to surface models -->
-<stream_ndep_mesh_filename>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</stream_ndep_mesh_filename>
-<stream_ndep_data_filename>lnd/clm2/ndepdata/fndep_clm_hist_b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.ensmean_1849-2015_monthly_0.9x1.25_c180926.nc</stream_ndep_data_filename>
+<!-- nitrogen deposition to surface components -->
+<stream_ndep_varlist>NDEP_NHx_month:NDEP_NOy_month</stream_ndep_varlist>
+<stream_ndep_varlist phys="cam7">drynhx:wetnhx:drynoy:wetnoy</stream_ndep_varlist>
 
-<stream_ndep_mesh_filename sim_year="1850">share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</stream_ndep_mesh_filename>
-<stream_ndep_data_filename sim_year="1850">lnd/clm2/ndepdata/fndep_clm_WACCM6_CMIP6piControl001_y21-50avg_1850monthly_0.95x1.25_c180802.nc</stream_ndep_data_filename>
+<stream_ndep_mesh_filename>share/meshes/fv0.9x1.25_141008_polemod_ESMFmesh.nc</stream_ndep_mesh_filename>
+<stream_ndep_mesh_filename phys="cam7">atm/ndep/cmip7/ndep_input4MIPs_surfaceFluxes_ESMFmesh_cdf5_c20251211.nc</stream_ndep_mesh_filename>
+
+<stream_ndep_data_filename>lnd/clm2/ndepdata/fndep_clm_hist_b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.ensmean_1849-2015_monthly_0.9x1.25_c180926.nc</stream_ndep_data_filename>
+<stream_ndep_data_filename phys="cam7">atm/ndep/cmip7/ndep_input4MIPs_surfaceFluxes_CMIP_FZJ-CMIP-nitrogen-1-2_gn_185001-202212_c20251222.nc</stream_ndep_data_filename>
+<stream_ndep_data_filename sim_year="1850">lnd/clm2/ndepdata/fndep_clm_WACCM6_CMIP6piControl001_y21-50avg_1850monthly_0.95x1.25_c180802.nc</stream_ndep_data_filename><stream_ndep_data_filename phys="cam7" sim_year="1850">atm/ndep/cmip7/ndep_input4MIPs_surfaceFluxes_CMIP_FZJ-CMIP-nitrogen-1-2_gn_185001-185012-clim_c20251222.nc</stream_ndep_data_filename>
 
 <stream_ndep_year_first >2000</stream_ndep_year_first>
 <stream_ndep_year_first sim_year="1850">1850</stream_ndep_year_first>

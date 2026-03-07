@@ -1244,22 +1244,20 @@ contains
 
        ! The ndep_stream_nl namelist group is read in stream_ndep_init.  This sets whether
        ! or not the stream will be used.
-       if (.not. stream_ndep_is_initialized) then
-          call stream_ndep_init(rc)
-          if (ChkErr(rc,__LINE__,u_FILE_u)) return
-          stream_ndep_is_initialized = .true.
+       if (ndep_stream_active) then
+          if (.not. stream_ndep_is_initialized) then
+             call stream_ndep_init(rc)
+             if (ChkErr(rc,__LINE__,u_FILE_u)) return
+          end if
        end if
 
-       if (ndep_stream_active.or.chem_has_ndep_flx) then
+       if (ndep_stream_active .or. chem_has_ndep_flx) then
 
           ! Nitrogen dep fluxes are  obtained from the ndep input stream if input data is available
           ! otherwise computed by chemistry
           if (ndep_stream_active) then
-
-             ! get ndep fluxes from the stream
              call stream_ndep_interp(cam_out, rc)
              if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
           end if
 
           g = 1

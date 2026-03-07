@@ -1869,8 +1869,7 @@ Default set by build-namelist based on sim_year.
 <entry id="co2flux_fuel_tintalgo" type="char*16" category="co2_cycle"
        group="co2_ffuel_nl" valid_values="linear,lower,upper,nearest">
 Time interpolation algorithm to use for co2flux_fuel_datafile.
-If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
-the forcing file otherwise, set to 'linear'
+Default: nearest
 </entry>
 
 <entry id="co2flux_fuel_taxmode" type="char*16" category="co2_cycle"
@@ -1927,8 +1926,7 @@ Default: set by build-namelist based on sim_year
 <entry id="aircraft_co2_tintalgo" type="char*16" category="co2_cycle"
        group="aircraft_emit_nl" valid_values="linear,lower,upper,nearest">
 Time interpolation algorithm to use for aircraft_co2_datafile.
-If not set by user, then set to 'nearest' if the variable 'time_bnds' is in
-the forcing file otherwise, set to 'linear'
+Default: nearest
 </entry>
 
 <entry id="aircraft_co2_taxmode" type="char*16" category="co2_cycle"
@@ -8264,6 +8262,11 @@ Nitrogen deposition stream data filename.
 <entry id="stream_ndep_mesh_filename" type="char*256" input_pathname="abs" category="Nitrogen Deposition"
        group="ndep_stream_nl" valid_values="" >
 Grid mesh file corresponding to sream_ndep_data_filename.
+</entry>
+
+<entry id="stream_ndep_varlist" type="char*256" category="Nitrogen Deposition"
+       group="ndep_stream_nl" valid_values="" >
+Colon delimited string of variable names on nitrogen deposition stream file(s).
 </entry>
 
 <entry id="megan_factors_file" type="char*256" input_pathname="abs" category="VOC_emissions"
