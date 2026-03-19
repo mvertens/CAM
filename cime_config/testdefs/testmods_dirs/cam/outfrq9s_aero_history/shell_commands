@@ -1,2 +1,6 @@
+if [ "$(./xmlquery --value MACH)" == "olivia" -a "$(./xmlquery --value COMPILER)" == "gnu" ]; then
+    ./xmlchange MPILIB=openmpi
+    ./xmlchange NTASKS=-3
+fi
 ./xmlchange ROF_NCPL=\$ATM_NCPL
 ./xmlchange GLC_NCPL=\$ATM_NCPL
