@@ -22,7 +22,7 @@ from CIME.case import Case
 logger = logging.getLogger(__name__)
 
 if len(sys.argv) != 4:
-    raise SystemExit(f"Incorrect call to {sys.argv[0]}, need CAM root and case root")
+    raise SystemExit(f"Incorrect call to {sys.argv[0]}, need CAM root, case root, and non-local passed as arguments")
 # end if
 cam_root = sys.argv[1]
 case_root = sys.argv[2]
