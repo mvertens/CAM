@@ -178,7 +178,7 @@
 [submodule "ccs_config"]
     path = ccs_config
     url = https://github.com/NorESMhub/ccs_config_noresm.git
-    fxtag = ccs_config_noresm0.0.63
+    fxtag = ccs_config_noresm0.0.65
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/ccs_config_noresm.git
 
