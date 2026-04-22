@@ -185,7 +185,7 @@
 [submodule "cime"]
     path = cime
     url = https://github.com/NorESMhub/cime.git
-    fxtag = cime6.1.73_noresm_v2
+    fxtag = cime6.1.173_noresm_v0
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/cime.git
 
