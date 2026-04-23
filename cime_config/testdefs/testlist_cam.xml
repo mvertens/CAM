@@ -135,4 +135,24 @@
     </options>
   </test>
 
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="REP_Ld3" testmods="cam/nudging">
+    <machines>
+      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
+    </machines>
+    <options>
+      <option name="wallclock">00:35:00</option>
+      <option name="comment">Test of CAM nudging</option>
+    </options>
+  </test>
+  
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERS_Ln9" testmods="cam/nudging">
+    <machines>
+      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
+    </machines>
+    <options>
+      <option name="wallclock">00:20:00</option>
+      <option name="comment">Test of CAM nudging</option>
+    </options>
+  </test>
+
 </testlist>

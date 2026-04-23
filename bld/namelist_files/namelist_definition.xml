@@ -220,67 +220,100 @@
        Default: FALSE
        </entry>
 
-<entry id="Nudge_Path" type="char*256" input_pathname="abs" category="nudging"
+<entry id="Nudge_Datapath" type="char*256" category="nudging"
        group="nudging_nl" valid_values="" >
-       Full pathname of analyses data to use for nudging.
-        (e.g. '/$DIN_LOC_ROOT/atm/cam/nudging/')
+       Full pathname of datapath where Nudge_Filenames are located.
        Default: none
        </entry>
 
-<entry id="Nudge_File_Template" type="char*80" category="nudging"
+<entry id="Nudge_Filenames" type="char*256(100)" category="nudging"
        group="nudging_nl" valid_values="" >
-       Template for Nudging analyses file names.
-        (e.g. '%y/ERAI_ne30np4_L30.cam2.i.%y-%m-%d-%s.nc')
+       Filenames of analyses data to use for nudging.
        Default: none
        </entry>
 
-<entry id="Nudge_Times_Per_Day" type="integer" category="nudging"
+<entry id="Nudge_Meshfile" type="char*256" category="nudging"
        group="nudging_nl" valid_values="" >
-       Number of analyses files per day.
-        (e.g. 4 --> 6 hourly analyses)
+       ESMF mesh file that corresponds to the nudging files
        Default: none
        </entry>
 
-<entry id="Model_Times_Per_Day" type="integer" category="nudging"
+<entry id="Nudge_Data_Year_First" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       First year of nudging data to use.
+       Default: none
+       </entry>
+
+<entry id="Nudge_Data_Year_Last" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Last year of nudging data to use.
+       Default: none
+       </entry>
+
+<entry id="Nudge_Data_Year_Align" type="integer" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Model (simulation) year to align with Nudge_Data_Year_First.
+       Default: none
+       </entry>
+
+<entry id="Nudge_Data_Mapalgo" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="bilinear,consf" >
+       Mapping algorithm to map nudge data to model grid.
+       Default: bilinear
+       </entry>
+
+<entry id="Nudge_Data_Taxmode" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="limit,extend" >
+       Time extrapolation mode for time interpolation.
+       Default: limit
+       </entry>
+
+<entry id="Nudge_Data_levname" type="char*256" category="nudging"
+       group="nudging_nl" valid_values="" >
+       Name of vertical variable in Nudge_filenames.
+       Default: lev
+       </entry>
+
+<entry id="Model_Update_Times_Per_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
        Number of time to update model data per day.
         (e.g. 48 --> 1800 Second timestep)
-       Default: none
+       Default: 6
        </entry>
 
 <entry id="Nudge_Beg_Year" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Year at which Nudging Begins.
+       Model year at which nudging begins.
        Default: none
        </entry>
 
 <entry id="Nudge_Beg_Month" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Month at which Nudging Begins.
+       Model month at which nudging begins.
        Default: none
        </entry>
 
 <entry id="Nudge_Beg_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Day at which Nudging Begins.
+       Model day at which nudging begins.
        Default: none
        </entry>
 
 <entry id="Nudge_End_Year" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Year at which Nudging Ends.
+       Model year at which nudging ends.
        Default: none
        </entry>
 
 <entry id="Nudge_End_Month" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Month at which Nudging Ends.
+       Model month at which nudging ends.
        Default: none
        </entry>
 
 <entry id="Nudge_End_Day" type="integer" category="nudging"
        group="nudging_nl" valid_values="" >
-       Day at which Nudging Ends.
+       Model day at which nudging ends.
        Default: none
        </entry>
 
