@@ -1,18 +1,17 @@
 <?xml version="1.0"?>
 <namelist_defaults>
-<start_ymd>19790101</start_ymd>
 
 <!-- Solar data from NRL -->
-<solar_irrad_data_file>atm/cam/solar/SolarForcingCMIP6_18491230-23000102_c20200615.nc</solar_irrad_data_file>
+<solar_irrad_data_file>atm/cam/solar/SolarForcingCMIP7-4.6_18491230-20240101_sumEPP_c20250630.nc</solar_irrad_data_file>
 
 <!-- LBC Files -->
-<flbc_file>atm/waccm/lb/LBC_17500116-20150116_CMIP6_0p5degLat_c180905.nc</flbc_file>
+<flbc_file>atm/waccm/lb/CMIP7/LBC_17500116-20221216_CMIP7_0p5degLat_c250326.nc</flbc_file>
 <flbc_type>'SERIAL'</flbc_type>
 <flbc_list>'CO2','CH4','N2O','CFC11','CFC12','CFC11eq'</flbc_list>
 
 <!-- Low top upper boundary conditions -->
 <ubc_specifier>'Q:H2O->UBC_FILE'</ubc_specifier>
-<ubc_file_path>atm/cam/chem/ubc/f.e21.FWHISTBgcCrop.f09_f09_mg17.CMIP6-AMIP-WACCM.ensAvg123.cam.h0zm.UBC.195001-201412_c220322.nc</ubc_file_path>
+<ubc_file_path>atm/cam/chem/ubc/b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.ensAvg123.cam.h0zm.H2O.1849-2014_c240604.nc</ubc_file_path>
 <ubc_file_input_type>'SERIAL'</ubc_file_input_type>
 
 <!-- ozone data -->
@@ -69,28 +68,6 @@
 
 <prescribed_volcaero_datapath>atm/cam/volc</prescribed_volcaero_datapath>
 <prescribed_volcaero_file>CMIP_CAM6_radiation_v3_reformatted.nc</prescribed_volcaero_file>
-
-<!--Options for mineral dust -->
-<dust_emis_fact> 4.60D0  </dust_emis_fact>                   <!--dust_nl-->
-<dust_emis_method>Leung_2023</dust_emis_method>              <!--dust_emi-->
-
-<!-- ================================================= -->
-<!-- noresm-physics -->
-<!-- ================================================= -->
-
-<dme_energy_adjust>.true.</dme_energy_adjust>
-<zmconv_c0_lnd> 0.0200D0 </zmconv_c0_lnd>                   <!--zmconv_nl-->
-<zmconv_c0_ocn> 0.0200D0 </zmconv_c0_ocn>                   <!--zmconv_nl-->
-<zmconv_ke>     8.0E-6 </zmconv_ke>                         <!--zmconv_nl-->
-<zmconv_ke_lnd> 8.0E-6 </zmconv_ke_lnd>                     <!--zmconv_nl-->
-<tau_0_ubc>  .true.   </tau_0_ubc>                          <!--gw_drag_nl-->
-<clubb_gamma_coef hgrid="0.9x1.25">0.286</clubb_gamma_coef>
-<clubb_gamma_coef hgrid="1.9x2.5" >0.264</clubb_gamma_coef>
-<micro_mg_dcs     hgrid="0.9x1.25">5.5e-4</micro_mg_dcs>    <!--micro_mg_nl-->
-<micro_mg_dcs     hgrid="1.9x2.5" >5.0e-4</micro_mg_dcs>    <!--micro_mg_nl-->
-<cldfrc2m_rhmini  hgrid="0.9x1.25">0.90D0</cldfrc2m_rhmini> <!--cldfrc2m_nl-->
-<cldfrc_iceopt    hgrid="1.9x2.5"> 4 </cldfrc_iceopt>       <!--cldfrc_nl-->
-<do_circulation_diags> .true. </do_circulation_diags>       <!-- only used in fv -->
 
 <!-- for prescribed deposition and emission fluxes -->
 <sim_year>1850-2015</sim_year>
