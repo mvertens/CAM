@@ -178,14 +178,14 @@
 [submodule "ccs_config"]
     path = ccs_config
     url = https://github.com/NorESMhub/ccs_config_noresm.git
-    fxtag = ccs_config_noresm0.0.61
+    fxtag = ccs_config_noresm0.0.65
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/ccs_config_noresm.git
 
 [submodule "cime"]
     path = cime
     url = https://github.com/NorESMhub/cime.git
-    fxtag = cime6.1.73_noresm_v1
+    fxtag = cime6.1.173_noresm_v0
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/cime.git
 
@@ -196,7 +196,7 @@
 [submodule "share"]
     path = share
     url = https://github.com/NorESMHub/NorESM_share
-    fxtag = share1.1.9_noresm_v0
+    fxtag = share1.1.18_noresm_v0
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMHub/NorESM_share
 
@@ -207,34 +207,34 @@
 [submodule "cdeps"]
     path = components/cdeps
     url = https://github.com/NorESMHub/CDEPS.git
-    fxtag = cdeps1.0.70_noresm_v7
+    fxtag = cdeps1.0.88_noresm_v1
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMHub/CDEPS.git
 
 [submodule "cice6"]
     path = components/cice
     url = https://github.com/NorESMhub/NorESM_CICE
-    fxtag = noresm_cice6_6_0_20250522_v2
+    fxtag = noresm_cice6_6_1_20251129_v2
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/NorESM_CICE
 
 [submodule "clm"]
     path = components/clm
     url = https://github.com/NorESMhub/CTSM
-    fxtag = ctsm5.4.002_noresm_v4
+    fxtag = ctsm5.4.002_noresm_v6
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CTSM
 
 [submodule "cmeps"]
     path = components/cmeps
     url = https://github.com/NorESMhub/CMEPS.git
-    fxtag = cmeps1.0.39_noresm_v8
+    fxtag = cmeps1.1.41_noresm_v0
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/CMEPS.git
 
 [submodule "mosart"]
     path = components/mosart
     url = https://github.com/NorESMhub/MOSART
-    fxtag = mosart1.1.12_noresm_v0
+    fxtag = mosart1.1.12_noresm_v2
     fxrequired = ToplevelRequired
     fxDONOTUSEurl = https://github.com/NorESMhub/MOSART
