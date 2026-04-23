@@ -1707,7 +1707,7 @@ contains
 
      ! If model calendar not equal to stream calendar
      if (trim(sdat%model_calendar) /= trim(sdat%stream(1)%calendar)) then
-        ! If model calendar is gregorian and stream calendar is nolep then
+        ! If model calendar is gregorian and stream calendar is noleap then
         ! return no leap calendar for February 29 
         if (( trim(sdat%model_calendar) == trim(shr_cal_gregorian)) .and. &
              (trim(sdat%stream(1)%calendar) == trim(shr_cal_noleap))) then
