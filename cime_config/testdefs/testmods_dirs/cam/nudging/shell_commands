@@ -3,4 +3,5 @@ if [ "$driver" = "nuopc" ]; then
   ./xmlchange ROF_NCPL=\$ATM_NCPL
   ./xmlchange GLC_NCPL=\$ATM_NCPL
 fi
-./xmlchange RUN_STARTDATE=2009-01-01
+./xmlchange RUN_STARTDATE=0001-01-01
+./xmlchange CALENDAR=GREGORIAN
