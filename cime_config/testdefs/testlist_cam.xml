@@ -131,6 +131,7 @@
     </machines>
     <options>
       <option name="wallclock">00:20:00</option>
+      <option name="comment">Test of 1850 compset at 1 degree with MAM chemistry</option>
     </options>
   </test>
 
@@ -143,37 +144,14 @@
       <option name="comment">Test of CAM nudging</option>
     </options>
   </test>
-
-<!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@                 -->
-<!--              CAM test-supported COMPSETS                 -->
-<!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@                 -->
-
-  <test compset="F1850" grid="f19_f19_mtn14" name="ERP_D_Ln9_P256" testmods="cam/outfrq9s">
+  
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERS_Ln9" testmods="cam/nudging">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
-      <machine name="betzy" compiler="intel" category="prealpha_noresm"/>
     </machines>
     <options>
       <option name="wallclock">00:20:00</option>
-    </options>
-  </test>
-
-  <test compset="F2000climo" grid="ne30pg3_ne30pg3_mtn14" name="ERP_D_Ln9_P512" testmods="cam/outfrq9s">
-    <machines>
-      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
-    </machines>
-    <options>
-      <option name="wallclock">00:25:00</option>
-    </options>
-  </test>
-
-  <test compset="FLTHIST" grid="ne3pg3_ne3pg3_mg37" name="ERP_D_Ln9_P36" testmods="cam/outfrq9s">
-    <machines>
-      <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
-    </machines>
-    <options>
-      <option name="wallclock">00:10:00</option>
-      <option name="comment">Test of 1850 compset at 1 degree with MAM chemistry</option>
+      <option name="comment">Test of CAM nudging</option>
     </options>
   </test>
 
