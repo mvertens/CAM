@@ -116,6 +116,7 @@ module atm_comp_nuopc
 
   logical                      :: dart_mode = .false.
   logical                      :: mediator_present
+  logical                      :: write_restart_at_endofrun = .false.
 
   character(len=CL)            :: orb_mode            ! attribute - orbital mode
   integer                      :: orb_iyear           ! attribute - orbital year
@@ -313,6 +314,13 @@ contains
     else
        call shr_sys_abort(subname//'Need to set attribute mediator_present')
     endif
+
+    call NUOPC_CompAttributeGet(gcomp, name="write_restart_at_endofrun",      &
+         value=cvalue, isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       if (trim(cvalue) .eq. '.true.') write_restart_at_endofrun = .true.
+    end if
 
     if (dbug_flag > 5) then
        call ESMF_LogWrite(subname//' done', ESMF_LOGMSG_INFO)
@@ -1122,20 +1130,6 @@ contains
           dosend = .true.
        end if
 
-       ! Determine if time to write restart
-
-       call ESMF_ClockGetAlarm(clock, alarmname='alarm_restart', alarm=alarm, rc=rc)
-       if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-       if (ESMF_AlarmIsRinging(alarm, rc=rc)) then
-          if (ChkErr(rc,__LINE__,u_FILE_u)) return
-          rstwr = .true.
-          call ESMF_AlarmRingerOff( alarm, rc=rc )
-          if (ChkErr(rc,__LINE__,u_FILE_u)) return
-       else
-          rstwr = .false.
-       endif
-
        ! Determine if time to stop
 
        call ESMF_ClockGetAlarm(clock, alarmname='alarm_stop', alarm=alarm, rc=rc)
@@ -1145,6 +1139,22 @@ contains
           nlend = .true.
        else
           nlend = .false.
+       end if
+
+       ! Determine if time to write restart
+       rstwr = .false.
+       if (nlend .and. write_restart_at_endofrun) then
+          rstwr = .true.
+       else
+          call ESMF_ClockGetAlarm(clock, alarmname='alarm_restart', alarm=alarm, rc=rc)
+          if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+          if (ESMF_AlarmIsRinging(alarm, rc=rc)) then
+             if (ChkErr(rc,__LINE__,u_FILE_u)) return
+             rstwr = .true.
+             call ESMF_AlarmRingerOff( alarm, rc=rc )
+             if (ChkErr(rc,__LINE__,u_FILE_u)) return
+          endif
        endif
 
        ! Run CAM (run2, run3, run4)
