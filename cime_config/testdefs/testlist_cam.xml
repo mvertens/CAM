@@ -4,18 +4,30 @@
 <!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@             -->
 <!--              CAM-Nor test-supported COMPSETS             -->
 <!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@             -->
-  <test compset="NFLTHIST" grid="ne30pg3_ne30pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
+
+  <test compset="NFHIST" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:40:00</option>
-      <option name="comment">Test HIST compset at 1 degree</option>
+      <option name="wallclock">00:20:00</option>
+      <option name="comment">Test base historical at 2 degree with DEBUG</option>
     </options>
   </test>
 
-  <test compset="NFLTHISTmam4" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
+  <test compset="NFHIST" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+    <machines>
+      <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
+      <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
+    </machines>
+    <options>
+      <option name="wallclock">00:20:00</option>
+      <option name="comment">Test base historical at 1 degree without DEBUG</option>
+    </options>
+  </test>
+
+  <test compset="NFHISTmam4" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
@@ -144,7 +156,7 @@
       <option name="comment">Test of CAM nudging</option>
     </options>
   </test>
-  
+
   <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERS_Ln9" testmods="cam/nudging">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
