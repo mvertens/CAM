@@ -2531,6 +2531,7 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <!-- seasalt emission tuning factor -->
 <!-- Note that ver="strat" when modal_accum_coarse_exch=.true. -->
 <seasalt_emis_scale                                                      >1.D0</seasalt_emis_scale>
+<seasalt_emis_scale ver="oslo_aero"                                      >1.D0</seasalt_emis_scale>
 <seasalt_emis_scale ver="mam7"                                           >1.62D0</seasalt_emis_scale>
 <seasalt_emis_scale ver="strat"                                          >0.90D0</seasalt_emis_scale>
 <seasalt_emis_scale ver="strat" clubb_sgs="1"                            >1.00D0</seasalt_emis_scale>

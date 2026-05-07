@@ -6852,7 +6852,9 @@ Default: set by build-namelist.
 
 <entry id="emis_fact_in_coarse_mode" type="real" category="cam_chem"
        group="dust_nl" valid_values="" >
-Tuning parameter for the fraction of total dust emissions but in the largest mode.
+Tuning parameter for the fraction of total dust emissions in the coarse dust mode (Oslo_Aero). 
+Valid values are in the range [0, 1], where the remaining fraction (1 - emis_fact_in_coarse_mode) 
+is allocated to the dust accumulation mode.
 Default: set by build-namelist.
 </entry>
 
