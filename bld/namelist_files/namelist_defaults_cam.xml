@@ -2518,7 +2518,7 @@
 <dust_emis_fact hgrid="0.47x0.63" offline_dyn="1" phys="cam7"    ver="chem">2.30D0</dust_emis_fact>
 
 <!-- Oslo_Aero default-->
-<dust_emis_fact dyn="se" phys="cam7">  3.3D0 </dust_emis_fact> 
+<dust_emis_fact dyn="se" ver="oslo_aero">  3.3D0 </dust_emis_fact> 
 <emis_fact_in_coarse_mode>0.97D0</emis_fact_in_coarse_mode>
 <!-- dust emissions method -->
 <dust_emis_method>              Zender_2003</dust_emis_method>
@@ -2530,7 +2530,7 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 
 <!-- seasalt emission tuning factor -->
 <!-- Note that ver="strat" when modal_accum_coarse_exch=.true. -->
-<seasalt_emis_scale                                                      >1.D0</seasalt_emis_scale>
+<seasalt_emis_scale                                                      >1.35D0</seasalt_emis_scale>
 <seasalt_emis_scale ver="oslo_aero"                                      >1.D0</seasalt_emis_scale>
 <seasalt_emis_scale ver="mam7"                                           >1.62D0</seasalt_emis_scale>
 <seasalt_emis_scale ver="strat"                                          >0.90D0</seasalt_emis_scale>
