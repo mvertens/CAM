@@ -6850,6 +6850,14 @@ Tuning parameter for dust emissions.
 Default: set by build-namelist.
 </entry>
 
+<entry id="emis_fact_in_coarse_mode" type="real" category="cam_chem"
+       group="dust_nl" valid_values="" >
+Tuning parameter for the fraction of total dust emissions in the coarse dust mode (Oslo_Aero). 
+Valid values are in the range [0, 1], where the remaining fraction (1 - emis_fact_in_coarse_mode) 
+is allocated to the dust accumulation mode.
+Default: set by build-namelist.
+</entry>
+
 <entry id="steady_state_ion_elec_temp" type="logical" category="waccmx"
        group="ion_electron_temp_nl" valid_values="" >
 If TRUE a steady state solution is used to calculate electron and
