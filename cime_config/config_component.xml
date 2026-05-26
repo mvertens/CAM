@@ -8,7 +8,7 @@
       CAM
     ===============
    -->
-    <desc atm="CAM70[%LT][%MT][%WA][%WX][%CSO][%CT1S][%CT4S][%CT0MA][%CT1MA][%CT4MA][%GHGMAM4][%NORESM][%TROPMAM4][%CAMoslo][%GHGCAMoslo]"                                                                                                                                                                                                                                                                                >CAM cam7 physics:</desc>
+    <desc atm="CAM70[%LT][%MT][%WA][%WX][%CSO][%CT1S][%CT4S][%CT0MA][%CT1MA][%CT4MA][%NORESM][%TROPMAM4][%CAMoslo][%GHGCAMoslo]"                                                                                                                                                                                                                                                                                >CAM cam7 physics:</desc>
     <desc atm="CAM60[%1PCT][%4xCO2][%CARMATS][%CARMAWM][%CT1S][%CT2S][%CFIRE][%CVBSX][%NUDG][%PORT][%RCO2][%SCAM][%SDYN][%WCCM][%WCMD][%WCSC][%WCTS][%WXIE][%WXIED][%HEMCO][%GEOSCHEM][%SCAMARM95][%SCAMARM97][%SCAMATEX][%SCAMBOMEX][%SCAMCGILSS11][%SCAMCGILSS12][%SCAMCGILSS6][%SCAMDYCOMSRF01][%SCAMDYCOMSRF02][%SCAMGATE3][%SCAMMPACE][%SCAMRICO][%SCAMSPARTICUS][%SCAMTOGA2][%SCAMTWP06][%SCAMCAMFRC]" >CAM cam6 physics:</desc>
     <desc atm="CAM50[%CT1S][%CLB][%PORT][%RCO2][%MAM7][%SCAM][%SDYN][%WCSC][%WCTS][%SCAMARM95][%SCAMARM97][%SCAMATEX][%SCAMBOMEX][%SCAMCGILSS11][%SCAMCGILSS12][%SCAMCGILSS6][%SCAMDYCOMSRF01][%SCAMDYCOMSRF02][%SCAMGATE3][%SCAMMPACE][%SCAMRICO][%SCAMSPARTICUS][%SCAMTOGA2][%SCAMTWP06][%SCAMCAMFRC]"                                                                                                     >CAM cam5 physics:</desc>
     <desc atm="CAM40[%PORT][%RCO2][%SCAM][%SDYN][%TMOZ][%WX][%WXIE][%WXIED][%WCCM][%WCMD][%SCAMARM95][%SCAMARM97][%SCAMATEX][%SCAMBOMEX][%SCAMCGILSS11][%SCAMCGILSS12][%SCAMCGILSS6][%SCAMDYCOMSRF01][%SCAMDYCOMSRF02][%SCAMGATE3][%SCAMMPACE][%SCAMRICO][%SCAMSPARTICUS][%SCAMTOGA2][%SCAMTWP06][%SCAMCAMFRC]"                                                                                              >CAM cam4 physics:</desc>
@@ -56,7 +56,6 @@
     <desc option="CT4MA"        >Middle atmosphere chemistiry with T4 troposphere chemistry:</desc>
     <desc option="CVBSX"        >CAM-Chem troposphere/stratosphere chem with extended volatility basis set SOA scheme and modal aersols :</desc>
     <desc option="GEOSCHEM"     >GEOS-Chem troposphere/stratosphere chemistry :</desc>
-    <desc option="GHGMAM4"      >Prognostic GHG chemistry mechanism for CAM7:</desc>
     <desc option="LT"           >CAM low top model </desc>
     <desc option="MAM7"         >Modal Aerosol Model composed of 7 modes: </desc>
     <desc option="MT"           >CAM mid top model </desc>
@@ -135,14 +134,6 @@
     <desc>CAM dynamical core</desc>
   </entry>
 
-  <entry id="CAM_AEROCOM">
-    <type>logical</type>
-    <default_value>FALSE</default_value>
-    <group>build_component_cam</group>
-    <file>env_build.xml</file>
-    <desc>If true, turn on aerocom diagnostics for oslo-aerosol package</desc>
-  </entry>
-
   <entry id="CAM_CONFIG_OPTS">
     <type>char</type>
     <valid_values></valid_values>
@@ -156,13 +147,11 @@
       <!-- NorESM-specific modifiers -->
       <value compset="_CAM.*(%NORESM)">-camnor</value>
       <value compset="_CAM.*(%TROPMAM4)">-chem trop_mam4</value>
-      <value compset="_CAM.*(%GHGMAM4)">-chem ghg_mam4</value>
       <value compset="_CAM.*(%CAMoslo)">-chem trop_mam_oslo</value>
       <value compset="_CAM.*(%GHGCAMoslo)">-chem ghg_mam_oslo</value>
 
       <!-- Modifiers for CAM runs (%.* includes SCAM runs) -->
       <value compset="_CAM.*(%CT1S|%CFIRE)">-chem trop_strat_mam5_vbs</value>
-      <value compset="_CAM.*(%GHGMAM4)">-chem ghg_mam4</value>
       <value compset="_CAM60.*%(GEOSCHEM)">-chem geoschem_mam4</value>
 
       <value compset="%MAM7">-chem trop_mam7</value>
@@ -370,6 +359,8 @@
       <value compset="HIST_CAM70%LT%NORESM%CAMoslo"  >hist_camnor_lt_osloaero</value>
       <value compset="2000_CAM70%LT%NORESM%TROPMAM4" >2000_camnor_tropmam4</value>
       <value compset="2000_CAM70%LT%NORESM%CAMoslo"  >2000_camnor_osloaero</value>
+      <value compset="AMIP_CAM70%LT%NORESM%CAMoslo"  >1979-2021_camnor_lt_osloaero</value>
+
       <!-- SCAM defaults to ARM97, all other IOPs are in usermods_dirs -->
       <!--       <value compset="CAM[456]0%SCAM"    >scam_arm97</value> -->
     </values>
@@ -393,7 +384,10 @@
     <valid_values></valid_values>
     <default_value></default_value>
     <values match="last" modifier="additive">
-      <value compset="_CAM.*%RCO2"> scenario_ghg=&apos;RAMP_CO2_ONLY&apos;ramp_co2_annual_rate=1 </value>
+<!-- This should move to a CAM use case file
+      <value compset="_CAM.*%RCO2">scenario_ghg=&apos;RAMP_CO2_ONLY&apos;ramp_co2_annual_rate=1
+      </value>
+-->
       <value compset="_CAM60%4xCO2"> co2vmr=1138.8e-6  </value>
       <value compset="_CAM60%WCTS%4xCO2"> flbc_cycle_yr=1  </value>
       <value compset="_CAM60%WCTS%4xCO2"> flbc_file='$DIN_LOC_ROOT/atm/waccm/lb/LBC_CMIP6abrupt4xCO2_cyclicalYear1_0p5degLat_c180929.nc'  </value>
@@ -406,7 +400,10 @@
       <value compset="_CAM60%WCTS%1PCT"> flbc_cycle_yr=-1 </value>
       <value compset="_CAM60%WCTS%1PCT"> flbc_file='$DIN_LOC_ROOT/atm/waccm/lb/LBC_CMIP6_1pctCO2ramp_y1-165_0p5degLat_c180930.nc'</value>
       <value compset="_CAM60%WCTS%1PCT"> nlte_limit_co2=.true.</value>
+      <!-- BPRP? -->
+<!-- This should move to a CAM use case file
       <value compset="_BGC%BDRD"> co2_cycle_rad_passive=.true. </value>
+-->
       <!-- hemco (harmonized emissions component) option -->
       <value compset="_CAM.*%HEMCO"> use_hemco=.true. </value>
       <!-- rearth provided by FMS for FV3 and must remain fixed to that value to maintain consistency between phys/dyn. -->
@@ -414,11 +411,26 @@
     </values>
     <group>run_component_cam</group>
     <file>env_run.xml</file>
-    <desc>CAM specific namelist settings for -namelist option Provides
-      options to the -namelist argument for the CAM build-namelist
-      utility.  This should be reserved for component set
-      specification. Users should modify CAM namelists only via the
-      $CASEROOT/user_nl_cam file.</desc>
+    <desc>CAM specific namelist settings for -namelist option.
+    Provides options to the -namelist argument for the
+    CAM build-namelist utility.  This should be reserved for
+    component set specification.
+    Users should modify CAM namelists only via the
+    $CASEROOT/user_nl_cam file.</desc>
+  </entry>
+
+  <entry id="CAM_CO2EXP">
+    <type>char</type>
+    <valid_values>none,OnePctCO2,RampCO2,X4CO2</valid_values>
+    <default_value>none</default_value>
+    <values match="last">
+      <value compset="_CAM7*%1PCT">OnePctCO2</value>
+      <value compset="_CAM7*%4xCO2">X4CO2</value>
+      <value compset="_CAM.*%RCO2">RampCO2</value>
+    </values>
+    <group>run_component_cam</group>
+    <file>env_run.xml</file>
+    <desc>CAM CO2 manipulation experiment (if any)</desc>
   </entry>
 
   <entry id="CAM_USER_MODS">

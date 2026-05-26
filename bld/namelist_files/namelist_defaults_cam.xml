@@ -583,7 +583,7 @@
 <carma_soilerosion_file carma="dust">atm/cam/dst/soil_erosion_factor_1x1_c120907.nc</carma_soilerosion_file>
 <carma_emis_file        carma="tholin">atm/waccm/emis/early_earth_haze.nc</carma_emis_file>
 
-<!-- CAM-Chem ozone (2000 climatology) -->
+<!-- Default for ozone is 2000 climatology -->
 <prescribed_ozone_datapath>atm/cam/ozone</prescribed_ozone_datapath>
 <prescribed_ozone_file>ozone_1.9x2.5_L26_2000clim_c091112.nc</prescribed_ozone_file>
 <prescribed_ozone_name>O3</prescribed_ozone_name>
@@ -1894,7 +1894,7 @@
 <svocbb_ext_file>atm/cam/chem/emis/rcp85_finn_2002-2014/rcp85_finn_2000.SVOCbb.elev.1.9x2.5_c160601.nc</svocbb_ext_file>
 
 <!-- prescribed oxidants for prognostic aerosol chemistry -->
-<tracer_cnst_file     ver="fixed_ox">oxid_1.9x2.5_L26_1850-2005_c091123.nc</tracer_cnst_file>
+<tracer_cnst_file     ver="fixed_ox">tracer_cnst_MTt4s_halons_3Dmonthly_1850climo330_c20260415.nc</tracer_cnst_file>
 
 <!-- prescribed oxidants for prognostic aerosol chemistry -lightweight set for running SCAM and producing SCAM IOP boundary data -->
 <tracer_cnst_file     phys="cam6"     ver="fixed_ox" scam="1">oxid_1.9x2.5_L26_1850clim_c091123.nc</tracer_cnst_file>
@@ -2115,7 +2115,7 @@
 <clubb_C7 phys="cam7"                             > 0.1     </clubb_C7>
 <clubb_C7b                                        > 0.5     </clubb_C7b>
 <clubb_C8                                         > 4.2     </clubb_C8>
-<clubb_C8 phys="cam7"                             > 4.5     </clubb_C8>
+<clubb_C8 phys="cam7"                             > 4.2     </clubb_C8>
 <clubb_C8b                                        > 0.0     </clubb_C8b>
 <clubb_C_invrs_tau_bkgnd                          > 1.0     </clubb_C_invrs_tau_bkgnd>
 <clubb_C_invrs_tau_sfc                            > 0.1     </clubb_C_invrs_tau_sfc>
@@ -2405,7 +2405,7 @@
 <nucleate_ice_use_troplev               >.true.</nucleate_ice_use_troplev>
 
 <!-- Secondary ice production -->
-<rafsip_on>.false.</rafsip_on>
+<rafsip_on>.true.</rafsip_on>
 <forestfileALL>atm/cam/RaFSIP/forestALL.txt</forestfileALL>
 <forestfileBRDS>atm/cam/RaFSIP/forestBRDS.txt</forestfileBRDS>
 <forestfileBRHM>atm/cam/RaFSIP/forestBRHM.txt</forestfileBRHM>
@@ -2482,7 +2482,7 @@
 <dust_emis_fact dyn="se"                   phys="cam5"                    >0.55D0</dust_emis_fact>
 <dust_emis_fact dyn="fv"                   phys="cam5"   clubb_sgs="1"    >0.22D0</dust_emis_fact>
 <dust_emis_fact dyn="se"                   phys="cam6"                    >0.70D0</dust_emis_fact>
-<dust_emis_fact dyn="se"                   phys="cam7"                    >2.30D0</dust_emis_fact>
+<dust_emis_fact dyn="se"                   phys="cam7"                    >6.10D0</dust_emis_fact>
 <dust_emis_fact dyn="mpas"                 phys="cam7"                    >2.30D0</dust_emis_fact>
 <dust_emis_fact dyn="se" hgrid="ne30np4"   phys="cam6"             chem="trop_strat_mam4_vbs">0.8D0</dust_emis_fact>
 <dust_emis_fact dyn="se" hgrid="ne30np4"   phys="cam7"             chem="trop_strat_mam4_vbs">2.30D0</dust_emis_fact>
@@ -2522,10 +2522,8 @@
 <emis_fact_in_coarse_mode>0.97D0</emis_fact_in_coarse_mode>
 <!-- dust emissions method -->
 <dust_emis_method>              Zender_2003</dust_emis_method>
-<!-- gold2718: Temporarily not using Leung_2023 as default for CAM7
-See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <dust_emis_method phys="cam7">  Leung_2023 </dust_emis_method>
--->
+
 <zender_soil_erod_source>atm</zender_soil_erod_source>
 
 <!-- seasalt emission tuning factor -->
@@ -2767,11 +2765,11 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <zmconv_c0_ocn                   hgrid="C384"     phys="cam6"         > 0.0035D0 </zmconv_c0_ocn>
 <zmconv_c0_ocn  microphys="mg2"  clubb_sgs="1"    phys="cam6"         > 0.0300D0 </zmconv_c0_ocn>
 <zmconv_c0_ocn  microphys="mg3"  clubb_sgs="1"    phys="cam6"         > 0.0300D0 </zmconv_c0_ocn>
-<zmconv_c0_ocn                                    phys="cam7"         > 0.0450D0 </zmconv_c0_ocn>
+<zmconv_c0_ocn                                    phys="cam7"         > 0.0210D0 </zmconv_c0_ocn>
 <zmconv_c0_ocn                   hgrid="ne120np4" phys="cam7"         > 0.0035D0 </zmconv_c0_ocn>
 <zmconv_c0_ocn                   hgrid="C384"     phys="cam7"         > 0.0035D0 </zmconv_c0_ocn>
-<zmconv_c0_ocn  microphys="mg2"  clubb_sgs="1"    phys="cam7"         > 0.0300D0 </zmconv_c0_ocn>
-<zmconv_c0_ocn  microphys="mg3"  clubb_sgs="1"    phys="cam7"         > 0.0300D0 </zmconv_c0_ocn>
+<zmconv_c0_ocn  microphys="mg2"  clubb_sgs="1"    phys="cam7"         > 0.0210D0 </zmconv_c0_ocn>
+<zmconv_c0_ocn  microphys="mg3"  clubb_sgs="1"    phys="cam7"         > 0.0210D0 </zmconv_c0_ocn>
 <zmconv_c0_ocn  dyn="fv"                          phys="cam4"         > 0.0035D0 </zmconv_c0_ocn>
 <zmconv_c0_ocn  dyn="se"                          phys="cam4"         > 0.0035D0 </zmconv_c0_ocn>
 
@@ -2788,7 +2786,7 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 <zmconv_num_cin                                       phys="cam7"     > 1       </zmconv_num_cin>
 
 <zmconv_dmpdz                                                         > -1.0E-3 </zmconv_dmpdz>
-<zmconv_tiedke_add                                                    > 0.5     </zmconv_tiedke_add>
+<zmconv_tiedke_add                                                    > 0.7     </zmconv_tiedke_add>
 <zmconv_capelmt                                                       > 70.0    </zmconv_capelmt>
 <zmconv_tau                                                           > 3600.0    </zmconv_tau>
 
@@ -4108,6 +4106,7 @@ See https://github.com/NorESMhub/noresm3_dev_simulations/discussions/78
 
 <!-- CAM-Oslo variables -->
 <use_aerocom>.false.</use_aerocom>
+<use_aerocom ver="oslo">.true.</use_aerocom>
 <dme_energy_adjust>.true.</dme_energy_adjust>
 <volc_fraction_coarse   >0.0</volc_fraction_coarse>
 <aerotab_table_dir>noresm-only/atm/cam/camoslo/AeroTab_8jun17/</aerotab_table_dir>

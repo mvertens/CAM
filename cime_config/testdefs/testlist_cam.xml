@@ -5,24 +5,24 @@
 <!--              CAM-Nor test-supported COMPSETS             -->
 <!--              @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@             -->
 
-  <test compset="NFHIST" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
+  <test compset="NFHIST" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ld3" testmods="cam/outfrq1d">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">00:45:00</option>
       <option name="comment">Test base historical at 2 degree with DEBUG</option>
     </options>
   </test>
 
-  <test compset="NFHIST" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+  <test compset="NFHIST" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ld3" testmods="cam/outfrq1d">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">01:00:00</option>
       <option name="comment">Test base historical at 1 degree without DEBUG</option>
     </options>
   </test>
@@ -33,105 +33,85 @@
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:40:00</option>
+      <option name="wallclock">00:45:00</option>
       <option name="comment">Test HIST compset with MAM4 chemistry</option>
     </options>
   </test>
 
-  <test compset="NF2000" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+  <test compset="NF2000" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ld3" testmods="cam/outfrq1d">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:40:00</option>
+      <option name="wallclock">01:00:00</option>
       <option name="comment">Test 2000 compset at 1 degree</option>
     </options>
   </test>
 
-  <test compset="NF1850" grid="ne30pg3_ne30pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s_aero_history">
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld3" testmods="cam/outfrq1d_aero_history">
     <machines>
       <machine name="betzy"  compiler="gnu" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="gnu" category="aux_cam_noresm"/>
+      <machine name="olivia" compiler="intel" category="prealpha_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
-      <option name="comment">Test basic 1850 at 1 degree with GNU compiler</option>
+      <option name="wallclock">01:00:00</option>
+      <option name="comment">Test basic 1850 at 2 degree with GNU compiler and expanded aerosol output</option>
     </options>
   </test>
 
-  <test compset="NF1850" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+  <test compset="NF1850" grid="ne30pg3_ne30pg3_mtn14" name="ERP_Ld3" testmods="cam/outfrq1d">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">01:00:00</option>
       <option name="comment">Test base 1850 at 1 degree without DEBUG</option>
     </options>
   </test>
 
-  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ln9" testmods="cam/secice">
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld3" testmods="cam/secice">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">00:45:00</option>
       <option name="comment">Test of secondary ice microphysics, without DEBUG</option>
     </options>
   </test>
 
-  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln18_P256" testmods="cam/outfrq9s_zm">
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ld3" testmods="cam/outfrq1d_zm">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:30:00</option>
+      <option name="wallclock">00:45:00</option>
       <option name="comment">Test ZM modifications from Tomas Tonazzio</option>
     </options>
   </test>
 
-  <test compset="NF1850fates-sp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ln9" testmods="cam/outfrq9s">
+  <test compset="NF1850esm" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld3" testmods="cam/outfrq1d">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
-      <option name="comment">Test 1850 with FATES SP at 2 degrees without DEBUG</option>
+      <option name="wallclock">00:45:00</option>
+      <option name="comment">Test of 2 degree FATES NOCOMP without DEBUG</option>
     </options>
   </test>
 
-  <test compset="NF1850ghg_fates-sp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_D_Ln9" testmods="cam/outfrq9s">
+  <test compset="NF1850ghg" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld3" testmods="cam/outfrq1d">
     <machines>
       <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:40:00</option>
-      <option name="comment">Test of 1850 at 2 degrees with FATES SP and DEBUG</option>
-    </options>
-  </test>
-
-  <test compset="NF1850fates-nocomp" grid="ne30pg3_ne30pg3_mtn14" name="ERS_D_Ld3" testmods="cam/outfrq9s_fatesini">
-    <machines>
-      <machine name="betzy"  compiler="gnu" category="aux_cam_noresm"/>
-      <machine name="olivia" compiler="gnu" category="aux_cam_noresm"/>
-    </machines>
-    <options>
-      <option name="wallclock">01:40:00</option>
-      <option name="comment">Test of 1 degree FATES NOCOMP with GNU compiler</option>
-    </options>
-  </test>
-  <test compset="NF1850ghg_fates-nocomp" grid="ne16pg3_ne16pg3_mtn14" name="ERP_Ld5" testmods="cam/outfrq9s">
-    <machines>
-      <machine name="betzy"  compiler="intel" category="aux_cam_noresm"/>
-      <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
-    </machines>
-    <options>
-      <option name="wallclock">00:40:00</option>
+      <option name="wallclock">00:45:00</option>
       <option name="comment">Test of 2 degree FATES NOCOMP without DEBUG</option>
     </options>
   </test>
@@ -142,27 +122,27 @@
       <machine name="olivia" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">00:30:00</option>
       <option name="comment">Test of 1850 compset at 1 degree with MAM chemistry</option>
     </options>
   </test>
 
-  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="REP_Ld3" testmods="cam/nudging">
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="REP_Ld1" testmods="cam/outfrq6h_aero_history">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:35:00</option>
+      <option name="wallclock">00:30:00</option>
       <option name="comment">Test of CAM nudging</option>
     </options>
   </test>
 
-  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERS_Ln9" testmods="cam/nudging">
+  <test compset="NF1850" grid="ne16pg3_ne16pg3_mtn14" name="ERS_Ld3" testmods="cam/nudging">
     <machines>
       <machine name="betzy" compiler="intel" category="aux_cam_noresm"/>
     </machines>
     <options>
-      <option name="wallclock">00:20:00</option>
+      <option name="wallclock">00:45:00</option>
       <option name="comment">Test of CAM nudging</option>
     </options>
   </test>

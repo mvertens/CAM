@@ -969,7 +969,8 @@ else {
     }
 }
 
-# $aer_model is either 'bam' or 'mam'.  This token is used in the element names that
+# $aer_model is one of 'bam', 'mam', or oslo.
+# This token is used in the element names that
 # are constructed to get the default physprops files.
 my $aer_model = 'bam';
 if ($prescribed_aero_model eq 'modal' or $chem =~ /_mam/) {$aer_model = 'mam';}
@@ -981,6 +982,9 @@ if ($chem =~ /_mam_oslo/) {
 if ($aer_model eq 'oslo') {
   add_default($nl, 'emis_fact_in_coarse_mode', 'ver'=>'oslo_aero');
   add_default($nl, 'seasalt_emis_scale',  'ver'=>'oslo_aero');
+
+  # Top level for aerosol processes that impact CAM climate.
+  add_default($nl, 'clim_modal_aero_top_press');
 
 } elsif ($aer_model eq 'mam' ) {
 
@@ -3285,7 +3289,7 @@ if ($simple_phys) {$use_simple_phys = '.true.';}
 $nl->set_variable_value('phys_ctl_nl', 'use_simple_phys', $use_simple_phys);
 
 #Cam-Oslo options
-add_default($nl, 'use_aerocom');
+add_default($nl, 'use_aerocom', 'ver'=>$aer_model);
 add_default($nl, 'volc_fraction_coarse');
 add_default($nl, 'aerotab_table_dir');
 add_default($nl, 'ocean_filepath');
@@ -3517,7 +3521,7 @@ if ($cfg->get('microphys') =~ /^mg/) {
             $micro_mg_dcs = '500.D-6';
         }
         elsif ($phys eq 'cam7') {
-            $micro_mg_dcs = '500.D-6'; # Note: CESM is using 600.
+            $micro_mg_dcs = '600.D-6'; # Note: CESM is using 600.
         }
     }
 
