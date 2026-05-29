@@ -4107,6 +4107,7 @@
 <!-- CAM-Oslo variables -->
 <use_aerocom>.false.</use_aerocom>
 <use_aerocom ver="oslo">.true.</use_aerocom>
+<rh_fine_aer_scale_fact_optics>1.0</rh_fine_aer_scale_fact_optics>
 <dme_energy_adjust>.true.</dme_energy_adjust>
 <volc_fraction_coarse   >0.0</volc_fraction_coarse>
 <aerotab_table_dir>noresm-only/atm/cam/camoslo/AeroTab_8jun17/</aerotab_table_dir>
