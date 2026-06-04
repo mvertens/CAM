@@ -20,7 +20,7 @@
 
 <!-- ozone data :  -->
 <prescribed_ozone_datapath>   'atm/cam/ozone_strataero'  </prescribed_ozone_datapath>
-<prescribed_ozone_file    >   'ozone_strataero_b.e30_alpha07c_cesm.B1850C_MTt4s.ne30_t232_wgx3.251.001_1850climo_zm_5day_c251204.nc'       </prescribed_ozone_file>
+<prescribed_ozone_file    >   'ozone_strataero_b.e30_alpha08o.B1850C_MTt4s.ne30_t232_wgx3.330_branch_1850climo_zm_5day_c260415.nc'         </prescribed_ozone_file>
 <prescribed_ozone_name    >   'O3'  </prescribed_ozone_name>
 <prescribed_ozone_type    >   CYCLICAL   </prescribed_ozone_type>
 <prescribed_ozone_cycle_yr>   1850    </prescribed_ozone_cycle_yr>
@@ -28,7 +28,7 @@
 <!-- Prescribed oxidants for aerosol chemistry : -->
 <tracer_cnst_cycle_yr >   1850    </tracer_cnst_cycle_yr>
 <tracer_cnst_datapath >   'atm/cam/tracer_cnst'   </tracer_cnst_datapath>
-<tracer_cnst_file     >   'tracer_cnst_MTt4s_halons_3Dmonthly_1850climo251_c20251209.nc' </tracer_cnst_file>
+<tracer_cnst_file     >   'tracer_cnst_MTt4s_halons_3Dmonthly_1850climo330_c20260415.nc' </tracer_cnst_file>
 <tracer_cnst_specifier>   'O3','OH','NO3','HO2' </tracer_cnst_specifier>
 <tracer_cnst_type     >   'CYCLICAL'  </tracer_cnst_type>
 <tracer_cnst_filelist >   ''   </tracer_cnst_filelist>
@@ -105,10 +105,6 @@
 <prescribed_volcaero_file>UOEXETER-CMIP-2-2-1_185001-202112-clim_intpwghtavg_v20260105.nc</prescribed_volcaero_file>
 <prescribed_volcaero_cycle_yr>1850</prescribed_volcaero_cycle_yr>
 <prescribed_volcaero_type>CYCLICAL</prescribed_volcaero_type>
-
-<!--Options for mineral dust -->
-<dust_emis_fact> 4.60D0  </dust_emis_fact>                   <!--dust_nl-->
-<dust_emis_method>Leung_2023</dust_emis_method>              <!--dust_emi-->
 
 <!-- for prescribed deposition and emission fluxes -->
 <sim_year>1850</sim_year>
