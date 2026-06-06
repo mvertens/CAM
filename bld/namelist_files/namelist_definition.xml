@@ -10160,6 +10160,15 @@ If true, turn on aerocom output
 Default: false
 </entry>
 
+<entry id="rh_fine_aer_scale_fact_optics" type="real" category="cam_oslo"
+       group="oslo_ctl_nl" valid_values="" >
+- Scales the relative humidity in the optical calculations
+  within OSLO_AERO for modes 1-5 
+- RH not scaled for dust (modes 6-7) or seasalt (modes 8-10)
+Default: 1.0
+</entry>
+
+
 <entry id="volc_fraction_coarse" type="real" category="cam_oslo"
        group="oslo_ctl_nl" valid_values="" >
 Fraction of volcanic aerosols which will end up in coarse mode
