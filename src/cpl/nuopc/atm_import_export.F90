@@ -1,6 +1,6 @@
 module atm_import_export
 
- use NUOPC             , only : NUOPC_CompAttributeGet, NUOPC_Advertise, NUOPC_IsConnected
+  use NUOPC             , only : NUOPC_CompAttributeGet, NUOPC_Advertise, NUOPC_IsConnected
   use NUOPC_Model       , only : NUOPC_ModelGet
   use ESMF              , only : ESMF_GridComp, ESMF_State, ESMF_Mesh, ESMF_StateGet, ESMF_Field
   use ESMF              , only : ESMF_Clock
@@ -29,7 +29,7 @@ module atm_import_export
   use cam_control_mod   , only : aqua_planet, simple_phys
   use cam_esmf_mod      , only : cam_esmf_set_areas
   use atm_stream_co2_surface_source, only : stream_co2_surface_source_init, stream_co2_surface_source_interp
-  use atm_stream_co2_surface_source, only : stream_co2_surface_source_is_initialized
+  use atm_stream_co2_surface_source, only : stream_co2_surface_source_is_initialized, co2_surface_source
 
   implicit none
   private ! except
@@ -1230,8 +1230,8 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (exists) then
        ! if co2_surface_source is a filename - use this to overwrite co2_diag
-       if (trim(co2_surface_source) /= 'unset') then
-          if (.not. stream_co2_is_initialized) then
+       if (co2_surface_source) then
+          if (.not. stream_co2_surface_source_is_initialized) then
              call stream_co2_surface_source_init(rc)
              if (ChkErr(rc,__LINE__,u_FILE_u)) return
           end if

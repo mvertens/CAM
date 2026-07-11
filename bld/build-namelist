@@ -713,14 +713,16 @@ if (!($simple_phys or $aqua_mode)) {
 # Setup default co2 surface source stream only if not simple_phys or aqua_mode and
 # the chemistry cannot produce the nitrogen depostion fluxes
 if (!($simple_phys or $aqua_mode)) {
-    add_default($nl, 'co2_surface_source')
-    add_default($nl, 'stream_co2_surface_source_mesh_filename' , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_co2_surface_source_data_filename' , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_co2_surface_source_year_first'    , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_co2_surface_source_year_last'     , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_co2_surface_source_year_align'    , 'sim_year'=>$sim_year);
-    add_default($nl, 'stream_co2_surface_source_varname');
-  }
+    add_default($nl, 'co2_surface_source');
+    my $co2_surface_source = get_default_value("co2_surface_source");
+    #if (lc($co2_surface_source) eq 'true') {
+        add_default($nl, 'stream_co2_surface_source_mesh_filename');
+        add_default($nl, 'stream_co2_surface_source_data_filename');
+        add_default($nl, 'stream_co2_surface_source_data_varname');
+        add_default($nl, 'stream_co2_surface_source_year_first');
+        add_default($nl, 'stream_co2_surface_source_year_last' );
+        add_default($nl, 'stream_co2_surface_source_year_align');
+    #}
 }
 
 # Topography

@@ -10163,7 +10163,7 @@ Default: false
 <entry id="rh_fine_aer_scale_fact_optics" type="real" category="cam_oslo"
        group="oslo_ctl_nl" valid_values="" >
 - Scales the relative humidity in the optical calculations
-  within OSLO_AERO for modes 1-5 
+  within OSLO_AERO for modes 1-5
 - RH not scaled for dust (modes 6-7) or seasalt (modes 8-10)
 Default: 1.0
 </entry>
@@ -10295,19 +10295,28 @@ Default: path
   If TRUE, set co2_diag sent to land and ocean to value read from co2_surface_source_data_filename
   Default: FALSE
 </entry>
-
+<entry id="stream_co2_surface_source_mesh_filename" type="char*256" input_pathname="abs" category="CO2 surface source"
+       group="co2_surface_source_stream_nl" valid_values="" >
+Grid mesh file corresponding to sream_co2_surface_source_data_filename.
+</entry>
+<entry id="stream_co2_surface_source_data_filename" type="char*256" input_pathname="abs" category="CO2 surface source"
+       group="co2_surface_source_stream_nl" valid_values="" >
+co2  stream data filename.
+</entry>
+<entry id="stream_co2_surface_source_data_varname" type="char*256" category="CO2 surface source"
+       group="co2_surface_source_stream_nl" valid_values="" >
+co2 varname on stream data file(s).
+</entry>
 <entry id="stream_co2_surface_source_year_first" type="integer" category="CO2 surface source"
        group="co2_surface_source_stream_nl" valid_values="" >
   First year to use in co2 stream data.
   Default: 2000
 </entry>
-
 <entry id="stream_co2_surface_source_year_last" type="integer" category="CO2 surface source"
        group="co2_surface_source_stream_nl" valid_values="" >
   Last year last to use in co2 stream data.
   Default: 2000
 </entry>
-
 <entry id="stream_co2_surface_source_year_align" type="integer" category="CO2 surface source"
        group="co2_surface_source_stream_nl" valid_values="" >
 The simulation year corresponding to stream_co2_surface_source_year_first.
@@ -10323,21 +10332,6 @@ year. This would be appropriate in transient runs where the model
 calendar is setup to span the same year range as the forcing data.
 Set by build-namelist.
 Default: 1
-</entry>
-
-<entry id="stream_co2_surface_source_data_filename" type="char*256" input_pathname="abs" category="CO2 surface source"
-       group="co2_surface_source_stream_nl" valid_values="" >
-co2  stream data filename.
-</entry>
-
-<entry id="stream_co2_surface_source_mesh_filename" type="char*256" input_pathname="abs" category="CO2 surface source"
-       group="co2_surface_source_stream_nl" valid_values="" >
-Grid mesh file corresponding to sream_co2_surface_source_data_filename.
-</entry>
-
-<entry id="stream_co2_surface_source_varlist" type="char*256" category="CO2 surface source"
-       group="co2_surface_source_stream_nl" valid_values="" >
-Variable names on co2 stream file(s).
 </entry>
 
 </namelist_definition>

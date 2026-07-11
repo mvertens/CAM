@@ -14,7 +14,7 @@ module atm_stream_co2_surface_source
   use shr_kind_mod      , only : r8 => shr_kind_r8, CL => shr_kind_cl, CS => shr_kind_cs
   use shr_log_mod       , only : errMsg => shr_log_errMsg
   use spmd_utils        , only : mpicom, masterproc, iam
-  use spmd_utils        , only : mpi_character, mpi_integer
+  use spmd_utils        , only : mpi_character, mpi_integer, mpi_logical
   use cam_logfile       , only : iulog
   use cam_abortutils    , only : endrun
   use cam_esmf_mod      , only : model_clock, model_mesh
@@ -26,19 +26,20 @@ module atm_stream_co2_surface_source
   public :: stream_co2_surface_source_init      ! position datasets for dynamic co2_surface_source
   public :: stream_co2_surface_source_interp    ! interpolates between two years of co2_surface_source file data
 
-  logical, public, protected :: stream_co2_surface_source_is_initialized = .false.
-
   type(shr_strdata_type) :: sdat_co2_surface_source     ! input data stream
 
   ! namelist variables
-  character(len=CL) :: stream_co2_surface_source_data_filename
   character(len=CL) :: stream_co2_surface_source_mesh_filename
-  character(len=CL) :: stream_co2_surface_source_varname    ! variable name for co2_surface_source on stream file(s)
-  integer           :: stream_co2_surface_source_year_first ! first year in stream to use
-  integer           :: stream_co2_surface_source_year_last  ! last year in stream to use
-  integer           :: stream_co2_surface_source_year_align ! align stream_year_first 
+  character(len=CL) :: stream_co2_surface_source_data_filename
+  character(len=CL) :: stream_co2_surface_source_data_varname ! variable name for co2_surface_source on stream file(s)
+  integer           :: stream_co2_surface_source_year_first   ! first year in stream to use
+  integer           :: stream_co2_surface_source_year_last    ! last year in stream to use
+  integer           :: stream_co2_surface_source_year_align   ! align stream_year_first
 
-  character(len=*), parameter :: sourcefile = __FILE__
+  logical, public, protected :: co2_surface_source
+  logical, public, protected :: stream_co2_surface_source_is_initialized = .false.
+
+  character(len=*), parameter :: u_FILE_u = __FILE__
 
 !==============================================================================
 contains
@@ -61,45 +62,50 @@ contains
     !-----------------------------------------------------------------------
 
     namelist /co2_surface_source_stream_nl/       &
-         stream_co2_surface_source_data_filename, &
+         co2_surface_source,                      &
          stream_co2_surface_source_mesh_filename, &
+         stream_co2_surface_source_data_filename, &
+         stream_co2_surface_source_data_varname,  &
          stream_co2_surface_source_year_first,    &
          stream_co2_surface_source_year_last,     &
-         stream_co2_surface_source_year_align,    &
-         stream_co2_surface_source_var
+         stream_co2_surface_source_year_align
 
     ! Default values for namelist
+    co2_surface_source = .false.
     stream_co2_surface_source_data_filename = ' '
     stream_co2_surface_source_mesh_filename = ' '
-    stream_co2_surface_source_varlist       = ' '
-    stream_co2_surface_source_year_first    = 1 ! first year in stream to use
-    stream_co2_surface_source_year_last     = 1 ! last  year in stream to use
-    stream_co2_surface_source_year_align    = 1 ! align stream_co2_surface_source_year_first with this model year
+    stream_co2_surface_source_data_varname  = ' '
+    stream_co2_surface_source_year_first    = -999 ! first year in stream to use
+    stream_co2_surface_source_year_last     = -999 ! last  year in stream to use
+    stream_co2_surface_source_year_align    = -999 ! align stream_co2_surface_source_year_first with this model year
 
     ! Read co2_surface_source_stream namelist
     if (masterproc) then
        open( newunit=nu_nml, file=trim(nlfile), status='old', iostat=nml_error )
        if (nml_error /= 0) then
-          call endrun(subName//': ERROR opening '//trim(nlfile)//errMsg(sourcefile, __LINE__))
+          call endrun(subName//': ERROR opening '//trim(nlfile)//errMsg(u_FILE_u, __LINE__))
        end if
        call shr_nl_find_group_name(nu_nml, 'co2_surface_source_stream_nl', status=nml_error)
        if (nml_error == 0) then
           read(nu_nml, nml=co2_surface_source_stream_nl, iostat=nml_error)
           if (nml_error /= 0) then
-             call endrun(' ERROR reading co2_surface_source_stream_nl namelist'//errMsg(sourcefile, __LINE__))
+             call endrun(' ERROR reading co2_surface_source_stream_nl namelist'//errMsg(u_FILE_u, __LINE__))
           end if
        end if
        close(nu_nml)
     endif
+    call mpi_bcast(co2_surface_source, &
+         1, mpi_logical, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
     call mpi_bcast(stream_co2_surface_source_mesh_filename, &
          len(stream_co2_surface_source_mesh_filename), mpi_character, 0, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
     call mpi_bcast(stream_co2_surface_source_data_filename, &
          len(stream_co2_surface_source_data_filename), mpi_character, 0, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_filename")
-    call mpi_bcast(stream_co2_surface_source_varlist, &
-         len(stream_co2_surface_source_varlist), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_varname")
+    call mpi_bcast(stream_co2_surface_source_data_varname, &
+         len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
     call mpi_bcast(stream_co2_surface_source_year_first, &
          1, mpi_integer, 0, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_first")
@@ -117,8 +123,8 @@ contains
             trim(stream_co2_surface_source_data_filename)
        write(iulog,'(3a)')    subname,'  stream_co2_surface_source_mesh_filename = ',&
             trim(stream_co2_surface_source_mesh_filename)
-       write(iulog,'(3a)')    subname,'  stream_co2_surface_source_varname       = ',&
-            trim(stream_co2_surface_source_varname)
+       write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_varname  = ',&
+            trim(stream_co2_surface_source_data_varname)
        write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_first    = ',&
             stream_co2_surface_source_year_first
        write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_last     = ',&
@@ -158,8 +164,8 @@ contains
          stream_yearFirst    = stream_co2_surface_source_year_first,              &
          stream_yearLast     = stream_co2_surface_source_year_last,               &
          stream_yearAlign    = stream_co2_surface_source_year_align,              &
-         stream_fldlistFile  = (/stream_co2_surface_source_varname/),             &
-         stream_fldListModel = (/stream_co2_surface_source_varname/),             &
+         stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
+         stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
          stream_lev_dimname  = 'null',                                            &
          stream_mapalgo      = 'bilinear',                                        &
          stream_offset       = 0,                                                 &
@@ -210,18 +216,18 @@ contains
 
     ! Get pointer for stream data that is time and spatially interpolated to model time and grid
     call dshr_fldbun_getFldPtr(sdat_co2_surface_source%pstrm(1)%fldbun_model, &
-         stream_co2_surface_source_varname, fldptr1=dataptr1d, rc=rc)
+         stream_co2_surface_source_data_varname, fldptr1=dataptr1d, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! Set output diagnostic co2_surface_source
     ig = 1
     do lchnk = begchunk,endchunk
        do icol = 1,get_ncols_p(lchnk)
-          cam_out(lchnk)%co2_diag(icol) = dataptr1d(ig)
+          cam_out(lchnk)%co2diag(icol) = dataptr1d(ig)
           ig = ig + 1
        end do
     end do
 
   end subroutine stream_co2_surface_source_interp
 
-end module atm_stream_co2_surface_source     
+end module atm_stream_co2_surface_source

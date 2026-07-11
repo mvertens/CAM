@@ -2016,6 +2016,15 @@
 <soil_erod_file phys="cam4"  >atm/cam/dst/dst_source2x2tuned-cam4-06132012.nc</soil_erod_file>
 <soil_erod_file phys="cam4" hgrid="0.9x1.25">atm/cam/dst/dst_source1x1tuned-cam4-06202012.nc</soil_erod_file>
 
+<!-- co2 surface source (overwrite co2_diag sent to land and ocean) -->
+<co2_surface_source>.false.</co2_surface_source>
+<stream_co2_surface_source_mesh_filename>unset</stream_co2_surface_source_mesh_filename>
+<stream_co2_surface_source_data_filename>unset</stream_co2_surface_source_data_filename>
+<stream_co2_surface_source_data_varname>unset</stream_co2_surface_source_data_varname>
+<stream_co2_surface_source_year_first>-999</stream_co2_surface_source_year_first>
+<stream_co2_surface_source_year_last>-999</stream_co2_surface_source_year_last>
+<stream_co2_surface_source_year_align>-999</stream_co2_surface_source_year_align>
+
 <!-- nitrogen deposition to surface components -->
 <stream_ndep_varlist>NDEP_NHx_month:NDEP_NOy_month</stream_ndep_varlist>
 <stream_ndep_varlist phys="cam7">drynhx:wetnhx:drynoy:wetnoy</stream_ndep_varlist>
