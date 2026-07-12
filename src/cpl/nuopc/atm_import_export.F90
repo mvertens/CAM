@@ -1230,11 +1230,11 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (exists) then
        ! if co2_surface_source is a filename - use this to overwrite co2_diag
+       if (.not. stream_co2_surface_source_is_initialized) then
+          call stream_co2_surface_source_init(rc)
+          if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       end if
        if (co2_surface_source) then
-          if (.not. stream_co2_surface_source_is_initialized) then
-             call stream_co2_surface_source_init(rc)
-             if (ChkErr(rc,__LINE__,u_FILE_u)) return
-          end if
           call stream_co2_surface_source_interp(cam_out, rc)
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
        end if

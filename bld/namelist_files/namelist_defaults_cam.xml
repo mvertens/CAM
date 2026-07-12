@@ -2018,12 +2018,6 @@
 
 <!-- co2 surface source (overwrite co2_diag sent to land and ocean) -->
 <co2_surface_source>.false.</co2_surface_source>
-<stream_co2_surface_source_mesh_filename>unset</stream_co2_surface_source_mesh_filename>
-<stream_co2_surface_source_data_filename>unset</stream_co2_surface_source_data_filename>
-<stream_co2_surface_source_data_varname>unset</stream_co2_surface_source_data_varname>
-<stream_co2_surface_source_year_first>-999</stream_co2_surface_source_year_first>
-<stream_co2_surface_source_year_last>-999</stream_co2_surface_source_year_last>
-<stream_co2_surface_source_year_align>-999</stream_co2_surface_source_year_align>
 
 <!-- nitrogen deposition to surface components -->
 <stream_ndep_varlist>NDEP_NHx_month:NDEP_NOy_month</stream_ndep_varlist>

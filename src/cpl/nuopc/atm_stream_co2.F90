@@ -94,44 +94,52 @@ contains
        end if
        close(nu_nml)
     endif
+
     call mpi_bcast(co2_surface_source, &
          1, mpi_logical, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
-    call mpi_bcast(stream_co2_surface_source_mesh_filename, &
-         len(stream_co2_surface_source_mesh_filename), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
-    call mpi_bcast(stream_co2_surface_source_data_filename, &
-         len(stream_co2_surface_source_data_filename), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_filename")
-    call mpi_bcast(stream_co2_surface_source_data_varname, &
-         len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
-    call mpi_bcast(stream_co2_surface_source_year_first, &
-         1, mpi_integer, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_first")
-    call mpi_bcast(stream_co2_surface_source_year_last, &
-         1, mpi_integer, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_last")
-    call mpi_bcast(stream_co2_surface_source_year_align, &
-         1, mpi_integer, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_align")
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: co2_surface_source")
+
+    if (co2_surface_source) then
+       call mpi_bcast(stream_co2_surface_source_mesh_filename, &
+            len(stream_co2_surface_source_mesh_filename), mpi_character, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
+       call mpi_bcast(stream_co2_surface_source_data_filename, &
+            len(stream_co2_surface_source_data_filename), mpi_character, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_filename")
+       call mpi_bcast(stream_co2_surface_source_data_varname, &
+            len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
+       call mpi_bcast(stream_co2_surface_source_year_first, &
+            1, mpi_integer, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_first")
+       call mpi_bcast(stream_co2_surface_source_year_last, &
+            1, mpi_integer, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_last")
+       call mpi_bcast(stream_co2_surface_source_year_align, &
+            1, mpi_integer, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_align")
+    end if
 
     if (masterproc) then
        write(iulog,'(a)')  ' '
-       write(iulog,'(2a)')    subname,' stream co2_surface_source settings:'
-       write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_filename = ',&
-            trim(stream_co2_surface_source_data_filename)
-       write(iulog,'(3a)')    subname,'  stream_co2_surface_source_mesh_filename = ',&
-            trim(stream_co2_surface_source_mesh_filename)
-       write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_varname  = ',&
-            trim(stream_co2_surface_source_data_varname)
-       write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_first    = ',&
-            stream_co2_surface_source_year_first
-       write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_last     = ',&
-            stream_co2_surface_source_year_last
-       write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_align    = ',&
-            stream_co2_surface_source_year_align
-       write(iulog,'(a)') ' '
+       if (co2_surface_source) then
+          write(iulog,'(2a)')    subname,' co2 surface source override settings::'
+          write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_filename = ',&
+               trim(stream_co2_surface_source_data_filename)
+          write(iulog,'(3a)')    subname,'  stream_co2_surface_source_mesh_filename = ',&
+               trim(stream_co2_surface_source_mesh_filename)
+          write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_varname  = ',&
+               trim(stream_co2_surface_source_data_varname)
+          write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_first    = ',&
+               stream_co2_surface_source_year_first
+          write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_last     = ',&
+               stream_co2_surface_source_year_last
+          write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_align    = ',&
+               stream_co2_surface_source_year_align
+          write(iulog,'(a)') ' '
+       else
+          write(iulog, '(2a)') subname, 'co2 surface source will not be overwritten'
+       end if
     endif
 
   end subroutine stream_co2_surface_source_readnl
