@@ -32,6 +32,7 @@ module atm_stream_co2_surface_source
   character(len=CL) :: stream_co2_surface_source_mesh_filename
   character(len=CL) :: stream_co2_surface_source_data_filename
   character(len=CL) :: stream_co2_surface_source_data_varname ! variable name for co2_surface_source on stream file(s)
+  character(len=CS) :: stream_co2_surface_source_taxmode      ! 'cycle' or 'extend' or 'limit'
   integer           :: stream_co2_surface_source_year_first   ! first year in stream to use
   integer           :: stream_co2_surface_source_year_last    ! last year in stream to use
   integer           :: stream_co2_surface_source_year_align   ! align stream_year_first
@@ -66,6 +67,7 @@ contains
          stream_co2_surface_source_mesh_filename, &
          stream_co2_surface_source_data_filename, &
          stream_co2_surface_source_data_varname,  &
+         stream_co2_surface_source_taxmode,       &
          stream_co2_surface_source_year_first,    &
          stream_co2_surface_source_year_last,     &
          stream_co2_surface_source_year_align
@@ -75,6 +77,7 @@ contains
     stream_co2_surface_source_data_filename = ' '
     stream_co2_surface_source_mesh_filename = ' '
     stream_co2_surface_source_data_varname  = ' '
+    stream_co2_surface_source_taxmode       = 'unset'
     stream_co2_surface_source_year_first    = -999 ! first year in stream to use
     stream_co2_surface_source_year_last     = -999 ! last  year in stream to use
     stream_co2_surface_source_year_align    = -999 ! align stream_co2_surface_source_year_first with this model year
@@ -109,6 +112,9 @@ contains
        call mpi_bcast(stream_co2_surface_source_data_varname, &
             len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
        if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
+       call mpi_bcast(stream_co2_surface_source_taxmode, &
+            len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
        call mpi_bcast(stream_co2_surface_source_year_first, &
             1, mpi_integer, 0, mpicom, ierr)
        if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_first")
@@ -118,6 +124,15 @@ contains
        call mpi_bcast(stream_co2_surface_source_year_align, &
             1, mpi_integer, 0, mpicom, ierr)
        if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_align")
+
+       ! error check
+       if ( trim(stream_co2_surface_source_taxmode) /= 'cycle'  .and. &
+            trim(stream_co2_surface_source_taxmode) /= 'extend' .and. &
+            trim(stream_co2_surface_source_taxmode) /= 'limit') then
+          call endrun(subName//': ERROR stream_co2_surface_source_taxmode '&
+               //trim(stream_co2_surface_source_taxmode)&
+               //' must be either cycle, extend or limit')
+       end if
     end if
 
     if (masterproc) then
@@ -129,6 +144,8 @@ contains
           write(iulog,'(3a)')    subname,'  stream_co2_surface_source_mesh_filename = ',&
                trim(stream_co2_surface_source_mesh_filename)
           write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_varname  = ',&
+               trim(stream_co2_surface_source_data_varname)
+          write(iulog,'(3a)')    subname,'  stream_co2_surface_source_taxmode       = ',&
                trim(stream_co2_surface_source_data_varname)
           write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_first    = ',&
                stream_co2_surface_source_year_first
@@ -177,7 +194,7 @@ contains
          stream_lev_dimname  = 'null',                                            &
          stream_mapalgo      = 'bilinear',                                        &
          stream_offset       = 0,                                                 &
-         stream_taxmode      = 'cycle',                                           &
+         stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
          stream_dtlimit      = 1.0e30_r8,                                         &
          stream_tintalgo     = 'linear',                                          &
          stream_name         = 'CO2_SURFACE_SOURCE data ',                        &

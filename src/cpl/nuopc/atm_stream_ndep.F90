@@ -41,6 +41,7 @@ module atm_stream_ndep
   character(len=CL) :: stream_ndep_data_filename
   character(len=CL) :: stream_ndep_mesh_filename
   character(len=CL) :: stream_ndep_varlist    ! colon delimited string of ndep field names
+  character(len=CS) :: stream_ndep_taxmode    ! time extrapolation - 'cycle','limit' or 'extend'
   integer           :: stream_ndep_year_first ! first year in stream to use
   integer           :: stream_ndep_year_last  ! last year in stream to use
   integer           :: stream_ndep_year_align ! align stream_year_firstndep with
@@ -76,12 +77,14 @@ contains
          stream_ndep_year_first,    &
          stream_ndep_year_last,     &
          stream_ndep_year_align,    &
-         stream_ndep_varlist
+         stream_ndep_varlist,       &
+         stream_ndep_taxmode
 
     ! Default values for namelist
     stream_ndep_data_filename = ' '
     stream_ndep_mesh_filename = ' '
     stream_ndep_varlist       = ' '
+    stream_ndep_taxmode       = 'unset'
     stream_ndep_year_first    = 1 ! first year in stream to use
     stream_ndep_year_last     = 1 ! last  year in stream to use
     stream_ndep_year_align    = 1 ! align stream_ndep_year_first with this model year
@@ -101,23 +104,11 @@ contains
        end if
        close(nu_nml)
     endif
-    call mpi_bcast(stream_ndep_mesh_filename, len(stream_ndep_mesh_filename), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_mesh_filename")
-    call mpi_bcast(stream_ndep_data_filename, len(stream_ndep_data_filename), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_data_filename")
-    call mpi_bcast(stream_ndep_varlist, len(stream_ndep_varlist), mpi_character, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_varlist")
-    call mpi_bcast(stream_ndep_year_first, 1, mpi_integer, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_first")
-    call mpi_bcast(stream_ndep_year_last, 1, mpi_integer, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_last")
-    call mpi_bcast(stream_ndep_year_align, 1, mpi_integer, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_align")
 
     ! Determine if ndep stream is active, and if not return
+    call mpi_bcast(stream_ndep_data_filename, len(stream_ndep_data_filename), mpi_character, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_data_filename")
     ndep_stream_active = (len_trim(stream_ndep_data_filename)>0 .and. stream_ndep_data_filename/='UNSET')
-
-    ! Check whether the stream is being used.
     if (.not. ndep_stream_active) then
        if (masterproc) then
           write(iulog,'(a)') ' '
@@ -126,6 +117,29 @@ contains
        endif
        RETURN
     endif
+
+    ! Broadcast remaining namelist variables
+    call mpi_bcast(stream_ndep_mesh_filename, len(stream_ndep_mesh_filename), mpi_character, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_mesh_filename")
+    call mpi_bcast(stream_ndep_varlist, len(stream_ndep_varlist), mpi_character, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_varlist")
+    call mpi_bcast(stream_ndep_taxmode, len(stream_ndep_taxmode), mpi_character, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_taxmode")
+    call mpi_bcast(stream_ndep_year_first, 1, mpi_integer, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_first")
+    call mpi_bcast(stream_ndep_year_last, 1, mpi_integer, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_last")
+    call mpi_bcast(stream_ndep_year_align, 1, mpi_integer, 0, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_align")
+
+    ! error check
+    if ( trim(stream_ndep_taxmode) /= 'cycle'  .and. &
+         trim(stream_ndep_taxmode) /= 'extend' .and. &
+         trim(stream_ndep_taxmode) /= 'limit') then
+       call endrun(subName//': ERROR stream_ndep_taxmode '&
+            //trim(stream_ndep_taxmode) &
+            //' must be either cycle, extend or limit')
+    end if
 
     ! Create array of variable names on ndep forcing file - needed to initialize sdat
     numflds = shr_string_listGetNum(stream_ndep_varlist)
@@ -185,7 +199,7 @@ contains
          stream_lev_dimname  = 'null',                              &
          stream_mapalgo      = 'bilinear',                          &
          stream_offset       = 0,                                   &
-         stream_taxmode      = 'cycle',                             &
+         stream_taxmode      = trim(stream_ndep_taxmode),           &
          stream_dtlimit      = 1.0e30_r8,                           &
          stream_tintalgo     = 'linear',                            &
          stream_name         = 'Nitrogen deposition data ',         &
