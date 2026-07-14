@@ -10311,7 +10311,7 @@ co2  stream data filename.
        group="co2_surface_source_stream_nl" valid_values="" >
 co2 varname on stream data file(s).
 </entry>
-<entry id="stream_co2_surface_source_data_taxmode" type="char*256" category="CO2 surface source"
+<entry id="stream_co2_surface_source_taxmode" type="char*256" category="CO2 surface source"
        group="co2_surface_source_stream_nl" valid_values="cycle,extend,limit" >
 time extrapolation mode.
 </entry>

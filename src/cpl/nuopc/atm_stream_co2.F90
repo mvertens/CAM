@@ -146,7 +146,7 @@ contains
           write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_varname  = ',&
                trim(stream_co2_surface_source_data_varname)
           write(iulog,'(3a)')    subname,'  stream_co2_surface_source_taxmode       = ',&
-               trim(stream_co2_surface_source_data_varname)
+               trim(stream_co2_surface_source_taxmode)
           write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_first    = ',&
                stream_co2_surface_source_year_first
           write(iulog,'(2a,i0)') subname,'  stream_co2_surface_source_year_last     = ',&
@@ -176,30 +176,32 @@ contains
 
     ! Read the input namelist
     call stream_co2_surface_source_readnl('atm_in')
-
+       
     ! Initialize the cdeps data type sdat_co2_surface_source
-    call shr_strdata_init_from_inline(sdat_co2_surface_source,                    &
-         my_task             = iam,                                               &
-         logunit             = iulog,                                             &
-         compname            = 'ATM',                                             &
-         model_clock         = model_clock,                                       &
-         model_mesh          = model_mesh,                                        &
-         stream_meshfile     = trim(stream_co2_surface_source_mesh_filename),     &
-         stream_filenames    = (/trim(stream_co2_surface_source_data_filename)/), &
-         stream_yearFirst    = stream_co2_surface_source_year_first,              &
-         stream_yearLast     = stream_co2_surface_source_year_last,               &
-         stream_yearAlign    = stream_co2_surface_source_year_align,              &
-         stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
-         stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
-         stream_lev_dimname  = 'null',                                            &
-         stream_mapalgo      = 'bilinear',                                        &
-         stream_offset       = 0,                                                 &
-         stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
-         stream_dtlimit      = 1.0e30_r8,                                         &
-         stream_tintalgo     = 'linear',                                          &
-         stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
-         rc                  = rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (co2_surface_source) then
+       call shr_strdata_init_from_inline(sdat_co2_surface_source,                    &
+            my_task             = iam,                                               &
+            logunit             = iulog,                                             &
+            compname            = 'ATM',                                             &
+            model_clock         = model_clock,                                       &
+            model_mesh          = model_mesh,                                        &
+            stream_meshfile     = trim(stream_co2_surface_source_mesh_filename),     &
+            stream_filenames    = (/trim(stream_co2_surface_source_data_filename)/), &
+            stream_yearFirst    = stream_co2_surface_source_year_first,              &
+            stream_yearLast     = stream_co2_surface_source_year_last,               &
+            stream_yearAlign    = stream_co2_surface_source_year_align,              &
+            stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
+            stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
+            stream_lev_dimname  = 'null',                                            &
+            stream_mapalgo      = 'bilinear',                                        &
+            stream_offset       = 0,                                                 &
+            stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
+            stream_dtlimit      = 1.0e30_r8,                                         &
+            stream_tintalgo     = 'linear',                                          &
+            stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
+            rc                  = rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    end if
 
     stream_co2_surface_source_is_initialized = .true.
 
