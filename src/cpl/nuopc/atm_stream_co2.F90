@@ -1,4 +1,4 @@
-module atm_stream_co2_surface_source
+module atm_stream_co2
 
   !-----------------------------------------------------------------------
   ! Contains methods for reading in co2_surface_source deposition data file
@@ -6,14 +6,12 @@ module atm_stream_co2_surface_source
   ! interpolation.
   !-----------------------------------------------------------------------
   !
-  use ESMF              , only : ESMF_Clock, ESMF_Mesh
-  use ESMF              , only : ESMF_SUCCESS, ESMF_LOGERR_PASSTHRU, ESMF_END_ABORT
-  use ESMF              , only : ESMF_Finalize, ESMF_LogFoundError
+  use ESMF              , only : ESMF_SUCCESS 
   use nuopc_shr_methods , only : chkerr
   use dshr_strdata_mod  , only : shr_strdata_type
   use shr_kind_mod      , only : r8 => shr_kind_r8, CL => shr_kind_cl, CS => shr_kind_cs
   use shr_log_mod       , only : errMsg => shr_log_errMsg
-  use spmd_utils        , only : mpicom, masterproc, iam
+  use spmd_utils        , only : mpicom, masterproc, iam, masterprocid
   use spmd_utils        , only : mpi_character, mpi_integer, mpi_logical
   use cam_logfile       , only : iulog
   use cam_abortutils    , only : endrun
@@ -96,36 +94,8 @@ contains
           end if
        end if
        close(nu_nml)
-    endif
 
-    call mpi_bcast(co2_surface_source, &
-         1, mpi_logical, 0, mpicom, ierr)
-    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: co2_surface_source")
-
-    if (co2_surface_source) then
-       call mpi_bcast(stream_co2_surface_source_mesh_filename, &
-            len(stream_co2_surface_source_mesh_filename), mpi_character, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
-       call mpi_bcast(stream_co2_surface_source_data_filename, &
-            len(stream_co2_surface_source_data_filename), mpi_character, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_filename")
-       call mpi_bcast(stream_co2_surface_source_data_varname, &
-            len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
-       call mpi_bcast(stream_co2_surface_source_taxmode, &
-            len(stream_co2_surface_source_data_varname), mpi_character, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
-       call mpi_bcast(stream_co2_surface_source_year_first, &
-            1, mpi_integer, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_first")
-       call mpi_bcast(stream_co2_surface_source_year_last, &
-            1, mpi_integer, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_last")
-       call mpi_bcast(stream_co2_surface_source_year_align, &
-            1, mpi_integer, 0, mpicom, ierr)
-       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_align")
-
-       ! error check
+       ! Error check
        if ( trim(stream_co2_surface_source_taxmode) /= 'cycle'  .and. &
             trim(stream_co2_surface_source_taxmode) /= 'extend' .and. &
             trim(stream_co2_surface_source_taxmode) /= 'limit') then
@@ -133,6 +103,32 @@ contains
                //trim(stream_co2_surface_source_taxmode)&
                //' must be either cycle, extend or limit')
        end if
+    endif
+
+    call mpi_bcast(co2_surface_source, 1, mpi_logical, masterprocid, mpicom, ierr)
+    if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: co2_surface_source")
+
+    if (co2_surface_source) then
+       call mpi_bcast(stream_co2_surface_source_mesh_filename, &
+            len(stream_co2_surface_source_mesh_filename), mpi_character, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
+       call mpi_bcast(stream_co2_surface_source_data_filename, &
+            len(stream_co2_surface_source_data_filename), mpi_character, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_filename")
+       call mpi_bcast(stream_co2_surface_source_data_varname, &
+            len(stream_co2_surface_source_data_varname), mpi_character, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_data_varname")
+       call mpi_bcast(stream_co2_surface_source_taxmode, &
+            len(stream_co2_surface_source_taxmode), mpi_character, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_taxmode")
+       call mpi_bcast(stream_co2_surface_source_year_first, &
+            1, mpi_integer, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_first")
+       call mpi_bcast(stream_co2_surface_source_year_last, &
+            1, mpi_integer, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_year_last")
+       call mpi_bcast(stream_co2_surface_source_year_align, &
+            1, mpi_integer, masterprocid, mpicom, ierr)
     end if
 
     if (masterproc) then
@@ -174,34 +170,29 @@ contains
 
     rc = ESMF_SUCCESS
 
-    ! Read the input namelist
-    call stream_co2_surface_source_readnl('atm_in')
-       
     ! Initialize the cdeps data type sdat_co2_surface_source
-    if (co2_surface_source) then
-       call shr_strdata_init_from_inline(sdat_co2_surface_source,                    &
-            my_task             = iam,                                               &
-            logunit             = iulog,                                             &
-            compname            = 'ATM',                                             &
-            model_clock         = model_clock,                                       &
-            model_mesh          = model_mesh,                                        &
-            stream_meshfile     = trim(stream_co2_surface_source_mesh_filename),     &
-            stream_filenames    = (/trim(stream_co2_surface_source_data_filename)/), &
-            stream_yearFirst    = stream_co2_surface_source_year_first,              &
-            stream_yearLast     = stream_co2_surface_source_year_last,               &
-            stream_yearAlign    = stream_co2_surface_source_year_align,              &
-            stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
-            stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
-            stream_lev_dimname  = 'null',                                            &
-            stream_mapalgo      = 'bilinear',                                        &
-            stream_offset       = 0,                                                 &
-            stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
-            stream_dtlimit      = 1.0e30_r8,                                         &
-            stream_tintalgo     = 'linear',                                          &
-            stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
-            rc                  = rc)
-       if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    end if
+    call shr_strdata_init_from_inline(sdat_co2_surface_source,                    &
+         my_task             = iam,                                               &
+         logunit             = iulog,                                             &
+         compname            = 'ATM',                                             &
+         model_clock         = model_clock,                                       &
+         model_mesh          = model_mesh,                                        &
+         stream_meshfile     = trim(stream_co2_surface_source_mesh_filename),     &
+         stream_filenames    = (/trim(stream_co2_surface_source_data_filename)/), &
+         stream_yearFirst    = stream_co2_surface_source_year_first,              &
+         stream_yearLast     = stream_co2_surface_source_year_last,               &
+         stream_yearAlign    = stream_co2_surface_source_year_align,              &
+         stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
+         stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
+         stream_lev_dimname  = 'null',                                            &
+         stream_mapalgo      = 'bilinear',                                        &
+         stream_offset       = 0,                                                 &
+         stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
+         stream_dtlimit      = 1.0e30_r8,                                         &
+         stream_tintalgo     = 'linear',                                          &
+         stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
+         rc                  = rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     stream_co2_surface_source_is_initialized = .true.
 
@@ -257,4 +248,4 @@ contains
 
   end subroutine stream_co2_surface_source_interp
 
-end module atm_stream_co2_surface_source
+end module atm_stream_co2

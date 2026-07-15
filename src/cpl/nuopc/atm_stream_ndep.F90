@@ -13,7 +13,7 @@ module atm_stream_ndep
   use dshr_strdata_mod  , only : shr_strdata_type
   use shr_kind_mod      , only : r8 => shr_kind_r8, CL => shr_kind_cl, CS => shr_kind_cs
   use shr_log_mod       , only : errMsg => shr_log_errMsg
-  use spmd_utils        , only : mpicom, masterproc, iam
+  use spmd_utils        , only : mpicom, masterproc, iam, masterprocid
   use spmd_utils        , only : mpi_character, mpi_integer
   use cam_logfile       , only : iulog
   use cam_abortutils    , only : endrun
@@ -68,7 +68,7 @@ contains
     integer :: ierr      ! error status
     integer :: nf        ! field counter
     integer :: numflds   ! number of fields in stream_ndep_varlist
-    character(*), parameter :: subName = "('stream_ndep_readnl')"
+    character(len=*), parameter :: subName = "('stream_ndep_readnl')"
     !-----------------------------------------------------------------------
 
     namelist /ndep_stream_nl/       &
@@ -106,7 +106,7 @@ contains
     endif
 
     ! Determine if ndep stream is active, and if not return
-    call mpi_bcast(stream_ndep_data_filename, len(stream_ndep_data_filename), mpi_character, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_data_filename, len(stream_ndep_data_filename), mpi_character, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_data_filename")
     ndep_stream_active = (len_trim(stream_ndep_data_filename)>0 .and. stream_ndep_data_filename/='UNSET')
     if (.not. ndep_stream_active) then
@@ -119,17 +119,17 @@ contains
     endif
 
     ! Broadcast remaining namelist variables
-    call mpi_bcast(stream_ndep_mesh_filename, len(stream_ndep_mesh_filename), mpi_character, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_mesh_filename, len(stream_ndep_mesh_filename), mpi_character, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_mesh_filename")
-    call mpi_bcast(stream_ndep_varlist, len(stream_ndep_varlist), mpi_character, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_varlist, len(stream_ndep_varlist), mpi_character, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_varlist")
-    call mpi_bcast(stream_ndep_taxmode, len(stream_ndep_taxmode), mpi_character, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_taxmode, len(stream_ndep_taxmode), mpi_character, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_taxmode")
-    call mpi_bcast(stream_ndep_year_first, 1, mpi_integer, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_year_first, 1, mpi_integer, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_first")
-    call mpi_bcast(stream_ndep_year_last, 1, mpi_integer, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_year_last, 1, mpi_integer, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_last")
-    call mpi_bcast(stream_ndep_year_align, 1, mpi_integer, 0, mpicom, ierr)
+    call mpi_bcast(stream_ndep_year_align, 1, mpi_integer, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_ndep_year_align")
 
     ! error check
@@ -171,7 +171,7 @@ contains
     integer, intent(out) :: rc
 
     ! local variables
-    character(*), parameter :: subName = "('stream_ndep_init')"
+    character(len=*), parameter :: subName = "('stream_ndep_init')"
     !-----------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
@@ -233,7 +233,7 @@ contains
     integer           :: ierr         ! error status
     integer           :: err_handling ! temporary
     character(len=CS) :: ndepunits    ! ndep units
-    character(*), parameter :: subName = "('stream_ndep_check_units')"
+    character(len=*), parameter :: subName = "('stream_ndep_check_units')"
     !-----------------------------------------------------------------------
 
     call cam_pio_openfile( fileid, trim(stream_fldFileName_ndep), PIO_NOWRITE)
@@ -294,7 +294,7 @@ contains
     real(r8), pointer :: dataptr1d_nhx_wet(:)
     real(r8), pointer :: dataptr1d_noy_dry(:)
     real(r8), pointer :: dataptr1d_noy_wet(:)
-    character(*), parameter :: subName = "('stream_ndep_interp')"
+    character(len=*), parameter :: subName = "('stream_ndep_interp')"
     !-----------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
