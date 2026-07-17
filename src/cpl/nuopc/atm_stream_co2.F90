@@ -238,10 +238,12 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! Set output diagnostic co2_surface_source
+    ! Input data is in [mol/mol] but land and ocean expect to receive [ppm].
+    ! Unit conversion is to multiply by 1e6.
     ig = 1
     do lchnk = begchunk,endchunk
        do icol = 1,get_ncols_p(lchnk)
-          cam_out(lchnk)%co2diag(icol) = dataptr1d(ig)
+          cam_out(lchnk)%co2diag(icol) = dataptr1d(ig) * 1.0e6_r8
           ig = ig + 1
        end do
     end do
