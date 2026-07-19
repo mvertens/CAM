@@ -6,7 +6,7 @@ module atm_stream_co2
   ! interpolation.
   !-----------------------------------------------------------------------
   !
-  use ESMF              , only : ESMF_SUCCESS 
+  use ESMF              , only : ESMF_SUCCESS
   use nuopc_shr_methods , only : chkerr
   use dshr_strdata_mod  , only : shr_strdata_type
   use shr_kind_mod      , only : r8 => shr_kind_r8, CL => shr_kind_cl, CS => shr_kind_cs
@@ -57,7 +57,7 @@ contains
     integer :: nml_error ! namelist i/o error flag
     integer :: ierr      ! error status
     integer :: nf        ! field counter
-    character(*), parameter :: subName = "('stream_co2_surface_source_readnl')"
+    character(len=*), parameter :: subName = "('stream_co2_surface_source_readnl')"
     !-----------------------------------------------------------------------
 
     namelist /co2_surface_source_stream_nl/       &
@@ -165,36 +165,38 @@ contains
     integer, intent(out) :: rc
 
     ! local variables
-    character(*), parameter :: subName = "('stream_co2_surface_source_init')"
+    character(len=*), parameter :: subName = "('stream_co2_surface_source_init')"
     !-----------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
 
-    ! Initialize the cdeps data type sdat_co2_surface_source
-    call shr_strdata_init_from_inline(sdat_co2_surface_source,                    &
-         my_task             = iam,                                               &
-         logunit             = iulog,                                             &
-         compname            = 'ATM',                                             &
-         model_clock         = model_clock,                                       &
-         model_mesh          = model_mesh,                                        &
-         stream_meshfile     = trim(stream_co2_surface_source_mesh_filename),     &
-         stream_filenames    = (/trim(stream_co2_surface_source_data_filename)/), &
-         stream_yearFirst    = stream_co2_surface_source_year_first,              &
-         stream_yearLast     = stream_co2_surface_source_year_last,               &
-         stream_yearAlign    = stream_co2_surface_source_year_align,              &
-         stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
-         stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
-         stream_lev_dimname  = 'null',                                            &
-         stream_mapalgo      = 'bilinear',                                        &
-         stream_offset       = 0,                                                 &
-         stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
-         stream_dtlimit      = 1.0e30_r8,                                         &
-         stream_tintalgo     = 'linear',                                          &
-         stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
-         rc                  = rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (co2_surface_source .and. .not. stream_co2_surface_source_is_initialized) then
+       ! Initialize the cdeps data type sdat_co2_surface_source
+       call shr_strdata_init_from_inline(sdat_co2_surface_source,                    &
+            my_task             = iam,                                               &
+            logunit             = iulog,                                             &
+            compname            = 'ATM',                                             &
+            model_clock         = model_clock,                                       &
+            model_mesh          = model_mesh,                                        &
+            stream_meshfile     = trim(stream_co2_surface_source_mesh_filename),     &
+            stream_filenames    = (/trim(stream_co2_surface_source_data_filename)/), &
+            stream_yearFirst    = stream_co2_surface_source_year_first,              &
+            stream_yearLast     = stream_co2_surface_source_year_last,               &
+            stream_yearAlign    = stream_co2_surface_source_year_align,              &
+            stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
+            stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
+            stream_lev_dimname  = 'null',                                            &
+            stream_mapalgo      = 'bilinear',                                        &
+            stream_offset       = 0,                                                 &
+            stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
+            stream_dtlimit      = 1.0e30_r8,                                         &
+            stream_tintalgo     = 'linear',                                          &
+            stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
+            rc                  = rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    stream_co2_surface_source_is_initialized = .true.
+       stream_co2_surface_source_is_initialized = .true.
+    end if
 
   end subroutine stream_co2_surface_source_init
 
@@ -220,7 +222,7 @@ contains
     integer  :: sec     ! seconds into current date for nstep+1
     integer  :: mcdate  ! Current model date (yyyymmdd)
     real(r8), pointer :: dataptr1d(:)
-    character(*), parameter :: subName = "('stream_co2_surface_source_interp')"
+    character(len=*), parameter :: subName = "('stream_co2_surface_source_interp')"
     !-----------------------------------------------------------------------
 
     rc = ESMF_SUCCESS
