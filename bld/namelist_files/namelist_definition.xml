@@ -1106,12 +1106,6 @@ Name of file that contains names of the offline meteorology data files.
 Default: none
 </entry>
 
-<entry id="met_remove_file" type="logical"  category="dyn_fv_off"
-       group="metdata_nl" valid_values="" >
-TRUE =&gt; the offline meteorology file will be removed from local disk when no longer needed.
-Default: FALSE
-</entry>
-
 <entry id="met_rlx_top" type="real"  category="dyn_fv_off"
        group="metdata_nl" valid_values="" >
 (km) top of relaxation region of winds for offline waccm
