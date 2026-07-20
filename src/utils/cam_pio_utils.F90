@@ -1144,7 +1144,7 @@ contains
     end if
 
     if(pio_iotask_rank(pio_subsystem) == 0) then
-       write(iulog,*) 'Opening existing file ', trim(fname), file%fh
+       write(iulog,'(a,2x,a,4x,i0)') 'Opening existing file ', trim(fname), file%fh
     end if
 
     ierr = pio_openfile(pio_subsystem, file, pio_iotype, fname, mode)

@@ -104,6 +104,7 @@ subroutine read_namelist(nlfilename, single_column, scmlat, scmlon)
    use surface_emissions_mod, only: surface_emissions_readnl
    use elevated_emissions_mod, only: elevated_emissions_readnl
    use atm_stream_ndep,     only: stream_ndep_readnl
+   use atm_stream_co2,      only: stream_co2_surface_source_readnl
 
    !---------------------------Arguments-----------------------------------
 
@@ -209,6 +210,7 @@ subroutine read_namelist(nlfilename, single_column, scmlat, scmlon)
    call surface_emissions_readnl(nlfilename)
    call elevated_emissions_readnl(nlfilename)
    call stream_ndep_readnl(nlfilename)
+   call stream_co2_surface_source_readnl(nlfilename)
 
 end subroutine read_namelist
 

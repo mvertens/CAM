@@ -28,6 +28,8 @@ module atm_import_export
   use chemistry         , only : chem_has_ndep_flx
   use cam_control_mod   , only : aqua_planet, simple_phys
   use cam_esmf_mod      , only : cam_esmf_set_areas
+  use atm_stream_co2    , only : stream_co2_surface_source_init, stream_co2_surface_source_interp
+  use atm_stream_co2    , only : stream_co2_surface_source_is_initialized, co2_surface_source
 
   implicit none
   private ! except
@@ -1227,6 +1229,16 @@ contains
     call state_getfldptr(exportState, 'Sa_co2diag', fldptr=fldptr_co2diag, exists=exists, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (exists) then
+       ! if co2_surface_source is a filename - use this to overwrite co2_diag
+       if (co2_surface_source) then
+          if (.not. stream_co2_surface_source_is_initialized) then
+             call stream_co2_surface_source_init(rc)
+             if (ChkErr(rc,__LINE__,u_FILE_u)) return
+          end if
+          call stream_co2_surface_source_interp(cam_out, rc)
+          if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       end if
+
        g = 1
        do c = begchunk,endchunk
           do i = 1,get_ncols_p(c)
