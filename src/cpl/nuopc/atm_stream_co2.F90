@@ -96,14 +96,16 @@ contains
        close(nu_nml)
 
        ! Error check
-       if ( trim(stream_co2_surface_source_taxmode) /= 'cycle'  .and. &
-            trim(stream_co2_surface_source_taxmode) /= 'extend' .and. &
-            trim(stream_co2_surface_source_taxmode) /= 'limit') then
-          call endrun(subName//': ERROR stream_co2_surface_source_taxmode '&
-               //trim(stream_co2_surface_source_taxmode)&
-               //' must be either cycle, extend or limit')
+       if (co2_surface_source) then
+          if ( trim(stream_co2_surface_source_taxmode) /= 'cycle'  .and.       &
+               trim(stream_co2_surface_source_taxmode) /= 'extend' .and.       &
+               trim(stream_co2_surface_source_taxmode) /= 'limit') then
+             call endrun(subName//': ERROR stream_co2_surface_source_taxmode ' &
+                  //trim(stream_co2_surface_source_taxmode)                    &
+                  //' must be either cycle, extend or limit')
+          end if
        end if
-    endif
+    end if
 
     call mpi_bcast(co2_surface_source, 1, mpi_logical, masterprocid, mpicom, ierr)
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: co2_surface_source")
@@ -153,7 +155,7 @@ contains
        else
           write(iulog, '(2a)') subname, 'co2 surface source will not be overwritten'
        end if
-    endif
+    end if
 
   end subroutine stream_co2_surface_source_readnl
 
