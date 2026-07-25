@@ -27,6 +27,8 @@ module atm_stream_co2
   type(shr_strdata_type) :: sdat_co2_surface_source     ! input data stream
 
   ! namelist variables
+  character(len=CL) :: stream_co2_surface_source_mapalgo
+  character(len=CL) :: stream_co2_surface_source_lat_dimname
   character(len=CL) :: stream_co2_surface_source_mesh_filename
   character(len=CL) :: stream_co2_surface_source_data_filename
   character(len=CL) :: stream_co2_surface_source_data_varname ! variable name for co2_surface_source on stream file(s)
@@ -72,6 +74,8 @@ contains
 
     ! Default values for namelist
     co2_surface_source = .false.
+    stream_co2_surface_source_mapalgo       = 'none'
+    stream_co2_surface_source_lat_dimname   = 'lat'
     stream_co2_surface_source_data_filename = ' '
     stream_co2_surface_source_mesh_filename = ' '
     stream_co2_surface_source_data_varname  = ' '
@@ -111,6 +115,12 @@ contains
     if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: co2_surface_source")
 
     if (co2_surface_source) then
+       call mpi_bcast(stream_co2_surface_source_mapalgo, &
+            len(stream_co2_surface_source_mapalgo), mpi_character, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mapalgo")
+       call mpi_bcast(stream_co2_surface_source_lat_dimname, &
+            len(stream_co2_surface_source_lat_dimname), mpi_character, masterprocid, mpicom, ierr)
+       if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_lat_dimname")
        call mpi_bcast(stream_co2_surface_source_mesh_filename, &
             len(stream_co2_surface_source_mesh_filename), mpi_character, masterprocid, mpicom, ierr)
        if (ierr /= 0) call endrun(trim(subname)//": FATAL: mpi_bcast: stream_co2_surface_source_mesh_filename")
@@ -137,6 +147,10 @@ contains
        write(iulog,'(a)')  ' '
        if (co2_surface_source) then
           write(iulog,'(2a)')    subname,' co2 surface source override settings::'
+          write(iulog,'(3a)')    subname,'  stream_co2_surface_source_mapalgo       = ',&
+               trim(stream_co2_surface_source_mapalgo)
+          write(iulog,'(3a)')    subname,'  stream_co2_surface_source_lat_dimname   = ',&
+               trim(stream_co2_surface_source_lat_dimname)
           write(iulog,'(3a)')    subname,'  stream_co2_surface_source_data_filename = ',&
                trim(stream_co2_surface_source_data_filename)
           write(iulog,'(3a)')    subname,'  stream_co2_surface_source_mesh_filename = ',&
@@ -188,12 +202,13 @@ contains
             stream_fldlistFile  = (/stream_co2_surface_source_data_varname/),        &
             stream_fldListModel = (/stream_co2_surface_source_data_varname/),        &
             stream_lev_dimname  = 'null',                                            &
-            stream_mapalgo      = 'bilinear',                                        &
+            stream_mapalgo      = trim(stream_co2_surface_source_mapalgo),           &
             stream_offset       = 0,                                                 &
             stream_taxmode      = trim(stream_co2_surface_source_taxmode),           &
             stream_dtlimit      = 1.0e30_r8,                                         &
             stream_tintalgo     = 'linear',                                          &
             stream_name         = 'CO2_SURFACE_SOURCE data ',                        &
+            stream_lat_dimname  = trim(stream_co2_surface_source_lat_dimname),       & 
             rc                  = rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
 

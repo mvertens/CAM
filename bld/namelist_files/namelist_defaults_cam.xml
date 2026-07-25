@@ -2012,6 +2012,9 @@
 
 <!-- co2 surface source (overwrite co2_diag sent to land and ocean) -->
 <co2_surface_source>.false.</co2_surface_source>
+<co2_surface_source_mapalgo>nearest_lat</co2_surface_source_mapalgo>
+<co2_surface_source_mesh_filename>none</co2_surface_source_mesh_filename>
+<co2_surface_source_lat_dimname>lat</co2_surface_source_lat_dimname>
 
 <!-- nitrogen deposition to surface components -->
 <stream_ndep_varlist>NDEP_NHx_month:NDEP_NOy_month</stream_ndep_varlist>
