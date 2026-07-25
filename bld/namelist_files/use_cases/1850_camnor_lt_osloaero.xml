@@ -37,8 +37,8 @@
 <ext_frc_type>CYCLICAL</ext_frc_type>
 <ext_frc_cycle_yr>1850</ext_frc_cycle_yr>
 <ext_frc_specifier hgrid="ne16np4" npg="3">
-	'H2O    ->  $INPUTDATA_ROOT/atm/cam/chem/emis/elev/H2O_emission_CH4_oxidationx2_elev_3DmonthlyL70_1850climoCMIP6piControl001_y21-50avg_c180802.nc',
-	'BC_AX  ->  0.1*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne16pg3/emissions_cmip7_noresm3_BC_airALL_vertical_1850_ne16pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
+        'H2O    ->  $INPUTDATA_ROOT/atm/cam/chem/emis/elev/H2O_emission_CH4_oxidationx2_elev_3DmonthlyL70_1850climoCMIP6piControl001_y21-50avg_c180802.nc',
+        'BC_AX  ->  0.1*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne16pg3/emissions_cmip7_noresm3_BC_airALL_vertical_1850_ne16pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
         'BC_AX  ->  0.1*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne16pg3/emissions_cmip7_noresm3_BC_anthroprofALL_vertical_1850_ne16pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
         'BC_N   ->  0.9*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne16pg3/emissions_cmip7_noresm3_BC_airALL_vertical_1850_ne16pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
         'BC_N   ->  0.9*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne16pg3/emissions_cmip7_noresm3_BC_anthroprofALL_vertical_1850_ne16pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
@@ -57,8 +57,8 @@
 </ext_frc_specifier>
 
 <ext_frc_specifier hgrid="ne30np4" npg="3">
-	'H2O    ->  $INPUTDATA_ROOT/atm/cam/chem/emis/elev/H2O_emission_CH4_oxidationx2_elev_3DmonthlyL70_1850climoCMIP6piControl001_y21-50avg_c180802.nc',
-	'BC_AX  ->  0.1*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne30pg3/emissions_cmip7_noresm3_BC_airALL_vertical_1850_ne30pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
+        'H2O    ->  $INPUTDATA_ROOT/atm/cam/chem/emis/elev/H2O_emission_CH4_oxidationx2_elev_3DmonthlyL70_1850climoCMIP6piControl001_y21-50avg_c180802.nc',
+        'BC_AX  ->  0.1*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne30pg3/emissions_cmip7_noresm3_BC_airALL_vertical_1850_ne30pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
         'BC_AX  ->  0.1*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne30pg3/emissions_cmip7_noresm3_BC_anthroprofALL_vertical_1850_ne30pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
         'BC_N   ->  0.9*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne30pg3/emissions_cmip7_noresm3_BC_airALL_vertical_1850_ne30pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
         'BC_N   ->  0.9*$INPUTDATA_ROOT/atm/cam/chem/emis/cmip7_emissions_version20260209/ne30pg3/emissions_cmip7_noresm3_BC_anthroprofALL_vertical_1850_ne30pg3_CEDS-CMIP-2025-04-18_version20260209.nc',
