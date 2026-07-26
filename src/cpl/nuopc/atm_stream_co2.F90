@@ -27,8 +27,8 @@ module atm_stream_co2
   type(shr_strdata_type) :: sdat_co2_surface_source     ! input data stream
 
   ! namelist variables
-  character(len=CL) :: stream_co2_surface_source_mapalgo
-  character(len=CL) :: stream_co2_surface_source_lat_dimname
+  character(len=CS) :: stream_co2_surface_source_mapalgo
+  character(len=CS) :: stream_co2_surface_source_lat_dimname
   character(len=CL) :: stream_co2_surface_source_mesh_filename
   character(len=CL) :: stream_co2_surface_source_data_filename
   character(len=CL) :: stream_co2_surface_source_data_varname ! variable name for co2_surface_source on stream file(s)
@@ -64,6 +64,8 @@ contains
 
     namelist /co2_surface_source_stream_nl/       &
          co2_surface_source,                      &
+         stream_co2_surface_source_mapalgo,       &
+         stream_co2_surface_source_lat_dimname,   &
          stream_co2_surface_source_mesh_filename, &
          stream_co2_surface_source_data_filename, &
          stream_co2_surface_source_data_varname,  &
@@ -74,10 +76,10 @@ contains
 
     ! Default values for namelist
     co2_surface_source = .false.
-    stream_co2_surface_source_mapalgo       = 'none'
+    stream_co2_surface_source_mapalgo       = 'nearest_lat'
     stream_co2_surface_source_lat_dimname   = 'lat'
+    stream_co2_surface_source_mesh_filename = 'none'
     stream_co2_surface_source_data_filename = ' '
-    stream_co2_surface_source_mesh_filename = ' '
     stream_co2_surface_source_data_varname  = ' '
     stream_co2_surface_source_taxmode       = 'unset'
     stream_co2_surface_source_year_first    = -999 ! first year in stream to use

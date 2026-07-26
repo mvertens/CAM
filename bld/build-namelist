@@ -717,13 +717,18 @@ if (!($simple_phys or $aqua_mode)) {
     add_default($nl, 'co2_surface_source');
     if ($nl->get_value('co2_surface_source') =~ /$TRUE/io) {
         if ( !(defined $nl->get_value('stream_co2_surface_source_mesh_filename') and
-               defined $nl->get_value('stream_co2_surface_source_data_filename') and
+	       defined $nl->get_value('stream_co2_surface_source_data_filename') and
                defined $nl->get_value('stream_co2_surface_source_data_varname') and
                defined $nl->get_value('stream_co2_surface_source_year_first') and
                defined $nl->get_value('stream_co2_surface_source_year_last') and
                defined $nl->get_value('stream_co2_surface_source_year_align') and
+               defined $nl->get_value('stream_co2_surface_source_year_align') and
+               defined $nl->get_value('stream_co2_surface_source_mapalgo') and
+               defined $nl->get_value('stream_co2_surface_source_lat_dimname') and
                defined $nl->get_value('stream_co2_surface_source_taxmode') ) ) {
              die "$ProgName - ERROR: if co2_surface_source is .true. then the following must be defined:
+             stream_co2_surface_source_mapalgo,
+             stream_co2_surface_source_lat_dimname,
              stream_co2_surface_source_mesh_filename,
              stream_co2_surface_source_data_filename,
              stream_co2_surface_source_data_varname,
@@ -732,6 +737,11 @@ if (!($simple_phys or $aqua_mode)) {
              stream_co2_surface_source_year_last,
              stream_co2_surface_source_year_align\n";
         }
+	if (($nl->get_value('stream_co2_surface_source_mapalgo') eq 'nearest_lat') and
+	    ($nl->get_value('stream_co2_surface_source_mesh_filename') ne 'none')) {   
+             die "$ProgName - ERROR: if stream_co2_surface_source_mesh_filename must equal none if \n
+    	     	 stream_co2_surface_source_mapalgo is nearest_lat"
+	}
     }
 }
 
