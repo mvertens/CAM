@@ -741,6 +741,10 @@ if (!($simple_phys or $aqua_mode)) {
 	    die "$ProgName - ERROR: stream_co2_surface_source_mesh_filename must be set to 'none' " .
 		"when stream_co2_surface_source_mapalgo is 'nearest_lat'\n";
 	}
+	if (($mapalgo ne 'nearest_lat') and ($mesh eq 'none')) {
+	    die "$ProgName - ERROR: stream_co2_surface_source_mesh_filename must be a valid mesh file " .
+		"when stream_co2_surface_source_mapalgo is '$mapalgo'\n";
+	}
     }
 }
 
