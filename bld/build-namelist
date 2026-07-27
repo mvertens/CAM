@@ -736,8 +736,11 @@ if (!($simple_phys or $aqua_mode)) {
              stream_co2_surface_source_year_last,
              stream_co2_surface_source_year_align\n";
         }
+	# get_value preserves the quotes from the namelist, so strip them before comparing
 	my $mapalgo = $nl->get_value('stream_co2_surface_source_mapalgo');
 	my $mesh    = $nl->get_value('stream_co2_surface_source_mesh_filename');
+	$mapalgo =~ s/^['"]+|['"]+$//g;
+	$mesh    =~ s/^['"]+|['"]+$//g;
 	if (($mapalgo eq 'nearest_lat') and ($mesh ne 'none')) {
 	    die "$ProgName - ERROR: stream_co2_surface_source_mesh_filename must be set to 'none' " .
 		"when stream_co2_surface_source_mapalgo is 'nearest_lat'\n";
