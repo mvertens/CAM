@@ -736,8 +736,9 @@ if (!($simple_phys or $aqua_mode)) {
              stream_co2_surface_source_year_last,
              stream_co2_surface_source_year_align\n";
         }
-	if (($nl->get_value('stream_co2_surface_source_mapalgo') eq 'nearest_lat') and
-	    ($nl->get_value('stream_co2_surface_source_mesh_filename') ne 'none')) {
+	my $mapalgo = $nl->get_value('stream_co2_surface_source_mapalgo');
+	my $mesh    = $nl->get_value('stream_co2_surface_source_mesh_filename');
+	if (($mapalgo eq 'nearest_lat') and ($mesh ne 'none')) {
 	    die "$ProgName - ERROR: stream_co2_surface_source_mesh_filename must be set to 'none' " .
 		"when stream_co2_surface_source_mapalgo is 'nearest_lat'\n";
 	}
