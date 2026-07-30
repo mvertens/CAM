@@ -2125,7 +2125,7 @@ contains
 
     if ( present(cyc_yr) .and. present(cyc_ndx_beg) ) then
        if (cyc_ndx_beg < 0) then
-          call endrun('open_trc_datafile: cycle year not found '//trim(filepath))
+          call endrun('open_trc_datafile: cycle year, '//int2str(cyc_yr)//' not found in '//trim(filepath))
        endif
     endif
 
