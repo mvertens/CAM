@@ -76,11 +76,11 @@ contains
 
     ! Default values for namelist
     co2_surface_source = .false.
-    stream_co2_surface_source_mapalgo       = 'nearest_lat'
-    stream_co2_surface_source_lat_dimname   = 'lat'
-    stream_co2_surface_source_mesh_filename = 'none'
-    stream_co2_surface_source_data_filename = ' '
-    stream_co2_surface_source_data_varname  = ' '
+    stream_co2_surface_source_mapalgo       = 'unset'
+    stream_co2_surface_source_lat_dimname   = 'unset'
+    stream_co2_surface_source_mesh_filename = 'unset'
+    stream_co2_surface_source_data_filename = 'unset'
+    stream_co2_surface_source_data_varname  = 'unset'
     stream_co2_surface_source_taxmode       = 'unset'
     stream_co2_surface_source_year_first    = -999 ! first year in stream to use
     stream_co2_surface_source_year_last     = -999 ! last  year in stream to use
