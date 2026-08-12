@@ -13,7 +13,7 @@ module chemistry
   use physics_types,    only : physics_state, physics_ptend, physics_ptend_init
   use spmd_utils,       only : masterproc
   use cam_logfile,      only : iulog
-  use mo_gas_phase_chemdr, only : map2chm
+  use mo_gas_phase_chemdr, only : map2chm, initialize_map2chm
   use shr_megan_mod,    only : shr_megan_mechcomps, shr_megan_mechcomps_n
   use srf_field_check,  only : active_Fall_flxvoc
   use tracer_data,      only : MAXTRCRS
@@ -28,7 +28,6 @@ module chemistry
 
   implicit none
   private
-  save
 
 !---------------------------------------------------------------------------------
 ! Public interfaces
@@ -191,12 +190,14 @@ end function chem_is
     character(len=128) :: molectype
     logical :: ndropmixed
     integer :: islvd
+    integer :: new_chm_map(pcnst)
 
 !-----------------------------------------------------------------------
 ! Set the simulation chemistry variables
 !-----------------------------------------------------------------------
     call set_sim_dat
 
+    new_chm_map(:) = 0
     o3_ndx    = get_spc_ndx('O3')
     o3_inv_ndx= get_inv_ndx('O3')
     ch4_ndx   = get_spc_ndx('CH4')
@@ -290,7 +291,7 @@ end function chem_is
        else if( m == nop_ndx ) then
           lng_name = 'NO+'
        else if( m == h2o_ndx ) then
-          map2chm(1) = m
+          new_chm_map(1) = m
           cycle
        endif
 
@@ -311,10 +312,11 @@ end function chem_is
           if( imozart == -1 ) then
              imozart = n
           end if
-          map2chm(n) = m
+          new_chm_map(n) = m
        endif
 
     end do
+    call initialize_map2chm(new_chm_map)
 
     call register_short_lived_species()
     call register_cfc11star()
