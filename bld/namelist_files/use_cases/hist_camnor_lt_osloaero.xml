@@ -5,7 +5,7 @@
 <solar_irrad_data_file>atm/cam/solar/SolarForcingCMIP7-4.6_18491230-20240101_sumEPP_c20250630.nc</solar_irrad_data_file>
 
 <!-- LBC Files -->
-<flbc_file>atm/waccm/lb/cmip7_ghg_version20260607/ghg_cmip7_CMIP_CR-CMIP-1-0-0_1750-2023_monthly_gnz_0p5degLat_version20260207.nc</flbc_file>
+<flbc_file>atm/waccm/lb/cmip7_ghg_version20260727/ghg_cmip7_CMIP_CR-CMIP-1-0-0_1750-2023_monthly_gnz_0p5degLat_version20260727.nc</flbc_file>
 <flbc_type>'SERIAL'</flbc_type>
 <flbc_list>'CO2','CH4','N2O','CFC11','CFC12','CFC11eq'</flbc_list>
 

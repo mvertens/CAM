@@ -10297,9 +10297,22 @@ Default: path
   If TRUE, set co2_diag sent to land and ocean to value read from co2_surface_source_data_filename
   Default: FALSE
 </entry>
+<entry id="stream_co2_surface_source_mapalgo" type="char*256" category="CO2 surface source"
+       group="co2_surface_source_stream_nl" valid_values="nearest_lat,bilinear,consf" >
+  Mapping algorithm to map co2 data to model grid. Nearest lat assumes
+  that a mesh file is not needed and that the forcing data is lat/time or lat/lev/time.
+  In this case the mesh is set to none.
+  Must be set by user 
+</entry>
+<entry id="stream_co2_surface_source_lat_dimname" type="char*256" category="CO2 surface source"
+       group="co2_surface_source_stream_nl" valid_values="" >
+  Latitude dimension name on stream_co2_surface_source_data_filename.
+  Only used if stream_co2_surface_source_mapalgo is 'nearest_lat'
+  Must be set by user
+</entry>
 <entry id="stream_co2_surface_source_mesh_filename" type="char*256" input_pathname="abs" category="CO2 surface source"
        group="co2_surface_source_stream_nl" valid_values="" >
-  Grid mesh file corresponding to stream_co2_surface_source_data_filename.
+  Grid mesh file corresponding to stream_co2_surface_source_data_filename. If stream_co2_surface_source_mapalgo is 'nearest_lat' then this must be set to 'none'
   Must be set by user.
 </entry>
 <entry id="stream_co2_surface_source_data_filename" type="char*256" input_pathname="abs" category="CO2 surface source"
