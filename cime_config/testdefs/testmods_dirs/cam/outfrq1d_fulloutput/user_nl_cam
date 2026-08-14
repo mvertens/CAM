@@ -1,2 +1,4 @@
 write_nstep0 = .true.
 inithist = 'ENDOFRUN'
+! Set h0 back to daily output (usermod sets it to monthly)
+nhtfrq(1) = -24

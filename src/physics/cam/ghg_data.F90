@@ -42,6 +42,8 @@ character(len=8), dimension(ncnst), parameter :: &
    cnst_names = (/'N2O  ', 'CH4  ', 'CFC11', 'CFC12', 'CO2  ', 'O2   '/) ! constituent names
 integer  :: pbuf_idx(ncnst)
 
+private :: trcmix
+
 !================================================================================================
 contains
 !================================================================================================
@@ -54,7 +56,7 @@ subroutine ghg_data_register()
 
   integer iconst
 
- 
+
   do iconst = 1,ncnst
      call pbuf_add_field(cnst_names(iconst),'physpkg',dtype_r8,(/pcols,pver/),pbuf_idx(iconst))
   enddo
@@ -69,10 +71,10 @@ subroutine ghg_data_timestep_init(pbuf2d, state)
   use physics_types,       only: physics_state
   use physics_buffer,      only: physics_buffer_desc, pbuf_get_field, pbuf_get_chunk
 
-  
+
   type(physics_state), intent(in), dimension(begchunk:endchunk) :: state
   type(physics_buffer_desc), pointer :: pbuf2d(:,:)
- 
+
   type(physics_buffer_desc), pointer :: pbuf_chnk(:)
   real(r8), pointer :: tmpptr(:,:)
 
@@ -89,8 +91,8 @@ subroutine ghg_data_timestep_init(pbuf2d, state)
 !$OMP PARALLEL DO PRIVATE (LCHNK,tmpptr,pbuf_chnk)
      do lchnk = begchunk, endchunk
        pbuf_chnk => pbuf_get_chunk(pbuf2d, lchnk)
-       call pbuf_get_field(pbuf_chnk, pbuf_idx(iconst), tmpptr) 
-       call trcmix(cnst_names(iconst), state(lchnk)%ncol, &
+       call pbuf_get_field(pbuf_chnk, pbuf_idx(iconst), tmpptr)
+       call trcmix(cnst_names(iconst), lchnk, state(lchnk)%ncol, &
                    state(lchnk)%lat, state(lchnk)%pmid, &
                    tmpptr)
      enddo
@@ -101,26 +103,27 @@ end subroutine ghg_data_timestep_init
 
 !================================================================================================
 
-subroutine trcmix(name, ncol, clat, pmid, q)
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
+subroutine trcmix(name, lchnk, ncol, clat, pmid, q)
+!-----------------------------------------------------------------------
+!
+! Purpose:
 ! Specify zonal mean mass mixing ratios of CH4, N2O, CFC11 and
 ! CFC12
-! 
-! Method: 
+!
+! Method:
 ! Distributions assume constant mixing ratio in the troposphere
 ! and a decrease of mixing ratio in the stratosphere. Tropopause
 ! defined by ptrop. The scale height of the particular trace gas
 ! depends on latitude. This assumption produces a more realistic
 ! stratospheric distribution of the various trace gases.
-! 
+!
 ! Author: J. Kiehl
-! 
+!
 !-----------------------------------------------------------------------
 
    ! Arguments
    character(len=*), intent(in)  :: name              ! constituent name
+   integer,          intent(in)  :: lchnk             ! chunk number
    integer,          intent(in)  :: ncol              ! number of columns
    real(r8),         intent(in)  :: clat(pcols)       ! latitude in radians for columns
    real(r8),         intent(in)  :: pmid(pcols,pver)  ! model pressures
@@ -133,7 +136,7 @@ subroutine trcmix(name, ncol, clat, pmid, q)
    real(r8) dlat            ! latitude in degrees
    real(r8) ptrop           ! pressure level of tropopause
    real(r8) pratio          ! pressure divided by ptrop
-   real(r8) trop_mmr        ! tropospheric mass mixing ratio
+   real(r8) trop_mmr(pcols) ! tropospheric mass mixing ratio
    real(r8) scale           ! pressure scale height
 !-----------------------------------------------------------------------
 
@@ -143,7 +146,7 @@ subroutine trcmix(name, ncol, clat, pmid, q)
 
    if (name == 'O2') then
 
-      q = chem_surfvals_get('O2MMR')
+      q(:ncol,:) = chem_surfvals_get('O2MMR')
 
    else if (name == 'CO2') then
 
@@ -152,7 +155,7 @@ subroutine trcmix(name, ncol, clat, pmid, q)
    else if (name == 'CH4') then
 
       ! set tropospheric mass mixing ratios
-      trop_mmr = rmwch4 * chem_surfvals_get('CH4VMR')
+      trop_mmr(:ncol) = rmwch4 * chem_surfvals_get('CH4VMR', lchnk, ncol)
 
       do k = 1,pver
          do i = 1,ncol
@@ -169,10 +172,10 @@ subroutine trcmix(name, ncol, clat, pmid, q)
 
             ! determine output mass mixing ratios
             if (pmid(i,k) >= ptrop) then
-               q(i,k) = trop_mmr
+               q(i,k) = trop_mmr(i)
             else
                pratio = pmid(i,k)/ptrop
-               q(i,k) = trop_mmr * (pratio)**scale
+               q(i,k) = trop_mmr(i) * (pratio)**scale
             end if
          end do
       end do
@@ -180,7 +183,7 @@ subroutine trcmix(name, ncol, clat, pmid, q)
    else if (name == 'N2O') then
 
       ! set tropospheric mass mixing ratios
-      trop_mmr = rmwn2o * chem_surfvals_get('N2OVMR')
+      trop_mmr(:ncol) = rmwn2o * chem_surfvals_get('N2OVMR', lchnk, ncol)
 
       do k = 1,pver
          do i = 1,ncol
@@ -197,10 +200,10 @@ subroutine trcmix(name, ncol, clat, pmid, q)
 
             ! determine output mass mixing ratios
             if (pmid(i,k) >= ptrop) then
-               q(i,k) = trop_mmr
+               q(i,k) = trop_mmr(i)
             else
                pratio = pmid(i,k)/ptrop
-               q(i,k) = trop_mmr * (pratio)**scale
+               q(i,k) = trop_mmr(i) * (pratio)**scale
             end if
          end do
       end do
@@ -208,7 +211,7 @@ subroutine trcmix(name, ncol, clat, pmid, q)
    else if (name == 'CFC11') then
 
       ! set tropospheric mass mixing ratios
-      trop_mmr = rmwf11 * chem_surfvals_get('F11VMR')
+      trop_mmr(:ncol) = rmwf11 * chem_surfvals_get('F11VMR', lchnk, ncol)
 
       do k = 1,pver
          do i = 1,ncol
@@ -225,10 +228,10 @@ subroutine trcmix(name, ncol, clat, pmid, q)
 
             ! determine output mass mixing ratios
             if (pmid(i,k) >= ptrop) then
-               q(i,k) = trop_mmr
+               q(i,k) = trop_mmr(i)
             else
                pratio = pmid(i,k)/ptrop
-               q(i,k) = trop_mmr * (pratio)**scale
+               q(i,k) = trop_mmr(i) * (pratio)**scale
             end if
          end do
       end do
@@ -236,7 +239,7 @@ subroutine trcmix(name, ncol, clat, pmid, q)
    else if (name == 'CFC12') then
 
       ! set tropospheric mass mixing ratios
-      trop_mmr = rmwf12 * chem_surfvals_get('F12VMR')
+      trop_mmr(:ncol) = rmwf12 * chem_surfvals_get('F12VMR', lchnk, ncol)
 
       do k = 1,pver
          do i = 1,ncol
@@ -253,10 +256,10 @@ subroutine trcmix(name, ncol, clat, pmid, q)
 
             ! determine output mass mixing ratios
             if (pmid(i,k) >= ptrop) then
-               q(i,k) = trop_mmr
+               q(i,k) = trop_mmr(i)
             else
                pratio = pmid(i,k)/ptrop
-               q(i,k) = trop_mmr * (pratio)**scale
+               q(i,k) = trop_mmr(i) * (pratio)**scale
             end if
          end do
       end do

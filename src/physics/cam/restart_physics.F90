@@ -116,8 +116,8 @@ module restart_physics
 
     if(co2_transport()) then
       ierr = pio_def_var(File, 'CO2PROG', pio_double, hdimids, co2prog_desc)
-      ierr = pio_def_var(File, 'CO2DIAG', pio_double, hdimids, co2diag_desc)
     end if
+    ierr = pio_def_var(File, 'CO2DIAG', pio_double, hdimids, co2diag_desc)
 
     ! cam_import variables -- write the constituent surface fluxes as individual 2D arrays
     ! rather than as a single variable with a pcnst dimension.  Note that the cflx components
@@ -308,13 +308,13 @@ module restart_physics
           tmpfield(:ncol, i) = cam_out(i)%co2prog(:ncol)
         end do
         call pio_write_darray(File, co2prog_desc, iodesc, tmpfield, ierr)
-
-        do i = begchunk, endchunk
-          ncol = cam_out(i)%ncol
-          tmpfield(:ncol, i) = cam_out(i)%co2diag(:ncol)
-        end do
-        call pio_write_darray(File, co2diag_desc, iodesc, tmpfield, ierr)
       end if
+
+      do i = begchunk, endchunk
+         ncol = cam_out(i)%ncol
+         tmpfield(:ncol, i) = cam_out(i)%co2diag(:ncol)
+      end do
+      call pio_write_darray(File, co2diag_desc, iodesc, tmpfield, ierr)
 
       ! cam_in components
       do m = 1, pcnst
@@ -561,15 +561,15 @@ module restart_physics
            cam_out(c)%co2prog(i) = tmpfield2(i, c)
          end do
        end do
-
-       ierr = pio_inq_varid(File, 'CO2DIAG', vardesc)
-       call pio_read_darray(File, vardesc, iodesc, tmpfield2, ierr)
-       do c=begchunk,endchunk
-         do i=1,pcols
-           cam_out(c)%co2diag(i) = tmpfield2(i, c)
-         end do
-       end do
      end if
+
+     ierr = pio_inq_varid(File, 'CO2DIAG', vardesc)
+     call pio_read_darray(File, vardesc, iodesc, tmpfield2, ierr)
+     do c=begchunk,endchunk
+       do i=1,pcols
+         cam_out(c)%co2diag(i) = tmpfield2(i, c)
+       end do
+     end do
 
      ! Reading the CFLX* components from the restart is optional for
      ! backwards compatibility.

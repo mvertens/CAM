@@ -4088,13 +4088,12 @@ if (!$simple_phys) {
 
     my $use_gw_movmtn_pbl = $nl->get_value('use_gw_movmtn_pbl');
     if ($use_gw_movmtn_pbl =~ /$TRUE/io) {
-         if ( ! ($dyn =~ /se/) ) {
+        if ( ! ($dyn =~ /se/) ) {
             die "$ProgName - ERROR: use_gw_movmtn_pbl is only available with the SE dycore \n";
-
-         }
+        }
     }
 
-     add_default($nl, 'use_gw_rdg_gamma' , 'val'=>'.false.');
+    add_default($nl, 'use_gw_rdg_gamma' , 'val'=>'.false.');
     add_default($nl, 'use_gw_front_igw' , 'val'=>'.false.');
     add_default($nl, 'use_gw_convect_sh', 'val'=>'.false.');
     add_default($nl, 'gw_lndscl_sgh');
@@ -5379,6 +5378,39 @@ sub check_input_files {
                 }
 
             } # end of while loop
+        }
+    }
+
+    # Manually list the Oslo Aero aerotab table files if it is in the namelist
+    my $datapath = $nl->get_value("aerotab_table_dir");
+    # Need to strip the quotes
+    if (defined $datapath) {
+        my $file;
+        my $entry;
+        my @filetypes = qw(aerodryk kcomp lwkcomp logntilp aerocomk);
+        $datapath =~ s/['"]//g;
+        if ($datapath !~ m:^[/\$]: and $inputdata_rootdir) {
+            $datapath = set_abs_filepath($datapath, $inputdata_rootdir);
+        }
+        foreach my $ftype (@filetypes) {
+            for my $aind (0 .. 10) {
+                if ($ftype eq 'logntilp' and $aind == 0) {
+                    next;
+                }
+                $file = set_abs_filepath("$ftype$aind.out", $datapath);
+                $entry = "aerotab table file $aind";
+                if ($inputdata_rootdir) {
+                    print $fh "$entry = $file\n";
+                }
+                else {
+                    if (-f $file) {
+                        print "OK -- found $datapath for $entry = $file\n";
+                    }
+                    else {
+                        print "NOT FOUND:  $datapath for $entry = $file\n";
+                    }
+                }
+            }
         }
     }
 

@@ -10177,70 +10177,11 @@ Fraction of volcanic aerosols which will end up in coarse mode
 Default: 0.0
 </entry>
 
-<entry id="aerotab_table_dir" type="char*256" input_pathname="abs" category="cam_oslo"
+<entry id="aerotab_table_dir" type="char*256" category="cam_oslo"
        group="oslo_ctl_nl" valid_values="" >
 Directory where we will expect to find the CAM-Oslo tables
 created from AeroTab
 </entry>
-
-<entry id="aerocomk0_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk1_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk2_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk3_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk4_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk5_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk6_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk7_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk8_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk9_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerocomk10_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-
-<entry id="aerodryk0_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk1_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk2_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk3_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk4_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk5_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk6_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk7_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk8_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk9_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="aerodryk10_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-
-<entry id="kcomp0_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp1_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp2_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp3_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp4_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp5_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp6_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp7_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp8_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp9_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="kcomp10_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-
-<entry id="logntilp1_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp2_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp3_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp4_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp5_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp6_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp7_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp8_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp9_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="logntilp10_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-
-<entry id="lwkcomp0_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp1_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp2_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp3_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp4_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp5_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp6_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp7_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp8_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp9_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
-<entry id="lwkcomp10_file" type="char*256" input_pathname="abs" category="cam_oslo" group="aerotab_ctl_nl" valid_values="" > AeroTab file</entry>
 
 <entry id="dms_source" type="char*20" category="cam_oslo"
        group="oslo_ctl_nl" valid_values="" >

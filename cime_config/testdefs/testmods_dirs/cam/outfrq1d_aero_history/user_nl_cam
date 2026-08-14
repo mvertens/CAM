@@ -11,4 +11,5 @@ history_aerosol_forcing = .true.
 history_aerosol_radiation = .true.
 history_aerosol_debug_output = .true.
 history_gas = .true.
+use_aerocom = .true.
 fincl3 = 'IntHeatTr:I', 'PotEnerTr:I', 'LatHeatTr:I', 'KinEnerTr:I', 'TotEnerTr:I'
