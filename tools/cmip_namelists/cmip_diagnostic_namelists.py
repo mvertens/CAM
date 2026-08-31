@@ -26,15 +26,29 @@ _CMIP_COMPOUND_NAME = "CMIP7 Compound Name"
 _REQUIRED_HEADERS = [_FREQUENCY_COLNAME, _MODELTYPE_COLNAME, _REGION_COLNAME,
                      _CAM_DIAG_COLNAME]
 _AVG_COLNAMES = [_CMIP_COMPOUND_NAME, "Processing type"]
-_CMIP_AVGFLG_RE = re.compile(r"[a-zA-Z.]*[.](t[a-z])[-]")
-# recognized CMIP7 averaging flags (not complete, just what is available to CAM)
+_CMIP_AVGFLG_RE = re.compile(r"[.](tavg|tmax|tmin|tpt)[-]")
+
 _CMIP_AVGFLAGS = {'tavg':'A', 'tmin':'M', 'tmax':'X', 'tpt':'I'}
 
-_HIST_FILEORDER = ['mon', 'day', '6hr', '3hr', '1hr', 'subhr']
+_HIST_TAPE_MAP = {
+    'mon':   1,
+    'day':   2,
+    '6hr':   {'default': 3, 'I': 4},
+    '3hr':   {'default': 5, 'I': 6},
+    '1hr':   {'default': 7, 'I': 8},
+    'subhr': 9,
+}
+# Order in which frequencies are processed/sorted (unrelated to tape number)
+_HIST_FREQ_ORDER = list(_HIST_TAPE_MAP.keys())
 _HIST_FRQCODES = {'mon':'0', 'day':'-24', '6hr':'-6', '3hr':'-3', '1hr':'-1', 'subhr':'1'}
-_HIST_MFILT = {'mon':'1', 'day':'30', '6hr':'30', '3hr':'30', '1hr':'30', 'subhr':'30'}
-_HIST_TITLES =  {'mon':'! monthly output', 'day':'! daily output', '6hr':'! 6-hourly output',
-                 '3hr':'! 3-hourly output', '1hr':'! 1-hourly output',
+_HIST_MFILT = {'mon':'1', 'day':'30', '6hr':'56', '3hr':'56', '1hr':'168', 'subhr':'48'}
+_HIST_TITLES =  {'mon':'! monthly output', 'day':'! daily output',
+                 '6hr':{'default':'! 6-hourly average, max, or min output',
+                        'I':'! 6-hourly instantaneous output'},
+                 '3hr':{'default':'! 3-hourly average, max, or min output',
+                        'I':'! 3-hourly instantaneous output'},
+                 '1hr':{'default':'! 1-hourly average, max, or min output',
+                        'I':'! 1-hourly instantaneous output'},
                  'subhr':'! timestep output'}
 
 # Special CAM diagnostics hardcoded in cam_history.F90 but not in fixed list
@@ -229,8 +243,8 @@ def read_config_file(filename, usermods_dir, overwrite):
         if not usermod.frequencies:
             print(f"Section, '{name}', contains no output frequencies")
             errors = True
-        elif any([x not in _HIST_FILEORDER for x in usermod.frequencies]):
-            unknown = list(set(usermod.frequencies) - set(_HIST_FILEORDER))
+        elif any([x not in _HIST_TAPE_MAP for x in usermod.frequencies]):
+            unknown = list(set(usermod.frequencies) - set(_HIST_TAPE_MAP.keys()))
             freq = ', '.join(unknown)
             print(f"Section, '{section}', contains unknown frequencies: {freq}")
             errors = True
@@ -268,28 +282,26 @@ def get_hist_proc_flag(row, avg_col, freq, rownum):
     else:
         avg_fld = row[avg_col]
     # end if
-    if avg_fld is None:
-        if freq == 'subhr':
-            hist_flag = 'I'
-        else:
-            hist_flag = 'A'
+    if avg_fld and (len(avg_fld) == 1):
+        # This is a column which simply has the average flag we want
+        if avg_fld not in ['I', 'A', 'X', 'M', 'B', 'N', 'L', 'S']:
+            raise ValueError(f"Error: Invalid processing flag, '{avg_fld}' on row {rownum}")
         # end if
+        hist_flag = avg_fld
     else:
-        match = _CMIP_AVGFLG_RE.match(avg_fld)
+        match = _CMIP_AVGFLG_RE.search(avg_fld) if avg_fld else None
         if match is None:
-            # This should be a column which simply has the average flag we want
-            if (len(avg_fld) != 1) or (avg_fld not in ['I', 'A', 'X', 'M', 'B', 'N', 'L', 'S']):
-                raise ValueError(f"Error: Invalid processing flag, '{avg_fld}' on row {rownum}")
+            # No recognized processing-type code found (e.g., avg_col is None
+            # or the code is not one of the recognized CMIP7 averaging flags).
+            # Fall back to the default based on frequency.
+            if freq == 'subhr':
+                hist_flag = 'I'
+            else:
+                hist_flag = 'A'
             # end if
-            hist_flag = avg_fld
         else:
             hist_desc = match.group(1)
-            if hist_desc in _CMIP_AVGFLAGS:
-                hist_flag = _CMIP_AVGFLAGS[hist_desc]
-            else:
-                emsg = f"Error: Invalid {_CMIP_COMPOUND_NAME}, '{hist_desc}' on row {rownum}"
-                raise ValueError(emsg)
-            # end if
+            hist_flag = _CMIP_AVGFLAGS[hist_desc]
             if (freq == 'subhr') and (hist_flag != 'I'):
                 emsg = f"Error: Invalid processing flag, '{hist_flag}' for time-step output"
                 raise ValueError(f"{emsg} on row {rownum}")
@@ -332,9 +344,9 @@ def parse_spreadsheet(csvfile, model_names=["atmos", "aerosol", "atmosChem"]):
         name_col = col_dirs[_CAM_DIAG_COLNAME]
         avg_col = None
         for flag_col_name in _AVG_COLNAMES:
-            if flag_col_name in col_dirs:
-                avg_col = col_dirs[flag_col_name]
-                exit
+            if flag_col_name in headers:
+                avg_col = headers.index(flag_col_name)
+                break
             # end if
         # end for
         for row in reader:
@@ -364,6 +376,30 @@ def parse_spreadsheet(csvfile, model_names=["atmos", "aerosol", "atmosChem"]):
         # end for
     # end with
     return cmip_dict
+
+def split_fields_by_tape(freq, fields):
+    """Partition <fields> (a set of 'NAME:FLAG' strings requested for output
+    frequency <freq>) into the history tape(s) defined for <freq> in
+    _HIST_TAPE_MAP.
+    Return a list of (fincl_index, title, field_set) tuples, sorted by
+    fincl_index, omitting any tape with no fields."""
+    tape_entry = _HIST_TAPE_MAP[freq]
+    title_entry = _HIST_TITLES[freq]
+    if not isinstance(tape_entry, dict):
+        return [(tape_entry, title_entry, fields)] if fields else []
+    
+    groups = {group_key: set() for group_key in tape_entry}
+    for entry in fields:
+        flag = entry.split(':')[-1]
+        group_key = 'I' if (flag == 'I') and ('I' in tape_entry) else 'default'
+        groups[group_key].add(entry)
+    tape_list = []
+    
+    for group_key, index in sorted(tape_entry.items(), key=lambda kv: kv[1]):
+        if groups[group_key]:
+            tape_list.append((index, title_entry[group_key], groups[group_key]))
+    
+    return tape_list
 
 def combine_data_requests(dict1, dict2):
     """Combine entries for common keys each key in <dict1> and <dict2>.
@@ -462,38 +498,36 @@ def generate_namelist_entries(data_request, usermod_config, fixed_fieldnames,
             outfile.write(f"! Only output fields listed in this file\n")
             outfile.write(f"empty_htapes = .true.\n\n")
             for freq in sorted(usermod.frequencies,
-                               key=lambda x: _HIST_FILEORDER.index(x)):
+                               key=lambda x: _HIST_FREQ_ORDER.index(x)):
                 if freq in data_request:
-                    # index is the fincl number for this frequency
-                    index = _HIST_FILEORDER.index(freq) + 1
-                    # Write history file config info
-                    outfile.write(f"{lbreak}{_HIST_TITLES[freq]}\n")
-                    outfile.write(f"nhtfrq({index}) = {_HIST_FRQCODES[freq]}\n")
-                    outfile.write(f"mfilt({index}) = {_HIST_MFILT[freq]}\n")
-                    fields = data_request[freq]
-                    # Convert to sorted list, skip fields not in available fields
-                    fields = sorted([quote_field(x) for x in fields
-                                     if x.split(':')[0] in avail_fieldnames])
-                    fldstring = ', '.join(fields)
-                    nlstr = f"fincl{index} = {fldstring}"
-                    # Write the fincl string with appropriate line breaks
-                    begpos = 0
-                    strlen = len(nlstr)
-                    while begpos < strlen:
-                        endpos = strlen
-                        if endpos - begpos > maxline:
-                            endpos = nlstr[0:begpos + maxline].rfind(' ')
-                            if endpos < begpos:
-                                endpos = strlen
+                    for index, title, group_fields in split_fields_by_tape(freq, data_request[freq]):
+                        # Write history file config info
+                        outfile.write(f"{lbreak}{title}\n")
+                        outfile.write(f"nhtfrq({index}) = {_HIST_FRQCODES[freq]}\n")
+                        outfile.write(f"mfilt({index}) = {_HIST_MFILT[freq]}\n")
+                        # Convert to sorted list, skip fields not in available fields
+                        out_fields = sorted([quote_field(x) for x in group_fields
+                                            if x.split(':')[0] in avail_fieldnames])
+                        fldstring = ', '.join(out_fields)
+                        nlstr = f"fincl{index} = {fldstring}"
+                        # Write the fincl string with appropriate line breaks
+                        begpos = 0
+                        strlen = len(nlstr)
+                        while begpos < strlen:
+                            endpos = strlen
+                            if endpos - begpos > maxline:
+                                endpos = nlstr[0:begpos + maxline].rfind(' ')
+                                if endpos < begpos:
+                                    endpos = strlen
+                                # end if
                             # end if
-                        # end if
-                        outfile.write(f"{nlstr[begpos:endpos]}\n")
-                        begpos = endpos
-                    # end while
+                            outfile.write(f"{nlstr[begpos:endpos]}\n")
+                            begpos = endpos
+                        # end while
+                        lbreak = '\n'
+                    # end for
                 # end if
-                lbreak = '\n'
-                # end for
-            # end if
+            # end for
         # end with (open file)
     # end for (sections)
     return missing_fields

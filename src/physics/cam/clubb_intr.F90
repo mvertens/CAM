@@ -1804,6 +1804,8 @@ end subroutine clubb_init_cnst
     call addfld ('VM_CLUBB',         (/ 'lev' /),  'A', 'm/s',      'Meridional Wind', sampled_on_subcycle=.true.)
     call addfld ('WM_ZT_CLUBB',      (/ 'lev' /),  'A', 'm/s',      'Vertical Velocity', sampled_on_subcycle=.true.)
     call addfld ('PBLH',             horiz_only,   'A', 'm',        'PBL height', sampled_on_subcycle=.true.)
+    call addfld ('PBLHMN',           horiz_only,   'M', 'm',        'Minimum PBL height', sampled_on_subcycle=.true.)
+    call addfld ('PBLHMX',           horiz_only,   'X', 'm',        'Maximum PBL height', sampled_on_subcycle=.true.)
     call addfld ('CLDST',            (/ 'lev' /),  'A', 'fraction', 'Stratus cloud fraction', sampled_on_subcycle=.true.)
     call addfld ('ZMDLF',            (/ 'lev' /),  'A', 'kg/kg/s',  'Detrained liquid water from ZM convection', sampled_on_subcycle=.true.)
     call addfld ('TTENDICE',         (/ 'lev' /),  'A', 'K/s',      'T tendency from Ice Saturation Adjustment', sampled_on_subcycle=.true.)
@@ -4736,6 +4738,8 @@ end subroutine clubb_init_cnst
 
     !  Output the PBL depth
     call outfld('PBLH', pblh, pcols, lchnk)
+    call outfld('PBLHMN', pblh, pcols, lchnk)
+    call outfld('PBLHMX', pblh, pcols, lchnk)
 
     call outfld('KVH_CLUBB', khzm, pcols, lchnk)
     call outfld('ELEAK_CLUBB', eleak, pcols, lchnk)

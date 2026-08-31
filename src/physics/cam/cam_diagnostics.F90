@@ -236,12 +236,14 @@ contains
 
     call addfld ('Z3',         (/ 'lev' /), 'A', 'm',         'Geopotential Height (above sea level)')
     call addfld ('Z1000',      horiz_only,  'A', 'm',         'Geopotential Z at 1000 mbar pressure surface')
+    call addfld ('Z925',       horiz_only,  'A', 'm',         'Geopotential Z at 925 mbar pressure surface')
     call addfld ('Z700',       horiz_only,  'A', 'm',         'Geopotential Z at 700 mbar pressure surface')
     call addfld ('Z500',       horiz_only,  'A', 'm',         'Geopotential Z at 500 mbar pressure surface')
     call addfld ('Z300',       horiz_only,  'A', 'm',         'Geopotential Z at 300 mbar pressure surface')
     call addfld ('Z200',       horiz_only,  'A', 'm',         'Geopotential Z at 200 mbar pressure surface')
     call addfld ('Z100',       horiz_only,  'A', 'm',         'Geopotential Z at 100 mbar pressure surface')
     call addfld ('Z050',       horiz_only,  'A', 'm',         'Geopotential Z at 50 mbar pressure surface')
+    call addfld ('Z010',       horiz_only,  'A', 'm',         'Geopotential Z at 10 mbar pressure surface')
 
     call addfld ('ZZ',         (/ 'lev' /), 'A', 'm2',        'Eddy height variance' )
     call addfld ('VZ',         (/ 'lev' /), 'A', 'm2/s',      'Meridional transport of geopotential height')
@@ -448,6 +450,9 @@ contains
     call addfld ('MQ',         (/ 'lev' /), 'A', 'kg/m2','Water vapor mass in layer')
     call addfld ('TMQ',        horiz_only,  'A', 'kg/m2','Total (vertically integrated) precipitable water')
     call addfld ('RELHUM',     (/ 'lev' /), 'A', 'percent','Relative humidity')
+    call addfld ('RELHUM850',  horiz_only,  'A', 'percent','Relative humidity at 850 mbar pressure surface')
+    call addfld ('RELHUM500',  horiz_only,  'A', 'percent','Relative humidity at 500 mbar pressure surface')
+    call addfld ('RELHUM100',  horiz_only,  'A', 'percent','Relative humidity at 100 mbar pressure surface')
     call addfld ('RHW',        (/ 'lev' /), 'A', 'percent','Relative humidity with respect to liquid')
     call addfld ('RHI',        (/ 'lev' /), 'A', 'percent','Relative humidity with respect to ice')
     call addfld ('RHCFMIP',    (/ 'lev' /), 'A', 'percent','Relative humidity with respect to water above 273 K, ice below 273 K')
@@ -508,6 +513,8 @@ contains
     call addfld ('UGUST',    horiz_only, 'A', 'm/s','Gustiness term added to U10')
     call addfld ('U10WITHGUSTS',horiz_only, 'A', 'm/s','10m wind speed with gustiness added')
     call addfld ('RHREFHT',  horiz_only, 'A', 'fraction','Reference height relative humidity')
+    call addfld ('RHREFHTMN',  horiz_only, 'M', 'fraction','Minimum reference height relative humidity')
+    call addfld ('RHREFHTMX',  horiz_only, 'X', 'fraction','Maximum reference height relative humidity')
 
     call addfld ('LANDFRAC', horiz_only, 'A', 'fraction','Fraction of sfc area covered by land')
     call addfld ('ICEFRAC',  horiz_only, 'A', 'fraction','Fraction of sfc area covered by sea-ice')
@@ -977,6 +984,11 @@ contains
           extrapolate='Z', ln_interp=.true., ps=state%ps, phis=state%phis, tbot=state%t(:,pver))
       call outfld('Z1000    ', p_surf, pcols, lchnk)
     end if
+    if (hist_fld_active('Z925')) then
+      call vertinterp(ncol, pcols, pver, state%pmid, 92500._r8, z3, p_surf, &
+          extrapolate='Z', ln_interp=.true., ps=state%ps, phis=state%phis, tbot=state%t(:,pver))
+      call outfld('Z925    ', p_surf, pcols, lchnk)
+    end if
     if (hist_fld_active('Z700')) then
       call vertinterp(ncol, pcols, pver, state%pmid, 70000._r8, z3, p_surf, &
           extrapolate='Z', ln_interp=.true., ps=state%ps, phis=state%phis, tbot=state%t(:,pver))
@@ -1002,6 +1014,10 @@ contains
     if (hist_fld_active('Z050')) then
       call vertinterp(ncol, pcols, pver, state%pmid,  5000._r8, z3, p_surf, ln_interp=.true.)
       call outfld('Z050    ', p_surf, pcols, lchnk)
+    end if
+    if (hist_fld_active('Z010')) then
+      call vertinterp(ncol, pcols, pver, state%pmid,  1000._r8, z3, p_surf, ln_interp=.true.)
+      call outfld('Z010    ', p_surf, pcols, lchnk)
     end if
     !
     ! Quadratic height fiels Z3*Z3
@@ -1267,6 +1283,11 @@ contains
     real(r8) :: tem2(pcols,pver) ! temporary workspace
     real(r8) :: esl(pcols,pver)   ! saturation vapor pressures
     real(r8) :: esi(pcols,pver)   !
+    real(r8) :: t_pres(pcols)     ! T interpolated to a pressure surface
+    real(r8) :: q_pres(pcols)     ! q interpolated to a pressure surface
+    real(r8) :: p_pres(pcols)     ! constant pressure surface value (for qsat)
+    real(r8) :: es_pres(pcols)    ! saturation vapor pressure at (t_pres,p_pres)
+    real(r8) :: qs_pres(pcols)    ! saturation specific humidity at (t_pres,p_pres)
 
     real(r8), pointer :: ftem_ptr(:,:)
 
@@ -1353,6 +1374,37 @@ contains
           ftem(:ncol,:) = state%q(:ncol,:,ixq)/ftem(:ncol,:)*100._r8
        end if
        call outfld ('RELHUM  ',ftem(:ncol,:)    ,ncol   ,lchnk     )
+    end if
+    !
+    ! Relative humidity on pressure surfaces.
+    ! RH is a nonlinear function of T (via qsat's Clausius-Clapeyron
+    ! dependence), so it is interpolated correctly by first interpolating
+    ! T and q to the pressure surface and only then recomputing RH there,
+    ! rather than by directly interpolating the model-level RELHUM field.
+    !
+    if (hist_fld_active('RELHUM850')) then
+       call vertinterp(ncol, pcols, pver, state%pmid, 85000._r8, state%t, t_pres)
+       call vertinterp(ncol, pcols, pver, state%pmid, 85000._r8, state%q(1,1,ixq), q_pres)
+       p_pres(:ncol) = 85000._r8
+       call qsat(t_pres(1:ncol), p_pres(1:ncol), es_pres(1:ncol), qs_pres(1:ncol), ncol)
+       p_surf(:ncol) = q_pres(:ncol)/qs_pres(:ncol)*100._r8
+       call outfld('RELHUM850', p_surf, pcols, lchnk)
+    end if
+    if (hist_fld_active('RELHUM500')) then
+       call vertinterp(ncol, pcols, pver, state%pmid, 50000._r8, state%t, t_pres)
+       call vertinterp(ncol, pcols, pver, state%pmid, 50000._r8, state%q(1,1,ixq), q_pres)
+       p_pres(:ncol) = 50000._r8
+       call qsat(t_pres(1:ncol), p_pres(1:ncol), es_pres(1:ncol), qs_pres(1:ncol), ncol)
+       p_surf(:ncol) = q_pres(:ncol)/qs_pres(:ncol)*100._r8
+       call outfld('RELHUM500', p_surf, pcols, lchnk)
+    end if
+    if (hist_fld_active('RELHUM100')) then
+       call vertinterp(ncol, pcols, pver, state%pmid, 10000._r8, state%t, t_pres)
+       call vertinterp(ncol, pcols, pver, state%pmid, 10000._r8, state%q(1,1,ixq), q_pres)
+       p_pres(:ncol) = 10000._r8
+       call qsat(t_pres(1:ncol), p_pres(1:ncol), es_pres(1:ncol), qs_pres(1:ncol), ncol)
+       p_surf(:ncol) = q_pres(:ncol)/qs_pres(:ncol)*100._r8
+       call outfld('RELHUM100', p_surf, pcols, lchnk)
     end if
 
     if (hist_fld_active('RHW') .or. hist_fld_active('RHI') .or. hist_fld_active('RHCFMIP') ) then
@@ -1870,6 +1922,8 @@ contains
 
 
       call outfld('RHREFHT',   ftem,      pcols, lchnk)
+      call outfld('RHREFHTMN',   ftem,      pcols, lchnk)
+      call outfld('RHREFHTMX',   ftem,      pcols, lchnk)
 
 
       if (write_camiop) then
