@@ -384,7 +384,7 @@
   <entries>
     <entry id="RUN_STARTDATE">
       <values match="last">
-        <value  compset="HIST_CAM">1850-01-01</value>
+        <value  compset="HIST_CAM">1870-01-01</value>
         <value  compset="AMIP_CAM">1979-01-01</value>
         <value  compset="1850_CAM">0001-01-01</value>
         <value  compset="2000_CAM">0001-01-01</value>
